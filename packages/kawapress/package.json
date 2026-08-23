@@ -1,0 +1,50 @@
+{
+  "name": "kawapress",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "A Vue-centric static site generator",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./cli": {
+      "source": "./src/cli.ts",
+      "types": "./src/cli.ts",
+      "default": "./src/cli.ts"
+    },
+    "./client": {
+      "source": "./src/client/index.ts",
+      "types": "./src/client/index.ts",
+      "default": "./src/client/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "kawapress": "./bin/kawapress.mjs"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "dependencies": {
+    "@mdit-vue/plugin-component": "catalog:markdown",
+    "@mdit-vue/plugin-frontmatter": "catalog:markdown",
+    "@mdit-vue/plugin-headers": "catalog:markdown",
+    "@mdit-vue/plugin-sfc": "catalog:markdown",
+    "@unhead/vue": "catalog:frontend",
+    "@vitejs/plugin-vue": "catalog:node",
+    "@vue/server-renderer": "catalog:frontend",
+    "citty": "catalog:node",
+    "consola": "catalog:node",
+    "jiti": "catalog:node",
+    "markdown-exit": "catalog:markdown",
+    "shiki": "catalog:markdown",
+    "sirv": "catalog:node",
+    "vite": "catalog:node",
+    "vue": "catalog:frontend",
+    "vue-router": "catalog:frontend"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@kawapress/playground",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "kawapress build",
+    "dev": "kawapress dev",
+    "preview": "kawapress preview"
+  },
+  "dependencies": {
+    "@kawapress/preset-nagi": "workspace:*",
+    "kawapress": "workspace:*",
+    "vue": "catalog:frontend"
+  }
+}

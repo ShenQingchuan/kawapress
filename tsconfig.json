@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "customConditions": ["source"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "eslint.config.ts",
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.d.ts",
+    "packages/*/*.ts",
+    "packages/*/*.config.ts"
+  ]
+}

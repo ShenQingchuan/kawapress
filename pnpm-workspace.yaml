@@ -1,0 +1,39 @@
+minimumReleaseAgeExclude:
+  - '@vue/language-core@3.3.11'
+  - vue-tsc@3.3.11
+
+shellEmulator: true
+
+trustPolicy: no-downgrade
+
+packages:
+  - packages/*
+  - examples/*
+
+catalogs:
+  dev:
+    '@antfu/eslint-config': ^9.3.0
+    '@types/node': ^26.2.0
+    eslint: ^10.8.1
+    typescript: ^6.0.3
+    vitest: ^4.1.11
+    vue-tsc: ^3.3.11
+  frontend:
+    '@unhead/vue': ^3.3.2
+    '@vue/server-renderer': ^3.5.41
+    vue: ^3.5.41
+    vue-router: ^5.2.0
+  markdown:
+    '@mdit-vue/plugin-component': ^3.0.2
+    '@mdit-vue/plugin-frontmatter': ^3.0.2
+    '@mdit-vue/plugin-headers': ^3.0.2
+    '@mdit-vue/plugin-sfc': ^3.0.2
+    markdown-exit: ^1.1.0-beta.2
+    shiki: ^4.4.3
+  node:
+    '@vitejs/plugin-vue': ^6.0.8
+    citty: ^0.2.2
+    consola: ^3.4.2
+    jiti: ^2.7.0
+    sirv: ^3.0.2
+    vite: ^8.2.2
