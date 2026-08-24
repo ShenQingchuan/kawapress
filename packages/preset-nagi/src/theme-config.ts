@@ -3,6 +3,7 @@ import type { NagiSidebarConfig } from './sidebar'
 
 export interface ResolvedNagiThemeConfig {
   sidebarMenuLabel: string
+  navMenuLabel: string
   outlineLabel: string
   returnToTopLabel: string
   langMenuLabel: string
@@ -18,6 +19,7 @@ export type NagiThemeConfig = Partial<ResolvedNagiThemeConfig>
 
 const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: 'Menu',
+  navMenuLabel: 'Open navigation menu',
   outlineLabel: 'On this page',
   returnToTopLabel: 'Return to top',
   langMenuLabel: 'Change language',
@@ -28,6 +30,7 @@ const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
 
 const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: '菜单',
+  navMenuLabel: '打开导航菜单',
   outlineLabel: '本页目录',
   returnToTopLabel: '返回顶部',
   langMenuLabel: '切换语言',
@@ -46,6 +49,7 @@ export function resolveNagiThemeConfig(
 
   const resolved: ResolvedNagiThemeConfig = {
     sidebarMenuLabel: config.sidebarMenuLabel ?? defaults.sidebarMenuLabel,
+    navMenuLabel: config.navMenuLabel ?? defaults.navMenuLabel,
     outlineLabel: config.outlineLabel ?? defaults.outlineLabel,
     returnToTopLabel: config.returnToTopLabel ?? defaults.returnToTopLabel,
     langMenuLabel: config.langMenuLabel ?? defaults.langMenuLabel,

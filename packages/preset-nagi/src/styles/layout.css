@@ -51,10 +51,16 @@
   max-width: none;
 }
 
-.nagi-nav {
+.nagi-nav-bar {
+  position: relative;
   z-index: var(--nagi-z-nav);
-  display: flex;
   flex: none;
+}
+
+.nagi-nav {
+  position: relative;
+  z-index: 1;
+  display: flex;
   align-items: center;
   height: var(--nagi-nav-height);
   padding: 0 1.5rem;
@@ -77,11 +83,104 @@
   object-fit: contain;
 }
 
-.nagi-nav__controls {
+.nagi-nav__end {
   display: flex;
   align-items: center;
   gap: 0.25rem;
   margin-left: auto;
+}
+
+.nagi-nav__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nagi-nav__menu {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--nagi-c-text-2);
+  border-radius: 0.5rem;
+  transition:
+    color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nagi-nav__menu:hover,
+.nagi-nav__menu[aria-expanded='true'] {
+  color: var(--nagi-c-text-1);
+  background: var(--nagi-c-bg-soft);
+}
+
+.nagi-nav__menu-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.nagi-nav__menu-icon span {
+  display: block;
+  height: 1.5px;
+  background: currentcolor;
+  border-radius: 1px;
+  transition:
+    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nagi-nav__menu[aria-expanded='true'] .nagi-nav__menu-icon span:nth-child(1) {
+  transform: translateY(6.5px) rotate(45deg);
+}
+
+.nagi-nav__menu[aria-expanded='true'] .nagi-nav__menu-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.nagi-nav__menu[aria-expanded='true'] .nagi-nav__menu-icon span:nth-child(3) {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+.nagi-nav-screen {
+  position: fixed;
+  top: var(--nagi-nav-height);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  background: var(--nagi-c-bg);
+  outline: none;
+  overflow: hidden;
+  clip-path: inset(0);
+  overscroll-behavior: contain;
+  transform-origin: top center;
+}
+
+.nagi-nav-screen__scroll {
+  height: 100%;
+}
+
+.nagi-nav-screen__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.nagi-nav-screen__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nagi-nav-screen__body > * + .nagi-nav-screen__actions {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--nagi-c-divider);
 }
 
 .nagi-language-menu {
@@ -89,14 +188,12 @@
 }
 
 .nagi-language-menu__button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
   height: 2.25rem;
-  padding: 0 0.625rem;
   color: var(--nagi-c-text-2);
-  font-size: 0.8125rem;
-  font-weight: 500;
   border-radius: 0.5rem;
   transition:
     color 0.25s,
@@ -109,27 +206,10 @@
   background: var(--nagi-c-bg-soft);
 }
 
-.nagi-language-menu__button svg {
-  width: 1rem;
-  height: 1rem;
-}
-
 .nagi-language-menu__icon {
-  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
   fill: currentcolor;
-}
-
-.nagi-language-menu__chevron {
-  fill: none;
-  stroke: currentcolor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.75;
-  transition: transform 0.25s;
-}
-
-.nagi-language-menu__button[aria-expanded='true'] .nagi-language-menu__chevron {
-  transform: rotate(180deg);
 }
 
 .nagi-appearance-switch {
@@ -207,10 +287,18 @@
   }
 }
 
+.nagi-language-menu__title {
+  margin-bottom: 0.5rem;
+  color: var(--nagi-c-text-1);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .nagi-language-menu__items {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
+  z-index: 1;
   min-width: 10rem;
   margin: 0;
   padding: 0.5rem;
@@ -220,6 +308,16 @@
   border-radius: 0.75rem;
   box-shadow: var(--nagi-shadow-3);
   transform-origin: top right;
+}
+
+.nagi-language-menu--list .nagi-language-menu__items {
+  position: static;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .nagi-language-menu__link {
@@ -235,8 +333,18 @@
     background-color 0.25s;
 }
 
+.nagi-language-menu--list .nagi-language-menu__link {
+  padding: 0.75rem 1rem;
+}
+
 .nagi-language-menu__link:hover {
   color: var(--nagi-c-brand-1);
+  background: var(--nagi-c-bg-soft);
+}
+
+.nagi-language-menu__link.is-active {
+  color: var(--nagi-c-brand-1);
+  font-weight: 600;
   background: var(--nagi-c-bg-soft);
 }
 
@@ -626,6 +734,11 @@
 
   .nagi-nav {
     padding: 0 2rem;
+  }
+
+  .nagi-nav-screen__body {
+    padding-right: 2rem;
+    padding-left: 2rem;
   }
 
   .nagi-home-hero,
