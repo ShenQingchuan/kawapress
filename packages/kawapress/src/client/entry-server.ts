@@ -9,6 +9,7 @@ export interface RenderResult {
   html: string
   found: boolean
   head: string
+  htmlAttrs: string
 }
 
 export async function render(url: string): Promise<RenderResult> {
@@ -23,6 +24,6 @@ export async function render(url: string): Promise<RenderResult> {
   await router.isReady()
   const found = router.currentRoute.value.name !== 'not-found'
   const html = await renderToString(app)
-  const { headTags } = await head.render()
-  return { html, found, head: headTags }
+  const { headTags, htmlAttrs } = await head.render()
+  return { html, found, head: headTags, htmlAttrs }
 }

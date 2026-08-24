@@ -6,6 +6,8 @@ import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
 import { headersPlugin } from '@mdit-vue/plugin-headers'
 import { sfcPlugin } from '@mdit-vue/plugin-sfc'
 import { createMarkdownExit } from 'markdown-exit'
+import anchorPlugin from 'markdown-it-anchor'
+import { stringifyJsonForScript } from '../json'
 
 interface MarkdownEnv {
   frontmatter?: Record<string, unknown>
@@ -32,6 +34,15 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   md.use(frontmatterPlugin as any)
   md.use(sfcPlugin as any)
   md.use(componentPlugin as any)
+  md.use(anchorPlugin as any, {
+    level: [1, 2, 3, 4, 5, 6],
+    permalink: anchorPlugin.permalink.linkInsideHeader({
+      class: 'header-anchor',
+      placement: 'after',
+      space: true,
+      symbol: '#',
+    }),
+  })
   // include h1: page title inference reads it; outline rendering filters to h2+ itself
   md.use(headersPlugin as any, { level: [1, 2, 3] })
 
@@ -75,7 +86,11 @@ const scriptLangRE = /\slang\s*=\s*["']([^"']+)["']/
 const scriptEndRE = /<\/script>/
 
 export function assembleVueSfc(html: string, env: MarkdownEnv, pageData: PageData): string {
-  const pageDataCode = `export const __pageData = JSON.parse(${JSON.stringify(JSON.stringify(pageData))})`
+  const serializedPageData = stringifyJsonForScript(pageData, {
+    label: `pageData for route ${JSON.stringify(pageData.path)}`,
+    path: 'pageData',
+  })
+  const pageDataCode = `export const __pageData = ${serializedPageData}`
 
   const scripts = env.sfcBlocks?.scripts.map(block => block.content) ?? []
   const plainIndex = scripts.findIndex(content => !scriptSetupRE.test(content))

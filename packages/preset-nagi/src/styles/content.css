@@ -1,0 +1,252 @@
+/* Typography values are adapted from the VitePress default theme (MIT). */
+
+.nagi-doc [id] {
+  scroll-margin-top: 1.5rem;
+}
+
+.nagi-doc :where(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+  color: var(--nagi-c-text-1);
+  font-weight: 600;
+  outline: none;
+}
+
+.nagi-doc h1 {
+  font-size: 1.75rem;
+  line-height: 1.4285714;
+  letter-spacing: -0.02em;
+}
+
+.nagi-doc h2 {
+  margin: 3rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--nagi-c-divider);
+  font-size: 1.5rem;
+  line-height: 1.3333333;
+  letter-spacing: -0.02em;
+}
+
+.nagi-doc h3 {
+  margin: 2rem 0 0;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.nagi-doc h4 {
+  margin: 1.5rem 0 0;
+  font-size: 1.125rem;
+  line-height: 1.3333333;
+  letter-spacing: -0.01em;
+}
+
+.nagi-doc .header-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-left: -0.87em;
+  color: var(--nagi-c-brand-1);
+  font-weight: 500;
+  text-decoration: none;
+  opacity: 0;
+  user-select: none;
+  transition:
+    color 0.25s,
+    opacity 0.25s;
+}
+
+.nagi-doc h2 .header-anchor {
+  top: 1.5rem;
+}
+
+.nagi-doc :where(h1, h2, h3, h4, h5, h6):hover .header-anchor,
+.nagi-doc .header-anchor:focus-visible {
+  opacity: 1;
+}
+
+.nagi-doc :where(p, img, summary) {
+  margin: 1rem 0;
+}
+
+.nagi-doc p {
+  line-height: 1.75;
+}
+
+.nagi-doc blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--nagi-c-divider);
+  color: var(--nagi-c-text-2);
+}
+
+.nagi-doc blockquote > p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.nagi-doc a {
+  margin-inline: 0.25rem;
+  color: var(--nagi-c-brand-1);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.125rem;
+  transition: color 0.25s;
+}
+
+.nagi-doc a:hover {
+  color: var(--nagi-c-brand-2);
+}
+
+.nagi-doc strong {
+  font-weight: 600;
+}
+
+.nagi-doc :where(ul, ol) {
+  margin: 1rem 0;
+  padding-left: 1.25rem;
+}
+
+.nagi-doc ul {
+  list-style: disc;
+}
+
+.nagi-doc ol {
+  list-style: decimal;
+}
+
+.nagi-doc li + li {
+  margin-top: 0.5rem;
+}
+
+.nagi-doc li > :where(ol, ul) {
+  margin: 0.5rem 0 0;
+}
+
+.nagi-doc li > p:first-child {
+  margin-top: 0;
+}
+
+.nagi-doc li > p:last-child {
+  margin-bottom: 0;
+}
+
+.nagi-doc li.task-list-item {
+  list-style: none;
+}
+
+.nagi-doc .task-list-item-checkbox {
+  margin: 0 0.25rem 0.125rem -1.25rem;
+  vertical-align: middle;
+  accent-color: var(--nagi-c-brand-1);
+}
+
+.nagi-doc table {
+  display: block;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+}
+
+.nagi-doc tr {
+  background: var(--nagi-c-bg);
+  border-top: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-doc tr:nth-child(2n) {
+  background: var(--nagi-c-bg-soft);
+}
+
+.nagi-doc :where(th, td) {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-doc th {
+  color: var(--nagi-c-text-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  background: var(--nagi-c-bg-soft);
+}
+
+.nagi-doc td {
+  font-size: 0.875rem;
+}
+
+.nagi-doc hr {
+  height: 0;
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-doc :not(pre, h1, h2, h3, h4, h5, h6) > code {
+  color: var(--nagi-code-color);
+  font-size: var(--nagi-code-font-size);
+}
+
+.nagi-doc :not(pre) > code {
+  padding: 0.1875rem 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--nagi-code-bg);
+}
+
+.nagi-doc a > code {
+  color: var(--nagi-c-brand-1);
+}
+
+.nagi-doc a:hover > code {
+  color: var(--nagi-c-brand-2);
+}
+
+.nagi-doc :where(h1, h2, h3, h4) > code {
+  font-size: 0.9em;
+}
+
+.nagi-doc pre.shiki {
+  width: 100%;
+  margin: 1rem 0;
+  padding: var(--nagi-code-block-padding);
+  overflow-x: auto;
+  border-radius: var(--nagi-code-block-radius);
+  text-align: left;
+  tab-size: 4;
+}
+
+.nagi-doc pre.shiki > code {
+  display: block;
+  width: fit-content;
+  min-width: 100%;
+  color: var(--nagi-c-text-2);
+  font-size: var(--nagi-code-font-size);
+  line-height: var(--nagi-code-line-height);
+}
+
+.nagi-doc > :first-child {
+  margin-top: 0;
+}
+
+.nagi-doc > :last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 40rem) {
+  .nagi-doc pre.shiki {
+    border-radius: var(--nagi-code-block-radius);
+  }
+}
+
+@media not all and (min-width: 40rem) {
+  .nagi-doc pre.shiki {
+    width: calc(100% + 3rem);
+    margin-right: -1.5rem;
+    margin-left: -1.5rem;
+    border-radius: 0;
+  }
+}
+
+@media (min-width: 48rem) {
+  .nagi-doc h1 {
+    font-size: 2rem;
+    line-height: 1.25;
+  }
+}

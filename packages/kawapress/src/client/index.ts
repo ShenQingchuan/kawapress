@@ -1,3 +1,4 @@
-export { usePage, useSite } from './composables'
+export { useLocale, usePageData, useSite, useThemeConfig } from './composables'
+export type { LocaleContext } from './composables'
 export { useHead } from '@unhead/vue'
-export { RouterLink, RouterView } from 'vue-router'
+export { RouterLink, RouterView, useRouter } from 'vue-router'

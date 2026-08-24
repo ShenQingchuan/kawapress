@@ -25,7 +25,9 @@
     "vue": "catalog:frontend"
   },
   "dependencies": {
-    "@kawapress/plugin-shiki": "workspace:*"
+    "@kawapress/plugin-shiki": "workspace:*",
+    "overlayscrollbars": "catalog:frontend",
+    "overlayscrollbars-vue": "catalog:frontend"
   },
   "devDependencies": {
     "kawapress": "workspace:*",

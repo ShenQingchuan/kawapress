@@ -1,5 +1,6 @@
 import type { Plugin } from 'vite'
 import type { SiteData } from '../site'
+import { stringifyJsonForScript } from '../json'
 
 const MODULE_ID = 'virtual:kawapress-site'
 const RESOLVED_ID = `\0${MODULE_ID}`
@@ -14,7 +15,11 @@ export function virtualSitePlugin(site: SiteData): Plugin {
     },
     load(id) {
       if (id === RESOLVED_ID) {
-        return `export const site = ${JSON.stringify(site)}`
+        const serializedSite = stringifyJsonForScript(site, {
+          label: 'site data',
+          path: 'site',
+        })
+        return `export const site = ${serializedSite}`
       }
     },
   }

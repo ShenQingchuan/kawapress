@@ -8,7 +8,7 @@ trustPolicy: no-downgrade
 
 packages:
   - packages/*
-  - examples/*
+  - docs
 
 catalogs:
   dev:
@@ -22,6 +22,8 @@ catalogs:
     '@unhead/vue': ^3.3.2
     '@vue/server-renderer': ^3.5.41
     floating-vue: ^5.2.2
+    overlayscrollbars: ^2.16.0
+    overlayscrollbars-vue: ^0.5.10
     vue: ^3.5.41
     vue-router: ^5.2.0
   markdown:
@@ -31,6 +33,7 @@ catalogs:
     '@mdit-vue/plugin-sfc': ^3.0.2
     '@shikijs/twoslash': ^4.4.3
     markdown-exit: ^1.1.0-beta.2
+    markdown-it-anchor: ^9.2.0
     mdast-util-from-markdown: ^2.0.3
     mdast-util-gfm: ^3.1.0
     mdast-util-to-hast: ^13.2.1

@@ -6,6 +6,8 @@
 
 KawaPress 是一个全新的、以 Vue 为核心的静态站点生成器，主要用于文档站等内容型网站。写作者使用 Markdown 编写内容，KawaPress 将内容编译成可预渲染、可在浏览器接管的 Vue 网站。
 
+KawaPress 期望成为一个更好的 VitePress，是由 Vue 社区成员自主开发的独立解决方案。产品保留 VitePress 简洁、轻快、专注文档阅读的优点，同时追求更完整的默认体验、更自然的多语言支持，以及更自由的主题与插件扩展空间；它不是 VitePress 的复制品或配置兼容层。
+
 基本取舍：
 
 - 只支持 Vue，不做多框架适配。
@@ -286,6 +288,7 @@ Preset 规则：
 - Preset 自己不直接参与插件生命周期；需要生成侧或运行侧能力时，包含对应的逻辑插件。
 - `definePreset()` 统一处理配置覆盖与插件追加，Preset 作者不手写合并逻辑。
 - `defineConfig()` 始终是无需 Preset 的底层配置入口。
+- Core 公开 `PresetConfig<ResolvedThemeConfig>` 类型辅助器，默认把 Preset 的完整主题配置映射为用户可选的 `Partial<ResolvedThemeConfig>`，并同时应用到顶层与各 locale 的 `themeConfig`。Preset 作者只定义一次完整主题配置字段，不重复维护可选输入类型。
 
 示意实现：
 
@@ -304,18 +307,18 @@ export const nagi = definePreset({
 })
 ```
 
-官方默认 Preset 是 `@kawapress/preset-nagi`。Nagi 的 UI 是 Preset 内部的普通 Runtime Plugin，没有内核特权。
+官方内置默认 Preset 是 `@kawapress/preset-nagi`，名称写作 nagi（凪）。它提供类同 VitePress 默认主题的完整文档站体验，同时保留 KawaPress 自己的视觉与交互实现。nagi 的 UI 是 Preset 内部的普通 Runtime Plugin，没有内核特权。
 
 ## 六、主题与界面
 
-内核不提供界面组件。默认 Preset 必须通过公开 Runtime Plugin API 安装 UI。
+内核不提供界面组件。KawaPress 通过内置默认 Preset nagi提供开箱即用的文档界面；它在信息层级、文档布局与阅读体验上类同 VitePress 默认主题，但必须完全通过公开 Runtime Plugin API 安装 UI。
 
 KawaPress 0.1 约定以下必备全局组件名：
 
 - `Layout`
 - `NotFound`
 
-Nagi Runtime Plugin 使用真实 SFC 对象注册它们：
+nagi Runtime Plugin 使用真实 SFC 对象注册它们：
 
 ```ts
 defineRuntimePlugin({
@@ -377,7 +380,7 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 - `twoslash` 未填写或为 `false` 时只执行普通 Shiki 高亮。
 - `twoslash: true` 使用 KawaPress 基于 `@shikijs/twoslash` 与 `twoslash-vue` 组装的默认配置；默认 `explicitTrigger: true`，只有带 `twoslash` meta 的代码块执行分析。
 - 对象形式使用 KawaPress 导出的 `TwoslashOptions`，它基于通用 `TransformerTwoslashOptions`，不暴露自定义 renderer 与 twoslasher；其中的函数、缓存和 TypeScript 对象只留在生成侧，不传入 Runtime graph。
-- Nagi 明确组合 `shikiPlugin({ twoslash: true })`，不在 Preset 内实现私有 Twoslash 逻辑。
+- nagi 明确组合 `shikiPlugin({ twoslash: true })`，不在 Preset 内实现私有 Twoslash 逻辑。
 - KawaPress 自己维护 Floating Vue renderer、Runtime Plugin 和 CSS，不依赖 `@shikijs/vitepress-twoslash` 或 VitePress 运行时。
 - Runtime Plugin 在 SSR 与 client 创建 Vue App 时都直接安装 `floating-vue`，并导入通用 Twoslash 样式及 KawaPress 自有适配样式，保证两侧组件树一致。
 - 当前 Runtime Plugin 协议不传递生成侧选项，因此只要安装 `@kawapress/plugin-shiki` 就会加载其 Runtime Plugin；`twoslash: false` 只关闭生成侧分析，不作为运行侧裁剪开关。
@@ -390,14 +393,25 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 核心配置至少包含：
 
 ```ts
-interface KawaPressConfig {
+interface LocaleConfig<ThemeConfig> {
+  label: string
+  lang?: string
+  dir?: 'ltr' | 'rtl'
+  link?: string
+  title?: string
+  themeConfig?: ThemeConfig
+}
+
+interface KawaPressConfig<ThemeConfig extends object = object> {
   title?: string
   srcDir?: string
+  themeConfig?: ThemeConfig
+  locales?: Record<string, LocaleConfig<ThemeConfig>>
   plugins?: KawaPressPlugin[]
 }
 ```
 
-`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。
+`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型使用 ThemeConfig 泛型，使 Preset 能为顶层与各语言的 `themeConfig` 提供同一份类型推断，Core 不解释主题私有字段。
 
 pageData 至少包含：
 
@@ -410,7 +424,31 @@ interface PageData {
 }
 ```
 
-站点数据与 pageData 作为可序列化数据进入 Runtime graph。生成侧的函数、类实例与文件句柄不能进入浏览器。
+`PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与路由元数据，保证 Generator Plugin 的 `pageData()` 修改只执行一次且两份数据不漂移。`kawapress/client` 只公开当前页面数据：
+
+```ts
+declare function usePageData(): ComputedRef<PageData | undefined>
+```
+
+核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据生成自动侧边栏；本地全文搜索使用独立、按需加载的搜索索引，不复用全量 pageData。
+
+pageData 必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含页面路由、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
+
+nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。只有 `doc` 页面显示并进入自动侧边栏。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。
+
+nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文滚动容器占满剩余高度，页面外壳和 `body` 不滚动，长正文只在右侧内容区域滚动；Sidebar 菜单过长时在自己的区域内滚动。`doc` 不渲染 Footer。`home` 与 `page` 在 nagi 自己的页面滚动容器内滚动并渲染 Footer；未命中页面按 `page` 布局处理。
+
+nagi 的主要滚动区域统一使用基于 `overlayscrollbars-vue` 的 `OsScroll`，配置 `os-theme-nagi`、离开时自动隐藏、轨道点击滚动和 6px 圆角滑块。正文、Sidebar、Home/Page 页面不得暴露操作系统原生滚动条外观。代码块、浮层等无法包裹组件的嵌套原生滚动区使用同一套 CSS scrollbar fallback，颜色与深浅色主题变量保持一致。
+
+nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。
+
+nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。Menu 抽屉、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`outlineLabel`、`returnToTopLabel` 和 `langMenuLabel`；其他语言回退英文。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
+
+Markdown 编译阶段为 h1 至 h6 输出稳定、去重的 `id` 与 `.header-anchor` 永久链接；pageData outline 收集 h1 至 h3，nagi 当前页目录排除页面 h1 并递归显示 h2/h3。目录链接必须指向真实标题锚点，不能只生成无目标的 UI。
+
+KawaPress Core 内置基于路径的国际化模型，与文件路由直接对齐：`root` 表示无语言前缀的默认内容，其他 locale key 对应 `/<locale>/` 路径前缀。当前语言只由当前路由决定，不维护第二份可漂移的 locale 状态。官方文档以中文为 `root`，例如 `/guide`；英文使用 `en`，例如 `/en/guide`。locale 可覆盖 `label`、`lang`、`dir`、`link`、`title` 与泛型 `themeConfig`；当前主题配置由顶层 `themeConfig` 与 locale 的 `themeConfig` 浅合并。Core 公开响应式的 `useSite()`、`useThemeConfig()` 与 `useLocale()`，其中 `useLocale()` 提供当前语言、语言列表和保留当前相对页面的语言链接。SSR、hydration 与客户端导航使用同一套路径解析，SSR/SSG 同时把当前 `lang`、`dir` 写入 `<html>`。主题负责声明自己的 ThemeConfig 类型、默认文案与语言菜单界面，但不得自行解析 URL、维护当前语言或建立私有语言数据通道；用户通过每个 locale 的 `themeConfig` 覆盖主题文案。nagi必须提供语言切换入口，并优先跳到目标语言下的同一相对页面。
+
+站点数据、locale 配置、themeConfig 与 pageData 作为可序列化数据进入 Runtime graph。生成侧的函数、类实例与文件句柄不能进入浏览器。
 
 ## 九、仓库与工程规范
 
@@ -421,7 +459,7 @@ interface PageData {
 ```text
 packages/kawapress
 packages/preset-nagi
-examples/playground
+docs
 ```
 
 工程约定：
@@ -434,6 +472,11 @@ examples/playground
 - 第三方插件可以发布源码或预编译产物；KawaPress 不要求插件声明 `source` condition。预编译包将 `types` 指向声明文件，并将 `import`、`default` 指向 ESM 产物。
 - KawaPress 不在 TypeScript、Vitest 或 Vite 中启用自定义 `source` condition。Vite 的 SSR plugin pipeline 单独使用 `module` condition，确保进入 Module Runner 的 Vue 依赖选择 ESM 入口；否则 dev SSR 会把 `@vue/server-renderer` 的 CommonJS 入口与 top-level await 放入同一执行图并触发 `ERR_AMBIGUOUS_MODULE_SYNTAX`。这是 SSR 依赖解析约束，不是插件 package exports 约定。
 - Runtime Plugin 静态导入的 Vue SFC 与 CSS 由用户站点的 Vite 自动打包；用户不需要单独导入主题或插件 CSS。
+- KawaPress 使用 `docs` 工作区维护并构建自己的真实文档，不保留独立 playground；根目录的 `pnpm dev`、`pnpm build` 与 `pnpm preview` 分别代理文档站命令。新增功能直接进入真实文档，文档写作与构建过程作为持续 dogfooding。
+- 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。
+- 中文文档使用自然、亲和、温暖的高语境表达，循序渐进地帮助用户理解；英文文档使用直接、明确、低语境的表达，不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。
+- 文档只记录当前代码已经实现并通过 dogfooding 的行为，不写无法运行的未来安装或 API 承诺。
+- `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
 - Node.js 正式支持版本与 Vite 8 对齐，为 22.12 及以上。
 - CLI 提供 `kawapress dev` 与 `kawapress build`。
 - 开源协议为 MIT。
@@ -453,17 +496,18 @@ examples/playground
 - 默认 `@kawapress/preset-nagi`。
 - Markdown 编译成 Vue 组件。
 - frontmatter 与 pageData。
-- Shiki 高亮及 transformer 配置。
+- Shiki 双主题高亮、Twoslash 与 Floating Vue 浮层。
 - 文件路径路由、SSR 首屏和浏览器内导航。
-- playground 同时验证默认 Plugin、Runtime Plugin、Preset、SSR、hydration 和 build。
+- 页面路由元数据、nagi 自动侧边栏与独立的本地全文搜索索引。
+- nagi 的 `doc`、`home` 与 `page` 布局语义及系统深浅色模式。
+- Core 路径国际化、locale 站点数据、主题配置覆盖、语言同页切换与 SSR/SSG `lang`/`dir`。
+- `docs` 使用 KawaPress 自身、默认 Preset 和公开能力完成 dev、SSR、hydration 与静态构建闭环，并包含至少两种语言用于国际化 dogfooding。
 
 0.1 明确不包含：
 
 - `addPage()` 或插件虚拟页面。
-- Twoslash 与 Floating Vue。
-- 搜索、侧边栏自动生成和深浅色模式。
 - Content Layer、远程内容源和 CMS。
-- 国际化、版本化文档和博客能力。
+- 版本化文档和博客能力。
 - 默认 Plugin 热重载。
 - 生成侧与浏览器之间的 RPC。
 - Runtime 初始状态协议、SSR request context 和 render hooks。
@@ -472,9 +516,6 @@ examples/playground
 
 ### 0.2：文档站日常体验
 
-- 内置本地全文搜索。
-- 侧边栏自动生成。
-- 深浅色模式。
 - 上一页、下一页与编辑链接。
 - `create-kawapress` 脚手架。
 
@@ -483,7 +524,6 @@ examples/playground
 - 类型化 Content Layer。
 - frontmatter schema 与构建校验。
 - 内容查询。
-- 国际化。
 - 插件与 Preset 开发文档、脚手架和发布规范。
 
 ### 后续

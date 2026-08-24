@@ -1,5 +1,5 @@
 {
-  "name": "@kawapress/playground",
+  "name": "@kawapress/docs",
   "type": "module",
   "private": true,
   "scripts": {

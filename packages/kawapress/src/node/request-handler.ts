@@ -19,7 +19,7 @@ export function createRequestHandler(
     const url = (req.url ?? '/').split('?')[0].split('#')[0]
     try {
       const { render } = await serverEnv.runner.import(entryServerUrl)
-      const { html: appHtml, found, head } = await render(url)
+      const { html: appHtml, found, head, htmlAttrs } = await render(url)
       const cssUrls = collectDevCssUrls(
         serverEnv.moduleGraph.urlToModuleMap.values(),
       )
@@ -30,6 +30,7 @@ export function createRequestHandler(
           appHtml,
           clientEntryUrl: entryClientUrl,
           cssUrls,
+          htmlAttrs,
         }),
       )
       res.statusCode = found ? 200 : 404

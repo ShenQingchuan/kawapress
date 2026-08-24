@@ -43,6 +43,36 @@ describe('createGeneratorPluginRunner', () => {
     expect(config.title).toBe('Docs first second')
   })
 
+  it('reports the plugin and invalid field when pageData is not serializable', async () => {
+    const runner = await createGeneratorPluginRunner([
+      definePlugin({
+        name: 'invalid-page-data',
+        setup(api) {
+          api.pageData((pageData) => {
+            pageData.frontmatter.order = 1n
+          })
+        },
+      }),
+    ])
+
+    const run = runner.runPageData({
+      path: '/guide',
+      title: 'Guide',
+      frontmatter: {},
+      headers: [],
+    })
+
+    await expect(run).rejects.toThrow(
+      '[invalid-page-data / generator / pageData] Plugin execution failed.',
+    )
+    await expect(run).rejects.toThrow(
+      'KawaPress: pageData for route "/guide" is not JSON-serializable.',
+    )
+    await expect(run).rejects.toThrow(
+      'Found unsupported bigint value at pageData.frontmatter.order.',
+    )
+  })
+
   it('reports the plugin and capability when a handler fails', async () => {
     const cause = new Error('broken markdown')
     const runner = await createGeneratorPluginRunner([

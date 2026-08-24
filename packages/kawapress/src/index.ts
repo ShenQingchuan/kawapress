@@ -1,5 +1,7 @@
 export { defineConfig, definePreset } from './config'
-export type { KawapressConfig, KawapressPreset } from './config'
+export type { KawapressConfig, KawapressPreset, PresetConfig } from './config'
+export { assertJsonSerializable, parseJson, stringifyJson } from './json'
+export type { JsonOperationOptions } from './json'
 export { definePlugin, defineRuntimePlugin } from './plugin-api'
 export type {
   GeneratorPluginAPI,
@@ -11,3 +13,13 @@ export type {
   RuntimePluginHandler,
   RuntimePluginSetup,
 } from './plugin-api'
+export type {
+  LocaleConfig,
+  LocaleDirection,
+  LocaleLink,
+  PageData,
+  PageHeader,
+  ResolvedSiteData,
+  SiteConfig,
+  SiteData,
+} from './site'

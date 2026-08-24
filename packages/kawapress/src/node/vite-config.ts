@@ -1,6 +1,7 @@
 import type { InlineConfig, Plugin } from 'vite'
 import type { ResolvedSiteConfig } from './config'
 import vue from '@vitejs/plugin-vue'
+import { createMarkdownPageLoader } from './markdown-page-loader'
 import { markdownPlugin } from './markdown-plugin'
 import { virtualPagesPlugin } from './virtual-pages'
 import { virtualRuntimePluginsPlugin } from './virtual-runtime-plugins'
@@ -26,20 +27,43 @@ export function createBaseViteConfig(
         conditions: ['module'],
       },
     },
-    plugins: createBasePlugins(siteConfig),
+    plugins: createBasePlugins(root, siteConfig),
   }
 }
 
 function createBasePlugins(
+  root: string,
   siteConfig: ResolvedSiteConfig,
 ): Plugin[] {
+  const pageLoader = createMarkdownPageLoader({
+    root,
+    srcDir: siteConfig.srcDir,
+    pluginRunner: siteConfig.pluginRunner,
+  })
+
   return [
-    markdownPlugin(siteConfig.pluginRunner),
-    vue({ include: [/\.vue$/, /\.md$/] }),
+    markdownPlugin(pageLoader),
+    vue({
+      include: [
+        /\.vue$/,
+        /\.md$/,
+      ],
+    }),
     virtualRuntimePluginsPlugin({
       pluginNames: siteConfig.plugins.map(plugin => plugin.name),
     }),
-    virtualPagesPlugin({ srcDir: siteConfig.srcDir }),
-    virtualSitePlugin({ title: siteConfig.title }),
+    virtualPagesPlugin({
+      srcDir: siteConfig.srcDir,
+      pageLoader,
+    }),
+    virtualSitePlugin({
+      title: siteConfig.title,
+      locales: siteConfig.locales,
+      ...(
+        siteConfig.themeConfig === undefined
+          ? {}
+          : { themeConfig: siteConfig.themeConfig }
+      ),
+    }),
   ]
 }

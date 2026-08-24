@@ -1,11 +1,21 @@
 import type { Plugin } from 'vue'
+import { useHead } from '@unhead/vue'
 import { runtimePlugins } from 'virtual:kawapress-runtime-plugins'
 import { createSSRApp, defineComponent, h, resolveComponent } from 'vue'
+import { useSite } from './composables'
 import { createAppRouter } from './router'
 import { createRuntimePluginRunner } from './runtime-plugin-runner'
 
 export const Root = defineComponent({
   setup() {
+    const site = useSite()
+    useHead(() => ({
+      htmlAttrs: {
+        lang: site.value.lang,
+        dir: site.value.dir,
+      },
+    }))
+
     const Layout = resolveComponent('Layout')
     return () => h(Layout)
   },

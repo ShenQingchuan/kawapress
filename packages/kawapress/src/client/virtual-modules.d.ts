@@ -5,6 +5,7 @@ declare module 'virtual:kawapress-pages' {
     default: import('vue').Component
     __pageData?: import('../site').PageData
   }>>
+  export const pageData: Record<string, import('../site').PageData>
 }
 
 declare module 'virtual:kawapress-site' {

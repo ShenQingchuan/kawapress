@@ -1,0 +1,240 @@
+.nagi {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nagi-content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.nagi-page-scroll {
+  flex: 1;
+}
+
+.nagi-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.nagi-main__scroll {
+  flex: 1;
+}
+
+.nagi-sidebar__scroll,
+.nagi-outline-aside__scroll {
+  height: 100%;
+}
+
+.nagi-main__content {
+  width: 100%;
+  max-width: var(--nagi-content-width);
+  margin: 0 auto;
+  padding: 2rem 1.5rem 6rem;
+}
+
+.nagi-main--home .nagi-main__content {
+  max-width: var(--nagi-layout-width);
+}
+
+.nagi-main--page .nagi-main__content {
+  max-width: none;
+}
+
+.nagi-nav {
+  z-index: var(--nagi-z-nav);
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--nagi-nav-height);
+  padding: 0 1.5rem;
+  background: var(--nagi-c-bg);
+  border-bottom: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-nav__title {
+  color: var(--nagi-c-text-1);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nagi-language-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.nagi-language-menu__button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.25rem;
+  padding: 0 0.625rem;
+  color: var(--nagi-c-text-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition:
+    color 0.25s,
+    background-color 0.25s;
+}
+
+.nagi-language-menu__button:hover,
+.nagi-language-menu__button[aria-expanded='true'] {
+  color: var(--nagi-c-text-1);
+  background: var(--nagi-c-bg-soft);
+}
+
+.nagi-language-menu__button svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
+}
+
+.nagi-language-menu__chevron {
+  transition: transform 0.25s;
+}
+
+.nagi-language-menu__button[aria-expanded='true'] .nagi-language-menu__chevron {
+  transform: rotate(180deg);
+}
+
+.nagi-language-menu__items {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 10rem;
+  margin: 0;
+  padding: 0.5rem;
+  list-style: none;
+  background: var(--nagi-c-bg-elv);
+  border: 1px solid var(--nagi-c-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--nagi-shadow-3);
+  transform-origin: top right;
+}
+
+.nagi-language-menu__link {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  color: var(--nagi-c-text-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  transition:
+    color 0.25s,
+    background-color 0.25s;
+}
+
+.nagi-language-menu__link:hover {
+  color: var(--nagi-c-brand-1);
+  background: var(--nagi-c-bg-soft);
+}
+
+.nagi-sidebar {
+  min-height: 0;
+  background: var(--nagi-c-bg-alt);
+  outline: none;
+}
+
+.nagi-sidebar--desktop {
+  flex: 0 0 var(--nagi-sidebar-width);
+  width: var(--nagi-sidebar-width);
+  border-right: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-sidebar__nav {
+  padding: 2rem 2rem 6rem;
+}
+
+.nagi-sidebar__items,
+.nagi-sidebar-item,
+.nagi-sidebar-item__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nagi-sidebar-item--group {
+  padding-bottom: 1.5rem;
+}
+
+.nagi-sidebar-item + .nagi-sidebar-item {
+  margin-top: 0.25rem;
+}
+
+.nagi-sidebar-item__link,
+.nagi-sidebar-item__text {
+  display: block;
+  padding: 0.25rem 0;
+  color: var(--nagi-c-text-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.7142857;
+  text-decoration: none;
+  transition: color 0.25s;
+}
+
+.nagi-sidebar-item__link:hover,
+.nagi-sidebar-item__link.is-active {
+  color: var(--nagi-c-brand-1);
+}
+
+.nagi-sidebar-item__link.is-active {
+  font-weight: 600;
+}
+
+.nagi-sidebar-item--group > .nagi-sidebar-item__link,
+.nagi-sidebar-item--group > .nagi-sidebar-item__text {
+  color: var(--nagi-c-text-1);
+  font-weight: 700;
+}
+
+.nagi-sidebar-item__items {
+  padding-left: 1rem;
+  border-left: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-footer {
+  flex: none;
+  padding: 1.5rem;
+  border-top: 1px solid var(--nagi-c-divider);
+  color: var(--nagi-c-text-2);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.nagi-notfound {
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+.nagi-os-scroll {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+
+@media (min-width: 48rem) {
+  .nagi-main__content {
+    padding: 3rem 2rem 8rem;
+  }
+
+  .nagi-nav {
+    padding: 0 2rem;
+  }
+}

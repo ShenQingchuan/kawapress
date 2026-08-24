@@ -41,6 +41,7 @@
     "consola": "catalog:node",
     "jiti": "catalog:node",
     "markdown-exit": "catalog:markdown",
+    "markdown-it-anchor": "catalog:markdown",
     "sirv": "catalog:node",
     "vite": "catalog:node",
     "vue": "catalog:frontend",

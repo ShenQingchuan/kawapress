@@ -8,6 +8,11 @@ interface RegisteredPluginHandler<T> {
   handler: PluginHandler<T>
 }
 
+interface PluginHandlerRegistryOptions<T> {
+  beforeEachHandle?: PluginHandler<T>
+  afterEachHandle?: PluginHandler<T>
+}
+
 export interface PluginHandlerRegistry<T> {
   add: (pluginName: string, handler: PluginHandler<T>) => void
   run: (value: T) => Promise<void>
@@ -16,6 +21,7 @@ export interface PluginHandlerRegistry<T> {
 export function createPluginHandlerRegistry<T>(
   surface: PluginSurface,
   capability: string,
+  options: PluginHandlerRegistryOptions<T> = {},
 ): PluginHandlerRegistry<T> {
   const handlers: RegisteredPluginHandler<T>[] = []
 
@@ -29,7 +35,11 @@ export function createPluginHandlerRegistry<T>(
           surface,
           pluginName,
           capability,
-          () => handler(value),
+          async () => {
+            await options.beforeEachHandle?.(value)
+            await handler(value)
+            await options.afterEachHandle?.(value)
+          },
         )
       }
     },
@@ -54,8 +64,9 @@ async function runPluginHook(
     await hook()
   }
   catch (cause) {
+    const detail = cause instanceof Error ? `\n${cause.message}` : ''
     throw new Error(
-      `[${pluginName} / ${surface} / ${capability}] Plugin execution failed.`,
+      `[${pluginName} / ${surface} / ${capability}] Plugin execution failed. ${detail}`,
       { cause },
     )
   }

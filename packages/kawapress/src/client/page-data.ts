@@ -13,7 +13,10 @@ export function wrapPageLoader(path: string, loader: () => Promise<PageModule>) 
   return async (): Promise<Component> => {
     const mod = await loader()
     if (mod.__pageData) {
-      cache.set(path, mod.__pageData)
+      cache.set(path, {
+        ...mod.__pageData,
+        path,
+      })
     }
     return mod.default
   }

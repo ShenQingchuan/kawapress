@@ -30,7 +30,8 @@ describe('compileMarkdownToVue', () => {
       '/index',
     )
     expect(pageData.title).toBe('Hello World')
-    expect(code).toContain('<h1')
+    expect(code).toContain('<h1 id="hello-world"')
+    expect(code).toContain('class="header-anchor" href="#hello-world"')
     expect(pageData.headers[0]).toMatchObject({
       level: 1,
       slug: 'hello-world',
@@ -62,14 +63,12 @@ describe('compileMarkdownToVue', () => {
     expect(code).toContain('<script lang="ts">')
   })
 
-  it('injects __pageData that round-trips through double JSON encoding', async () => {
+  it('injects __pageData through a safe JSON.parse expression', async () => {
     const { code, pageData } = await compileMarkdownToVue(md, '# Hi\n', '/hi')
     const match = code.match(/__pageData = JSON\.parse\(("(?:[^"\\]|\\.)*")\)/)
     expect(match).toBeTruthy()
 
-    // mirrors the double encoding in the emitted code: source literal -> JSON string -> object
-    const jsonString = JSON.parse(match![1])
-    const decoded = JSON.parse(jsonString)
+    const decoded = JSON.parse(JSON.parse(match![1]))
     expect(decoded).toEqual(pageData)
   })
 })

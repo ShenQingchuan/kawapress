@@ -3,6 +3,8 @@ import Footer from './components/Footer.vue'
 import Layout from './components/Layout.vue'
 import NavBar from './components/NavBar.vue'
 import NotFound from './components/NotFound.vue'
+import Sidebar from './components/Sidebar.vue'
+import 'overlayscrollbars/styles/overlayscrollbars.css'
 import './theme.css'
 
 export default defineRuntimePlugin({
@@ -13,6 +15,7 @@ export default defineRuntimePlugin({
       app.component('Footer', Footer)
       app.component('NavBar', NavBar)
       app.component('NotFound', NotFound)
+      app.component('Sidebar', Sidebar)
     })
   },
 })

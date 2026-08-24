@@ -1,0 +1,169 @@
+/* Adapted from the VitePress default theme (MIT). */
+
+.nagi,
+.nagi *,
+.nagi ::before,
+.nagi ::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+}
+
+html {
+  color: var(--nagi-c-text-1);
+  background: var(--nagi-c-bg);
+  line-height: 1.5;
+  tab-size: 4;
+  font-family: var(--nagi-font-family-base);
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  color: var(--nagi-c-text-1);
+  font-family: var(--nagi-font-family-base);
+  background: var(--nagi-c-bg);
+  text-rendering: optimizelegibility;
+  text-autospace: normal;
+  text-spacing-trim: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.nagi :where(h1, h2, h3, h4, h5, h6) {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.nagi :where(h1, h2, h3, h4, h5, h6, li, p) {
+  overflow-wrap: break-word;
+}
+
+.nagi :where(ol, ul, menu) {
+  list-style: none;
+}
+
+.nagi :where(a) {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+.nagi :where(b, strong) {
+  font-weight: 600;
+}
+
+.nagi :where(code, kbd, samp, pre) {
+  font-family: var(--nagi-font-family-mono);
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  font-size: 1em;
+  text-autospace: no-autospace;
+}
+
+.nagi :where(img, svg, video, canvas, audio, iframe, embed, object) {
+  display: block;
+}
+
+.nagi :where(img, video) {
+  max-width: 100%;
+  height: auto;
+}
+
+.nagi :where(table) {
+  border-collapse: collapse;
+  border-color: inherit;
+  text-indent: 0;
+}
+
+.nagi :where(button, input, select, optgroup, textarea) {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  background: transparent;
+}
+
+.nagi :where(button:enabled, [role="button"]:enabled) {
+  cursor: pointer;
+}
+
+.nagi :where(button, input, textarea, select):focus {
+  outline: none;
+}
+
+.nagi :where(button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--nagi-c-brand-1);
+  outline-offset: 2px;
+}
+
+.nagi [hidden]:not([hidden="until-found"]) {
+  display: none !important;
+}
+
+[lang]:where(:lang(zh), :lang(ja), :lang(ko))
+  :where(.nagi h1, .nagi h2, .nagi h3, .nagi h4, .nagi h5, .nagi h6, .nagi li, .nagi p) {
+  line-break: strict;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nagi-scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--nagi-scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nagi-scrollbar-thumb-hover);
+}
+
+.os-theme-nagi {
+  --os-size: 6px;
+  --os-padding-perpendicular: 0;
+  --os-padding-axis: 0;
+  --os-track-border-radius: 9999px;
+  --os-track-bg: transparent;
+  --os-track-bg-hover: transparent;
+  --os-track-bg-active: transparent;
+  --os-track-border: none;
+  --os-track-border-hover: none;
+  --os-track-border-active: none;
+  --os-handle-border-radius: 9999px;
+  --os-handle-bg: var(--nagi-scrollbar-thumb);
+  --os-handle-bg-hover: var(--nagi-scrollbar-thumb-hover);
+  --os-handle-bg-active: var(--nagi-scrollbar-thumb-active);
+  --os-handle-border: none;
+  --os-handle-border-hover: none;
+  --os-handle-border-active: none;
+  --os-handle-min-size: 32px;
+  --os-handle-max-size: 100%;
+  --os-handle-perpendicular-size: 100%;
+  --os-handle-interactive-area-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0s !important;
+  }
+}

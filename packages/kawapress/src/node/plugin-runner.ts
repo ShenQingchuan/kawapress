@@ -9,6 +9,7 @@ import {
   createPluginHandlerRegistry,
   runPluginSetup,
 } from '../plugin-execution'
+import { assertPageDataSerializable } from '../site'
 
 export interface GeneratorPluginRunner {
   runConfig: (config: SiteConfig) => Promise<void>
@@ -22,7 +23,9 @@ export async function createGeneratorPluginRunner(
 ): Promise<GeneratorPluginRunner> {
   const configHandlers = createPluginHandlerRegistry<SiteConfig>('generator', 'config')
   const markdownHandlers = createPluginHandlerRegistry<MarkdownExit>('generator', 'markdown')
-  const pageDataHandlers = createPluginHandlerRegistry<PageData>('generator', 'pageData')
+  const pageDataHandlers = createPluginHandlerRegistry<PageData>('generator', 'pageData', {
+    afterEachHandle: assertPageDataSerializable,
+  })
   const viteHandlers = createPluginHandlerRegistry<UserConfig>('generator', 'vite')
 
   for (const plugin of plugins) {

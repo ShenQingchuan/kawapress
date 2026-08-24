@@ -1,0 +1,149 @@
+:root {
+  color-scheme: light dark;
+
+  --nagi-c-bg: light-dark(
+    oklch(0.99 0.003 286),
+    oklch(0.22 0.008 286)
+  );
+  --nagi-c-bg-alt: light-dark(
+    oklch(0.965 0.005 286),
+    oklch(0.19 0.007 286)
+  );
+  --nagi-c-bg-elv: light-dark(
+    oklch(0.995 0.002 286),
+    oklch(0.26 0.01 286)
+  );
+  --nagi-c-bg-soft: light-dark(
+    oklch(0.965 0.005 286),
+    oklch(0.26 0.01 286)
+  );
+  --nagi-c-border: light-dark(
+    oklch(0.8 0.008 286),
+    oklch(0.36 0.012 286)
+  );
+  --nagi-c-divider: light-dark(
+    oklch(0.9 0.006 286),
+    oklch(0.29 0.01 286)
+  );
+  --nagi-c-text-1: light-dark(
+    oklch(0.32 0.012 286),
+    oklch(0.9 0.01 286)
+  );
+  --nagi-c-text-2: light-dark(
+    oklch(0.5 0.012 286),
+    oklch(0.68 0.012 286)
+  );
+  --nagi-c-text-3: light-dark(
+    oklch(0.64 0.01 286),
+    oklch(0.52 0.012 286)
+  );
+  --nagi-c-brand-1: light-dark(
+    oklch(0.48 0.18 275),
+    oklch(0.78 0.13 275)
+  );
+  --nagi-c-brand-2: light-dark(
+    oklch(0.42 0.17 275),
+    oklch(0.84 0.1 275)
+  );
+  --nagi-c-danger-1: light-dark(
+    oklch(0.55 0.2 25),
+    oklch(0.72 0.16 20)
+  );
+  --nagi-c-warning-1: light-dark(
+    oklch(0.55 0.13 75),
+    oklch(0.78 0.13 80)
+  );
+
+  --nagi-font-family-base:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  --nagi-font-family-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+
+  --nagi-nav-height: 4rem;
+  --nagi-doc-toolbar-height: 3rem;
+  --nagi-layout-width: 90rem;
+  --nagi-content-width: 43rem;
+  --nagi-sidebar-width: 17rem;
+  --nagi-outline-width: 16rem;
+  --nagi-z-toolbar: 20;
+  --nagi-z-nav: 30;
+  --nagi-z-backdrop: 50;
+  --nagi-z-sidebar: 60;
+  --nagi-shadow-3: 0 12px 32px light-dark(
+    oklch(0.1 0.01 286 / 10%),
+    oklch(0.05 0.01 286 / 45%)
+  );
+
+  --nagi-code-block-padding: 1.25rem 1.5rem;
+  --nagi-code-block-radius: 0.5rem;
+  --nagi-code-font-size: 0.875em;
+  --nagi-code-line-height: 1.5;
+  --nagi-code-color: var(--nagi-c-brand-1);
+  --nagi-code-bg: color-mix(
+    in oklab,
+    var(--nagi-c-text-3) 14%,
+    transparent
+  );
+
+  --nagi-scrollbar-thumb: color-mix(
+    in oklab,
+    var(--nagi-c-text-3) 35%,
+    transparent
+  );
+  --nagi-scrollbar-thumb-hover: color-mix(
+    in oklab,
+    var(--nagi-c-text-2) 50%,
+    transparent
+  );
+  --nagi-scrollbar-thumb-active: color-mix(
+    in oklab,
+    var(--nagi-c-text-2) 65%,
+    transparent
+  );
+
+  --twoslash-border-color: var(--nagi-c-border);
+  --twoslash-underline-color: var(--nagi-c-brand-1);
+  --twoslash-popup-bg: var(--nagi-c-bg-elv);
+  --twoslash-popup-color: var(--nagi-c-text-1);
+  --twoslash-popup-shadow: 0 8px 30px light-dark(
+    oklch(0.2 0.01 286 / 12%),
+    oklch(0.05 0.01 286 / 45%)
+  );
+  --twoslash-popup-radius: 8px;
+  --twoslash-docs-color: var(--nagi-c-text-2);
+  --twoslash-docs-font: var(--nagi-font-family-base);
+  --twoslash-code-font: var(--nagi-font-family-mono);
+  --twoslash-code-font-size: 0.875em;
+  --twoslash-popup-code-line-height: 1.2;
+  --twoslash-popup-code-padding: 8px 12px;
+  --twoslash-popup-docs-padding: 12px;
+  --twoslash-popup-docs-font-size: 0.9em;
+  --twoslash-popup-docs-line-height: 1.6;
+  --twoslash-popup-inline-code-bg: var(--nagi-c-bg-soft);
+  --twoslash-popup-inline-code-radius: 4px;
+  --twoslash-cursor-color: var(--nagi-c-brand-1);
+  --twoslash-matched-color: var(--nagi-c-brand-1);
+  --twoslash-unmatched-color: var(--nagi-c-text-2);
+  --twoslash-error-color: var(--nagi-c-danger-1);
+  --twoslash-error-bg: color-mix(
+    in oklab,
+    var(--nagi-c-danger-1) 14%,
+    transparent
+  );
+  --twoslash-warn-color: var(--nagi-c-warning-1);
+  --twoslash-warn-bg: color-mix(
+    in oklab,
+    var(--nagi-c-warning-1) 14%,
+    transparent
+  );
+}
+
+:root.light {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}

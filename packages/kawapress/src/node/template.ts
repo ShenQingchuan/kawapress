@@ -3,6 +3,7 @@ export interface HtmlTemplateOptions {
   appHtml: string
   clientEntryUrl: string
   cssUrls?: string[]
+  htmlAttrs?: string
 }
 
 export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
@@ -10,8 +11,11 @@ export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
     .map(href => `<link rel="stylesheet" href="${href}">`)
     .join('\n')
 
+  const serializedHtmlAttrs = options.htmlAttrs?.trim()
+  const htmlAttrs = serializedHtmlAttrs ? ` ${serializedHtmlAttrs}` : ''
+
   return `<!DOCTYPE html>
-<html>
+<html${htmlAttrs}>
   <head>
     ${options.head}
     ${cssLinks}

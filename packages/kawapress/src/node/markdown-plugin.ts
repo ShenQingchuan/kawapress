@@ -1,10 +1,8 @@
 import type { Plugin } from 'vite'
-import type { GeneratorPluginRunner } from './plugin-runner'
-import { assembleVueSfc, createMarkdownCompiler, parseMarkdown } from './markdown'
+import type { MarkdownPageLoader } from './markdown-page-loader'
+import { assembleVueSfc } from './markdown'
 
-export function markdownPlugin(pluginRunner: GeneratorPluginRunner): Plugin {
-  const mdPromise = createMarkdownCompiler({ pluginRunner })
-
+export function markdownPlugin(pageLoader: MarkdownPageLoader): Plugin {
   return {
     name: 'kawapress:markdown',
     enforce: 'pre',
@@ -13,13 +11,8 @@ export function markdownPlugin(pluginRunner: GeneratorPluginRunner): Plugin {
       if (query || !file.endsWith('.md')) {
         return null
       }
-      const md = await mdPromise
-      const { html, env, pageData } = parseMarkdown(
-        md,
-        code,
-        file.replace(/\.md$/, ''),
-      )
-      await pluginRunner.runPageData(pageData)
+
+      const { html, env, pageData } = await pageLoader.load(code, file)
       return assembleVueSfc(html, env, pageData)
     },
   }

@@ -4,6 +4,7 @@ import { findPackageJSON } from 'node:module'
 import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
+import { parseJson } from '../json'
 
 const RUNTIME_PLUGINS_MODULE_ID = 'virtual:kawapress-runtime-plugins'
 const RESOLVED_ID = `\0${RUNTIME_PLUGINS_MODULE_ID}`
@@ -91,9 +92,10 @@ async function resolvePluginPackages(
         continue
       }
 
-      const packageJson = JSON.parse(
+      const packageJson = parseJson<{ exports?: unknown }>(
         await readFile(packagePath, 'utf8'),
-      ) as { exports?: unknown }
+        { label: `plugin package metadata at ${JSON.stringify(packagePath)}` },
+      )
       packages.set(pluginName, {
         packagePath,
         exports: packageJson.exports,

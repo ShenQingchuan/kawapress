@@ -1,22 +1,27 @@
+import type { PresetConfig } from 'kawapress'
+import type { NagiThemeConfig, ResolvedNagiThemeConfig } from './theme-config'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
-import { definePlugin, definePreset } from 'kawapress'
+import { definePreset } from 'kawapress'
+import { createNagiPlugin } from './nagi-plugin'
 
-const nagiPlugin = definePlugin({
-  name: '@kawapress/preset-nagi',
-  setup() {},
-})
+export type NagiConfig = PresetConfig<ResolvedNagiThemeConfig>
+export type { NagiThemeConfig } from './theme-config'
 
-export const nagi = definePreset({
-  plugins: [
-    shikiPlugin({
-      twoslash: true,
-      themes: {
-        light: 'github-light',
-        dark: 'github-dark',
-      },
-    }),
-    nagiPlugin,
-  ],
-})
+export function nagi(userConfig: NagiConfig = {}): NagiConfig {
+  const createConfig = definePreset<NagiThemeConfig>({
+    plugins: [
+      shikiPlugin({
+        twoslash: true,
+        themes: {
+          light: 'github-light',
+          dark: 'github-dark',
+        },
+      }),
+      createNagiPlugin(),
+    ],
+  })
+
+  return createConfig(userConfig)
+}
 
 export default nagi
