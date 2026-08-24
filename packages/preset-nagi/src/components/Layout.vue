@@ -21,11 +21,6 @@ useHead({
 </template>
 
 <style>
-body {
-  margin: 0;
-  font-family: var(--nagi-font-family-base);
-}
-
 .nagi {
   min-height: 100vh;
   display: flex;
@@ -33,6 +28,7 @@ body {
 }
 
 .nagi-main {
+  box-sizing: border-box;
   flex: 1;
   width: 100%;
   max-width: 720px;
@@ -40,7 +36,19 @@ body {
   padding: 2rem 1.5rem;
 }
 
+.nagi-main pre.shiki {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 1rem 0;
+  padding: var(--nagi-code-block-padding);
+  overflow-x: auto;
+  border-radius: var(--nagi-code-block-radius);
+}
+
 .nagi-main pre.shiki > code {
+  display: block;
+  min-width: 100%;
+  font-size: var(--nagi-code-font-size);
   line-height: var(--nagi-code-line-height);
 }
 </style>

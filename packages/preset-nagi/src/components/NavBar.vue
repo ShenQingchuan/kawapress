@@ -13,7 +13,8 @@ const site = useSite()
 <style scoped>
 .nagi-nav {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e5e5;
+  background: var(--nagi-c-bg);
+  border-bottom: 1px solid var(--nagi-c-divider);
 }
 
 .nagi-nav__title {

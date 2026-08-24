@@ -8,7 +8,13 @@ const nagiPlugin = definePlugin({
 
 export const nagi = definePreset({
   plugins: [
-    shikiPlugin({ twoslash: true }),
+    shikiPlugin({
+      twoslash: true,
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark',
+      },
+    }),
     nagiPlugin,
   ],
 })

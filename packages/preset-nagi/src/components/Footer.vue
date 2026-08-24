@@ -7,8 +7,8 @@
 <style scoped>
 .nagi-footer {
   padding: 1.5rem;
-  border-top: 1px solid #e5e5e5;
-  color: #888;
+  border-top: 1px solid var(--nagi-c-divider);
+  color: var(--nagi-c-text-2);
   font-size: 0.875rem;
   text-align: center;
 }

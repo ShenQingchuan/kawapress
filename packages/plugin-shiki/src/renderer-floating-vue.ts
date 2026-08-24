@@ -17,6 +17,7 @@ type RenderMarkdownInline = NonNullable<RendererRichOptions['renderMarkdownInlin
 
 const JSDOC_LINK_RE = /\{@link ([^}]*)\}/g
 const PARAM_NAME_RE = /^([\w$-]+)/
+const TWOSLASH_MENU_TAG = 'kawa-twoslash-menu'
 
 const composePopup: PopupCompose = ({ popup, token }) => [
   {
@@ -30,7 +31,7 @@ const composePopup: PopupCompose = ({ popup, token }) => [
 
 const composeCompletion: CompletionCompose = ({ popup, cursor }) => [{
   type: 'element',
-  tagName: 'v-menu',
+  tagName: TWOSLASH_MENU_TAG,
   properties: {
     'popper-class': 'shiki twoslash-floating twoslash-completion',
     'theme': 'twoslash-completion',
@@ -114,12 +115,12 @@ export function rendererFloatingVue(
     renderMarkdownInline,
     hast: {
       hoverToken: {
-        tagName: 'v-menu',
+        tagName: TWOSLASH_MENU_TAG,
         properties: menuProperties,
       },
       hoverCompose: composePopup,
       queryToken: {
-        tagName: 'v-menu',
+        tagName: TWOSLASH_MENU_TAG,
         properties: {
           ...menuProperties,
           ':shown': 'true',
@@ -134,7 +135,7 @@ export function rendererFloatingVue(
       popupError: { class: 'twoslash-popup-error' },
       errorToken: options.errorRendering === 'hover'
         ? {
-            tagName: 'v-menu',
+            tagName: TWOSLASH_MENU_TAG,
             properties: {
               ...menuProperties,
               class: 'twoslash-error twoslash-error-hover',

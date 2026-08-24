@@ -1,5 +1,6 @@
 import FloatingVue from 'floating-vue'
 import { defineRuntimePlugin } from 'kawapress'
+import { TwoslashMenu } from './twoslash-menu'
 import '@shikijs/twoslash/style-rich.css'
 import 'floating-vue/dist/style.css'
 import './twoslash.css'
@@ -34,6 +35,7 @@ export default defineRuntimePlugin({
           },
         },
       })
+      app.component('KawaTwoslashMenu', TwoslashMenu)
     })
   },
 })

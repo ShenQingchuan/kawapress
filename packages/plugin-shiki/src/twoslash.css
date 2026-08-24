@@ -9,6 +9,14 @@
   border-color: var(--twoslash-underline-color);
 }
 
+.twoslash .twoslash-error-line {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .v-popper--theme-twoslash {
   z-index: 19;
 }

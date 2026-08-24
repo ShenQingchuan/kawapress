@@ -14,12 +14,21 @@ export type TwoslashOptions = Omit<
   'renderer' | 'twoslasher'
 >
 
-export interface ShikiPluginOptions {
-  theme?: string
+interface ShikiPluginBaseOptions {
   langs?: string[]
   transformers?: ShikiTransformer[]
   twoslash?: boolean | TwoslashOptions
 }
+
+export interface ShikiThemePair extends Record<string, string> {
+  light: string
+  dark: string
+}
+
+export type ShikiPluginOptions = ShikiPluginBaseOptions & (
+  | { theme?: string, themes?: never }
+  | { theme?: never, themes: ShikiThemePair }
+)
 
 const V_PRE_TRANSFORMER_NAME = 'kawapress:v-pre'
 const RUNTIME_DEPENDENCIES = ['floating-vue']
@@ -42,6 +51,7 @@ const PRELOADED_LANGS = [
 
 export function shikiPlugin(options: ShikiPluginOptions = {}): KawaPressPlugin {
   const theme = options.theme ?? 'github-light'
+  const themes = options.themes
   const transformers = createTransformers(options)
 
   return definePlugin({
@@ -49,11 +59,14 @@ export function shikiPlugin(options: ShikiPluginOptions = {}): KawaPressPlugin {
     setup(api) {
       api.markdown(async (markdown) => {
         const highlighter = await createHighlighter({
-          themes: [theme],
+          themes: themes ? Object.values(themes) : [theme],
           langs: options.langs ?? PRELOADED_LANGS,
         })
         markdown.options.highlight = (str, lang, attrs) =>
-          highlightCode(highlighter, str, lang, attrs, theme, transformers)
+          highlightCode(highlighter, str, lang, attrs, {
+            theme,
+            themes,
+          }, transformers)
       })
       api.vite((config) => {
         const noExternal = config.ssr?.noExternal
@@ -143,15 +156,28 @@ function highlightCode(
   str: string,
   lang: string,
   attrs: string,
-  theme: string,
+  themeOptions: {
+    theme: string
+    themes?: ShikiThemePair
+  },
   transformers: ShikiTransformer[],
 ): string {
   const langName = (lang || 'txt').toLowerCase()
   const loaded = highlighter.getLoadedLanguages().includes(langName)
-  return highlighter.codeToHtml(str.trimEnd(), {
+  const commonOptions = {
     lang: loaded ? langName : 'txt',
-    theme,
     transformers,
     meta: { __raw: attrs },
-  })
+  }
+
+  return themeOptions.themes
+    ? highlighter.codeToHtml(str.trimEnd(), {
+        ...commonOptions,
+        themes: themeOptions.themes,
+        defaultColor: 'light-dark()',
+      })
+    : highlighter.codeToHtml(str.trimEnd(), {
+        ...commonOptions,
+        theme: themeOptions.theme,
+      })
 }
