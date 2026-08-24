@@ -1,8 +1,8 @@
 {
-  "name": "@kawapress/preset-nagi",
+  "name": "@kawapress/plugin-code-group",
   "type": "module",
   "version": "0.0.0",
-  "description": "Default preset for KawaPress",
+  "description": "Accessible code group tabs for KawaPress",
   "license": "MIT",
   "exports": {
     ".": {
@@ -25,15 +25,10 @@
     "vue": "catalog:frontend"
   },
   "dependencies": {
-    "@kawapress/plugin-code-group": "workspace:*",
-    "@kawapress/plugin-shiki": "workspace:*",
-    "overlayscrollbars": "catalog:frontend",
-    "overlayscrollbars-vue": "catalog:frontend"
+    "@mdit/plugin-container": "catalog:markdown"
   },
   "devDependencies": {
-    "kawapress": "workspace:*",
-    "typescript": "catalog:dev",
-    "vite": "catalog:node",
+    "markdown-exit": "catalog:markdown",
     "vue": "catalog:frontend"
   }
 }

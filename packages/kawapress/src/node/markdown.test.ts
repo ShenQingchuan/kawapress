@@ -49,6 +49,15 @@ describe('compileMarkdownToVue', () => {
     expect(code).toContain('href="/kawapress/guide"')
   })
 
+  it('gives empty pages a stable hydration root', async () => {
+    const { code } = await compileMarkdownToVue(
+      md,
+      '---\nlayout: home\n---\n',
+      '/',
+    )
+    expect(code).toContain('<span data-kawapress-empty-page hidden></span>')
+  })
+
   it('keeps script setup blocks out of the template', async () => {
     const { code } = await compileMarkdownToVue(
       md,

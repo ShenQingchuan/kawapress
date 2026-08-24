@@ -73,6 +73,28 @@ body {
   height: auto;
 }
 
+.nagi-themeable-image--dark {
+  display: none;
+}
+
+:root.dark .nagi-themeable-image--light {
+  display: none;
+}
+
+:root.dark .nagi-themeable-image--dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .nagi-themeable-image--light {
+    display: none;
+  }
+
+  :root:not(.light) .nagi-themeable-image--dark {
+    display: block;
+  }
+}
+
 .nagi :where(table) {
   border-collapse: collapse;
   border-color: inherit;

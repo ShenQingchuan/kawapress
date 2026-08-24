@@ -8,16 +8,26 @@ describe('nagi theme translations', () => {
       outlineLabel: '本页目录',
       returnToTopLabel: '返回顶部',
       langMenuLabel: '切换语言',
+      appearanceLabel: '切换明暗模式',
+      previousPageLabel: '上一篇',
+      nextPageLabel: '下一篇',
     })
   })
 
   it('falls back to English and keeps user overrides', () => {
-    expect(resolveNagiThemeConfig({ outlineLabel: 'Page contents' }, 'fr'))
+    expect(resolveNagiThemeConfig({
+      outlineLabel: 'Page contents',
+      githubUrl: 'https://github.com/example/docs',
+    }, 'fr'))
       .toEqual({
         sidebarMenuLabel: 'Menu',
         outlineLabel: 'Page contents',
         returnToTopLabel: 'Return to top',
         langMenuLabel: 'Change language',
+        appearanceLabel: 'Toggle light and dark mode',
+        previousPageLabel: 'Previous page',
+        nextPageLabel: 'Next page',
+        githubUrl: 'https://github.com/example/docs',
       })
   })
 })

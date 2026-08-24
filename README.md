@@ -1,4 +1,11 @@
-# KawaPress
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/public/kawapress-logo-dark.png">
+    <img src="./docs/public/kawapress-logo.png" alt="KawaPress" width="180">
+  </picture>
+</p>
+
+<h1 align="center">KawaPress</h1>
 
 KawaPress is a Vue-centric static site generator for content-focused websites. It compiles Markdown into a Vue application with SSR, hydration, file-based routing, and extensible generator and runtime plugins.
 

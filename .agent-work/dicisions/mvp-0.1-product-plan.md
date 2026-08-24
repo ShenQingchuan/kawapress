@@ -21,6 +21,7 @@ KawaPress 期望成为一个更好的 VitePress，是由 Vue 社区成员自主�
 - 核心 npm 包：`kawapress`
 - 官方包：`@kawapress/*`
 - CLI：`kawapress`
+- 只写 Markdown 并使用默认 nagi 的文档站只安装 `kawapress`。该包把官方 nagi Preset 作为正式依赖，并通过 `kawapress/nagi` 重新导出它的工厂、helper 与类型；默认界面运行所需的 Vue、nagi、Shiki、Code Group 等依赖由框架自己的依赖图携带，用户不重复声明。KawaPress 的 Vite 配置为编译器生成的 `import "vue"` 提供精确的 `^vue$` alias：优先解析站点直接安装的 Vue，未安装时回退 KawaPress 自己携带的 Vue runtime，并保持 `dedupe`。这个内部构建解析不等于用户拥有 Vue 直接依赖；用户需要在 Markdown、配置扩展或自定义主题中直接 `import` Vue API、编写 Vue 组件时，必须把 `vue` 显式安装为站点自己的依赖，以获得正确的包边界、编辑器类型与版本声明。独立 `@kawapress/*` 包继续存在，供高级用户单独组合或第三方 Preset 复用。
 
 ## 二、渲染架构
 
@@ -259,7 +260,7 @@ MVP 只公开两个 Runtime 注册方法：
 
 - 默认 Plugin 在 dev 启动或 build 开始时注册生成侧 handlers。
 - Runtime Plugin 由 Vite 加载，不由生成侧加载或执行。
-- `kawapress.config.ts` 变化时，KawaPress 自动重新加载配置并重建 Vite server，外层 HTTP server 与端口保持不变。
+- `kawapress.config.ts` 或它从站点根目录内导入的本地配置辅助模块变化时，KawaPress 自动重新加载完整配置依赖图并重建 Vite server，外层 HTTP server 与端口保持不变。配置加载必须返回本地依赖路径，不能只监听入口文件。监听使用文件系统事件而不是轮询；重建前比较文件内容，相同内容产生的重复事件必须直接忽略。
 - 默认 Plugin 自身源码变化在 0.1 中仍要求重新执行 `kawapress dev`。
 - `.vue`、Markdown、CSS 与 Runtime graph 内依赖继续使用 Vite HMR；必要时允许 full reload。
 - 插件错误必须带逻辑插件身份、执行面和具体能力名，例如 `my-plugin / markdown` 或 `my-plugin / runtime / vueApp`。
@@ -269,10 +270,10 @@ MVP 只公开两个 Runtime 注册方法：
 
 Preset 不是第三种插件，也没有独立生命周期。Preset 使用 `definePreset()` 定义；它接收默认配置并返回一个可调用的 Config 工厂。
 
-配置对象不存在 `presets` 字段。更换 Preset，就是更换最外层配置工厂：
+配置对象不存在 `presets` 字段。更换 Preset，就是更换最外层配置工厂。使用官方默认体验时从 `kawapress/nagi` 导入，无需额外安装 Preset 包：
 
 ```ts
-import { nagi } from '@kawapress/preset-nagi'
+import { nagi } from 'kawapress/nagi'
 
 export default nagi({
   title: 'My Docs',
@@ -388,6 +389,12 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 - 普通代码块使用 KawaPress 自有的 `v-pre` Shiki transformer 保护 Vue 插值；活跃 Twoslash 代码块由 KawaPress transformer 移除 `v-pre` 并完成花括号转义，不再使用高亮后恢复 `{{ }}` 的方案。
 - Twoslash 的浮层 UI 使用 Floating Vue；本阶段不自制 Tooltip/Popover 组件，也不开放 Floating Vue 运行侧配置。KawaPress 只提供一层透明的 `KawaTwoslashMenu` 适配组件，用 Vue `useId()` 向 Floating Vue 传入 SSR/client 稳定一致的 `ariaId`，避免其随机 ID 造成 hydration mismatch。
 
+### 7.2 Code Group
+
+通用代码 Tab 能力由独立逻辑插件包 `@kawapress/plugin-code-group` 提供，不写死在 Core 或 nagi 组件中。默认入口在 Markdown 管线解析 VitePress 风格的 `::: code-group` 容器与代码围栏后的 `[标签]`，生成结构稳定的 `KawaCodeGroup` 组件槽位；`./runtime-plugin` 注册真实 Vue 组件，负责 Tab 选择、方向键、Home、End、ARIA 关系与 SSR/client 稳定 ID。容器只接受 fenced code block，其他正文直接给出可执行的编译错误。
+
+插件只负责结构、状态和 `.kawa-code-group*` 稳定 class；nagi 负责其视觉样式。nagi Preset 默认组合该插件，官方《快速开始》使用它展示 npm、pnpm 与 Yarn 命令，不能把三个高频包管理器命令堆成连续普通代码块。
+
 ## 八、配置与数据
 
 核心配置至少包含：
@@ -431,19 +438,21 @@ interface PageData {
 declare function usePageData(): ComputedRef<PageData | undefined>
 ```
 
-核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据生成自动侧边栏；本地全文搜索使用独立、按需加载的搜索索引，不复用全量 pageData。
+核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据生成自动侧边栏，并读取各内容目录旁的 `_meta.json` 管理目录与页面的显示顺序和本地化名称，不使用 frontmatter `order`。`_meta.json` 使用按展示顺序排列的数组，字符串条目只声明文件或目录名，对象条目可以通过 `type`、`name` 与 `label` 区分文件、目录并覆盖显示名称；未列出的现有页面或目录继续按路径顺序追加。每个 locale 可以拥有自己目录下的 `_meta.json`，因此 Sidebar 结构与标签自然随路径语言切换。nagi 的 Generator Plugin 通过 JSON 虚拟模块把这些结构化内容元数据交给运行侧；该模块只传标准 JSON，不承载主题配置或生成侧对象。
+
+nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。本地全文搜索使用独立、按需加载的搜索索引，不复用全量 pageData。
 
 pageData 必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含页面路由、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
 
-nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。只有 `doc` 页面显示并进入自动侧边栏。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。
+nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。只有 `doc` 页面显示并进入自动侧边栏。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
 
-nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文滚动容器占满剩余高度，页面外壳和 `body` 不滚动，长正文只在右侧内容区域滚动；Sidebar 菜单过长时在自己的区域内滚动。`doc` 不渲染 Footer。`home` 与 `page` 在 nagi 自己的页面滚动容器内滚动并渲染 Footer；未命中页面按 `page` 布局处理。
+nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文滚动容器占满剩余高度，页面外壳和 `body` 不滚动，长正文只在右侧内容区域滚动；Sidebar 菜单过长时在自己的区域内滚动。`doc` 不渲染 Footer。正文末尾根据当前已解析 Sidebar 的叶子链接顺序显示上一篇与下一篇，跨顶层分组时仍连续翻页；不显示 Edit this page on GitHub 或更新时间区域。`home` 与 `page` 在 nagi 自己的页面滚动容器内滚动并渲染 Footer；未命中页面按 `page` 布局处理。
 
 nagi 的主要滚动区域统一使用基于 `overlayscrollbars-vue` 的 `OsScroll`，配置 `os-theme-nagi`、离开时自动隐藏、轨道点击滚动和 6px 圆角滑块。正文、Sidebar、Home/Page 页面不得暴露操作系统原生滚动条外观。代码块、浮层等无法包裹组件的嵌套原生滚动区使用同一套 CSS scrollbar fallback，颜色与深浅色主题变量保持一致。
 
-nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。
+nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。NavBar 同时提供语言菜单与明暗模式切换按钮；未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。Runtime Plugin 在客户端模块求值、Vue hydration 之前恢复保存的根元素 class；图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
 
-nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。Menu 抽屉、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`outlineLabel`、`returnToTopLabel` 和 `langMenuLabel`；其他语言回退英文。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
+nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。Menu 抽屉、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`outlineLabel`、`returnToTopLabel`、`langMenuLabel`、`previousPageLabel` 和 `nextPageLabel`；其他语言回退英文。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
 
 Markdown 编译阶段为 h1 至 h6 输出稳定、去重的 `id` 与 `.header-anchor` 永久链接；pageData outline 收集 h1 至 h3，nagi 当前页目录排除页面 h1 并递归显示 h2/h3。目录链接必须指向真实标题锚点，不能只生成无目标的 UI。
 
@@ -468,7 +477,7 @@ docs
 - 全仓库使用 TypeScript 6。
 - Vue 代码使用 Composition API、`<script setup>` 与 TypeScript。
 - 依赖版本通过具名 pnpm catalogs 管理，禁止裸 `catalog:`。
-- 0.1 官方包直接发布 TypeScript、Vue SFC 与 CSS 源码，不执行独立的 package build；生成侧源码由 Jiti 加载，运行侧源码由 Vite 加载。
+- 0.1 官方包直接发布 TypeScript、Vue SFC 与 CSS 源码，不执行独立的 package build；CLI 源码入口由 Jiti 加载，站点配置及其 Generator Plugin 模块图由 Vite `runnerImport()` 加载并收集本地配置依赖，网站运行侧源码由 Vite 加载。
 - 源码发布包使用标准 package exports：`types`、`import` 与 `default` 均指向源码，不使用自定义 `source` condition，也不使用旧式 `module` 字段或 condition。
 - 第三方插件可以发布源码或预编译产物；KawaPress 不要求插件声明 `source` condition。预编译包将 `types` 指向声明文件，并将 `import`、`default` 指向 ESM 产物。
 - KawaPress 不在 TypeScript、Vitest 或 Vite 中启用自定义 `source` condition。Vite 的 SSR plugin pipeline 单独使用 `module` condition，确保进入 Module Runner 的 Vue 依赖选择 ESM 入口；否则 dev SSR 会把 `@vue/server-renderer` 的 CommonJS 入口与 top-level await 放入同一执行图并触发 `ERR_AMBIGUOUS_MODULE_SYNTAX`。这是 SSR 依赖解析约束，不是插件 package exports 约定。
@@ -476,7 +485,7 @@ docs
 - KawaPress 使用 `docs` 工作区维护并构建自己的真实文档，不保留独立 playground；根目录的 `pnpm dev`、`pnpm build` 与 `pnpm preview` 分别代理文档站命令。新增功能直接进入真实文档，文档写作与构建过程作为持续 dogfooding。
 - 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。
 - 中文文档使用自然、亲和、温暖的高语境表达，循序渐进地帮助用户理解；英文文档使用直接、明确、低语境的表达，不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。
-- 文档只记录当前代码已经实现并通过 dogfooding 的行为，不写无法运行的未来安装或 API 承诺。
+- 官方文档以 KawaPress 0.1 的预期终态为准，按正式发布后用户真正使用产品的方式编写，不暴露 `workspace:*`、未发布版本号、仓库内部代理命令等开发期临时状态。文档可以先于对应实现成文，但不得超出本文确定的 0.1 交付范围；功能完成后必须通过 `docs` dogfooding 校验文档中的命令、配置与行为。
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
 - 官方文档通过 GitHub Actions 构建并部署到 GitHub Pages；`main` 每次推送触发部署，CI 使用 `KAWAPRESS_BASE=/kawapress/`，上传 `docs/dist`，本地开发未设置该变量时继续使用根路径 `/`。
 - Node.js 正式支持版本与 Vite 8 对齐，为 22.12 及以上。
@@ -499,11 +508,12 @@ docs
 - Markdown 编译成 Vue 组件。
 - frontmatter 与 pageData。
 - Shiki 双主题高亮、Twoslash 与 Floating Vue 浮层。
+- 独立 Code Group Plugin、可访问代码 Tab 与 nagi 默认样式。
 - 文件路径路由、SSR 首屏和浏览器内导航。
 - 页面路由元数据、nagi 自动侧边栏与独立的本地全文搜索索引。
-- nagi 的 `doc`、`home` 与 `page` 布局语义及系统深浅色模式。
+- nagi 的 `doc`、`home` 与 `page` 布局语义、上一篇/下一篇导航及系统深浅色模式。
 - Core 路径国际化、locale 站点数据、主题配置覆盖、语言同页切换与 SSR/SSG `lang`/`dir`。
-- `docs` 使用 KawaPress 自身、默认 Preset 和公开能力完成 dev、SSR、hydration 与静态构建闭环，并包含至少两种语言用于国际化 dogfooding。
+- `docs` 只声明 `kawapress` 一个运行依赖，并通过 `kawapress/nagi` 使用默认 Preset 和公开能力，完成 dev、SSR、hydration 与静态构建闭环，同时包含至少两种语言用于国际化 dogfooding。
 
 0.1 明确不包含：
 
@@ -518,7 +528,6 @@ docs
 
 ### 0.2：文档站日常体验
 
-- 上一页、下一页与编辑链接。
 - `create-kawapress` 脚手架。
 
 ### 0.3：内容与生态

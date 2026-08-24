@@ -59,6 +59,9 @@ catalogs:
     '@mdit-vue/plugin-sfc':
       specifier: ^3.0.2
       version: 3.0.2
+    '@mdit/plugin-container':
+      specifier: ^1.0.2
+      version: 1.0.2
     '@shikijs/twoslash':
       specifier: ^4.4.3
       version: 4.4.3
@@ -133,19 +136,16 @@ importers:
         version: 3.3.11(typescript@6.0.3)
 
   docs:
-    dependencies:
-      '@kawapress/preset-nagi':
-        specifier: workspace:*
-        version: link:../packages/preset-nagi
+    devDependencies:
       kawapress:
         specifier: workspace:*
         version: link:../packages/kawapress
-      vue:
-        specifier: catalog:frontend
-        version: 3.5.41(typescript@6.0.3)
 
   packages/kawapress:
     dependencies:
+      '@kawapress/preset-nagi':
+        specifier: workspace:*
+        version: link:../preset-nagi
       '@mdit-vue/plugin-component':
         specifier: catalog:markdown
         version: 3.0.2
@@ -195,6 +195,22 @@ importers:
         specifier: catalog:frontend
         version: 5.2.0(@vue/compiler-sfc@3.5.41)(rolldown@1.2.5)(vite@8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
 
+  packages/plugin-code-group:
+    dependencies:
+      '@mdit/plugin-container':
+        specifier: catalog:markdown
+        version: 1.0.2(markdown-it@14.3.0)
+      kawapress:
+        specifier: workspace:*
+        version: link:../kawapress
+    devDependencies:
+      markdown-exit:
+        specifier: catalog:markdown
+        version: 1.1.0-beta.2
+      vue:
+        specifier: catalog:frontend
+        version: 3.5.41(typescript@6.0.3)
+
   packages/plugin-shiki:
     dependencies:
       '@shikijs/twoslash':
@@ -231,6 +247,9 @@ importers:
 
   packages/preset-nagi:
     dependencies:
+      '@kawapress/plugin-code-group':
+        specifier: workspace:*
+        version: link:../plugin-code-group
       '@kawapress/plugin-shiki':
         specifier: workspace:*
         version: link:../plugin-shiki
@@ -247,6 +266,9 @@ importers:
       typescript:
         specifier: catalog:dev
         version: 6.0.3
+      vite:
+        specifier: catalog:node
+        version: 8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0)
       vue:
         specifier: catalog:frontend
         version: 3.5.41(typescript@6.0.3)
@@ -514,6 +536,15 @@ packages:
   '@mdit-vue/types@3.0.2':
     resolution: {integrity: sha512-00aAZ0F0NLik6I6Yba2emGbHLxv+QYrPH00qQ5dFKXlAo1Ll2RHDXwY7nN2WAfrx2pP+WrvSRFTGFCNGdzBDHw==}
     engines: {node: '>=20.0.0'}
+
+  '@mdit/plugin-container@1.0.2':
+    resolution: {integrity: sha512-gCpqmadamWVbDI7+OgkywDGjfgqxrjZo3U+iK+sH7vERnZyX4sx1X65pXbqrem8Q5/4yO5t0d+kWkPC733ceRw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      markdown-it: ^14.2.0
+    peerDependenciesMeta:
+      markdown-it:
+        optional: true
 
   '@ota-meshi/ast-token-store@0.3.0':
     resolution: {integrity: sha512-XRO0zi2NIUKq2lUk3T1ecFSld1fMWRKE6naRFGkgkdeosx7IslyUKNv5Dcb5PJTja9tHJoFu0v/7yEpAkrkrTg==}
@@ -2771,6 +2802,12 @@ snapshots:
       markdown-it: 14.3.0
 
   '@mdit-vue/types@3.0.2': {}
+
+  '@mdit/plugin-container@1.0.2(markdown-it@14.3.0)':
+    dependencies:
+      '@types/markdown-it': 14.2.0
+    optionalDependencies:
+      markdown-it: 14.3.0
 
   '@ota-meshi/ast-token-store@0.3.0': {}
 

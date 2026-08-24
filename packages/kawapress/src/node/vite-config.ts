@@ -1,11 +1,16 @@
 import type { InlineConfig, Plugin } from 'vite'
 import type { ResolvedSiteConfig } from './config'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
 import vue from '@vitejs/plugin-vue'
 import { createMarkdownPageLoader } from './markdown-page-loader'
 import { markdownPlugin } from './markdown-plugin'
 import { virtualPagesPlugin } from './virtual-pages'
 import { virtualRuntimePluginsPlugin } from './virtual-runtime-plugins'
 import { virtualSitePlugin } from './virtual-site'
+
+const require = createRequire(import.meta.url)
+const VUE_PACKAGE_PATH = 'vue/package.json'
 
 export function createBaseViteConfig(
   root: string,
@@ -16,10 +21,7 @@ export function createBaseViteConfig(
     base: siteConfig.base,
     appType: 'custom',
     resolve: {
-      alias: [{
-        find: /^vue$/,
-        replacement: 'vue/dist/vue.runtime.esm-bundler.js',
-      }],
+      alias: resolveVueAliases(root),
       dedupe: ['vue', 'vue-router'],
     },
     ssr: {
@@ -30,6 +32,25 @@ export function createBaseViteConfig(
     },
     plugins: createBasePlugins(root, siteConfig),
   }
+}
+
+function resolveVueAliases(root: string) {
+  let packagePath: string
+  try {
+    packagePath = require.resolve(VUE_PACKAGE_PATH, { paths: [root] })
+  }
+  catch {
+    packagePath = require.resolve(VUE_PACKAGE_PATH)
+  }
+  const vueRoot = dirname(packagePath)
+
+  return [{
+    find: /^vue$/,
+    replacement: join(vueRoot, 'dist/vue.runtime.esm-bundler.js'),
+  }, {
+    find: /^vue\/server-renderer$/,
+    replacement: join(vueRoot, 'server-renderer/index.mjs'),
+  }]
 }
 
 function createBasePlugins(

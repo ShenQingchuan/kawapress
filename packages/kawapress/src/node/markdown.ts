@@ -104,6 +104,9 @@ const scriptLangRE = /\slang\s*=\s*["']([^"']+)["']/
 const scriptEndRE = /<\/script>/
 
 export function assembleVueSfc(html: string, env: MarkdownEnv, pageData: PageData): string {
+  const templateHtml = html.trim()
+    ? html
+    : '<span data-kawapress-empty-page hidden></span>'
   const serializedPageData = stringifyJsonForScript(pageData, {
     label: `pageData for route ${JSON.stringify(pageData.path)}`,
     path: 'pageData',
@@ -123,7 +126,7 @@ export function assembleVueSfc(html: string, env: MarkdownEnv, pageData: PageDat
   }
 
   return [
-    `<template>${html}</template>`,
+    `<template>${templateHtml}</template>`,
     ...scripts,
     ...(env.sfcBlocks?.styles.map(block => block.content) ?? []),
     ...(env.sfcBlocks?.customBlocks.map(block => block.content) ?? []),

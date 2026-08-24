@@ -1,14 +1,32 @@
 ---
 layout: home
 title: KawaPress
+hero:
+  name: KawaPress
+  text: Vite & Vue Powered Static Site Generator
+  tagline: Markdown to beautiful docs in minutes
+  image:
+    light: /kawapress-logo.png
+    dark: /kawapress-logo-dark.png
+    alt: KawaPress
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /en/guide/getting-started
+    - theme: alt
+      text: What is KawaPress?
+      link: /en/guide/what-is-kawapress
+features:
+  - icon: ✍️
+    title: Focus on content
+    details: Write in Markdown while KawaPress handles pages, routing, and static builds.
+  - icon: 🚀
+    title: Real SSR in development
+    details: Every initial request is server-rendered, so SSR problems appear before deployment.
+  - icon: 🌊
+    title: A complete default
+    details: nagi (凪) includes responsive layouts, dark mode, syntax highlighting, and i18n.
+  - icon: 🧩
+    title: Open to extension
+    details: Build features and themes with Plugins and Presets instead of private core hooks.
 ---
-
-# KawaPress
-
-A Vue-first static site generator for documentation and content-focused websites.
-
-KawaPress turns Markdown into Vue pages, runs real SSR during development, and generates static HTML for deployment.
-
-Its built-in nagi (凪) preset provides a documentation experience similar to the VitePress default theme while keeping plugin and theme extension boundaries explicit.
-
-[Learn about KawaPress](/en/guide/what-is-kawapress)

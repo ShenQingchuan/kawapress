@@ -242,6 +242,16 @@
   }
 }
 
+@media (max-width: 39.999rem) {
+  .nagi-doc-navigation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nagi-doc-navigation__link--next {
+    grid-column: 1;
+  }
+}
+
 @media (max-width: 59.999rem) {
   .nagi-sidebar--desktop {
     display: none;

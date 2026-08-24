@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import type { PageData } from 'kawapress'
-import { useLocale, useRouter } from 'kawapress/client'
-import { computed, onMounted, useTemplateRef, watch } from 'vue'
+import { useRouter } from 'kawapress/client'
+import { onMounted, useTemplateRef, watch } from 'vue'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
-import { createSidebar } from '../sidebar'
+import { useSidebarItems } from '../composables/useSidebarItems'
 import OsScroll from './OsScroll.vue'
 import SidebarItem from './SidebarItem.vue'
 
@@ -19,33 +18,7 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const theme = useNagiThemeConfig()
-const { localeIndex, locales } = useLocale()
-const pages: Record<string, PageData> = {}
-for (const route of router.getRoutes()) {
-  const pageData = route.meta.pageData as PageData | undefined
-  if (pageData) {
-    pages[pageData.path] = pageData
-  }
-}
-const items = computed(() => {
-  const currentLocale = localeIndex.value
-  const localePrefixes = locales.value
-    .map(locale => locale.localeIndex)
-    .filter(locale => locale !== 'root')
-    .map(locale => `/${locale}`)
-  const currentPrefix = currentLocale === 'root' ? '' : `/${currentLocale}`
-  const localePages = Object.fromEntries(
-    Object.entries(pages).filter(([path]) => {
-      if (currentLocale === 'root') {
-        return !localePrefixes.some(
-          prefix => path === prefix || path.startsWith(`${prefix}/`),
-        )
-      }
-      return path === currentPrefix || path.startsWith(`${currentPrefix}/`)
-    }),
-  )
-  return createSidebar(localePages, { base: currentPrefix })
-})
+const items = useSidebarItems()
 const sidebar = useTemplateRef<HTMLElement>('sidebar')
 
 onMounted(() => {

@@ -20,6 +20,11 @@
       "import": "./src/client/index.ts",
       "default": "./src/client/index.ts"
     },
+    "./nagi": {
+      "types": "./src/nagi.ts",
+      "import": "./src/nagi.ts",
+      "default": "./src/nagi.ts"
+    },
     "./package.json": "./package.json"
   },
   "bin": {
@@ -30,6 +35,7 @@
     "src"
   ],
   "dependencies": {
+    "@kawapress/preset-nagi": "workspace:*",
     "@mdit-vue/plugin-component": "catalog:markdown",
     "@mdit-vue/plugin-frontmatter": "catalog:markdown",
     "@mdit-vue/plugin-headers": "catalog:markdown",

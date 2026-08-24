@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { RouterView, useHead, usePageData, useSite } from 'kawapress/client'
 import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue'
+import DocNavigation from './DocNavigation.vue'
 import DocToolbar from './DocToolbar.vue'
+import Home from './Home.vue'
 import OsScroll from './OsScroll.vue'
 import Outline from './Outline.vue'
 
@@ -71,8 +73,11 @@ useHead({
           @toggle-sidebar="sidebarOpen = !sidebarOpen"
         />
         <OsScroll ref="docScroll" class="nagi-main__scroll">
-          <div class="nagi-main__content nagi-doc">
-            <RouterView />
+          <div class="nagi-main__content">
+            <article class="nagi-doc">
+              <RouterView />
+            </article>
+            <DocNavigation />
           </div>
         </OsScroll>
       </main>
@@ -85,7 +90,10 @@ useHead({
     </div>
 
     <OsScroll v-else class="nagi-page-scroll">
-      <main class="nagi-main" :class="`nagi-main--${layout}`">
+      <main v-if="layout === 'home'" class="nagi-main nagi-main--home">
+        <Home />
+      </main>
+      <main v-else class="nagi-main nagi-main--page">
         <div class="nagi-main__content nagi-doc">
           <RouterView />
         </div>

@@ -81,6 +81,10 @@ async function resolvePluginPackages(
   const packages = new Map<string, PluginPackage>()
   const unresolved = new Set(pluginNames)
   const searchRoots = [root]
+  const corePackagePath = findPluginPackage('kawapress', searchRoots)
+  if (corePackagePath) {
+    searchRoots.push(dirname(corePackagePath))
+  }
   let foundPackage = true
 
   while (unresolved.size > 0 && foundPackage) {
