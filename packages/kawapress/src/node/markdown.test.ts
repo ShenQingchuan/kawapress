@@ -1,8 +1,8 @@
 import type { MarkdownExit } from 'markdown-exit'
+import { shikiPlugin } from '@kawapress/plugin-shiki'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { compileMarkdownToVue, createMarkdownCompiler } from './markdown'
 import { createGeneratorPluginRunner } from './plugin-runner'
-import { shikiPlugin } from './shiki-plugin'
 
 let md: MarkdownExit
 let mdWithShiki: MarkdownExit

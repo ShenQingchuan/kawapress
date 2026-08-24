@@ -3,6 +3,7 @@ import Footer from './components/Footer.vue'
 import Layout from './components/Layout.vue'
 import NavBar from './components/NavBar.vue'
 import NotFound from './components/NotFound.vue'
+import './theme.css'
 
 export default defineRuntimePlugin({
   name: '@kawapress/preset-nagi',

@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
+    "@kawapress/plugin-shiki": "workspace:*",
     "@types/node": "catalog:dev",
     "eslint": "catalog:dev",
     "jiti": "catalog:node",

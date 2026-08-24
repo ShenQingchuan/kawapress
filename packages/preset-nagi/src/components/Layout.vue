@@ -23,8 +23,7 @@ useHead({
 <style>
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  line-height: 1.7;
+  font-family: var(--nagi-font-family-base);
 }
 
 .nagi {
@@ -39,5 +38,9 @@ body {
   max-width: 720px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
+}
+
+.nagi-main pre.shiki > code {
+  line-height: var(--nagi-code-line-height);
 }
 </style>

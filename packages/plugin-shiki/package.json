@@ -1,8 +1,8 @@
 {
-  "name": "@kawapress/preset-nagi",
+  "name": "@kawapress/plugin-shiki",
   "type": "module",
   "version": "0.0.0",
-  "description": "Default preset for KawaPress",
+  "description": "Shiki and Twoslash plugin for KawaPress",
   "license": "MIT",
   "exports": {
     ".": {
@@ -25,11 +25,16 @@
     "vue": "catalog:frontend"
   },
   "dependencies": {
-    "@kawapress/plugin-shiki": "workspace:*"
+    "@shikijs/twoslash": "catalog:markdown",
+    "floating-vue": "catalog:frontend",
+    "mdast-util-from-markdown": "catalog:markdown",
+    "mdast-util-gfm": "catalog:markdown",
+    "mdast-util-to-hast": "catalog:markdown",
+    "shiki": "catalog:markdown",
+    "twoslash-vue": "catalog:markdown",
+    "typescript": "catalog:dev"
   },
   "devDependencies": {
-    "kawapress": "workspace:*",
-    "typescript": "catalog:dev",
     "vue": "catalog:frontend"
   }
 }

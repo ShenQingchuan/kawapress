@@ -1,4 +1,5 @@
-import { definePlugin, definePreset, shikiPlugin } from 'kawapress'
+import { shikiPlugin } from '@kawapress/plugin-shiki'
+import { definePlugin, definePreset } from 'kawapress'
 
 const nagiPlugin = definePlugin({
   name: '@kawapress/preset-nagi',
@@ -7,8 +8,8 @@ const nagiPlugin = definePlugin({
 
 export const nagi = definePreset({
   plugins: [
+    shikiPlugin({ twoslash: true }),
     nagiPlugin,
-    shikiPlugin(),
   ],
 })
 

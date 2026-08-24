@@ -1,0 +1,32 @@
+:root {
+  --nagi-c-bg: #fff;
+  --nagi-c-bg-elv: #fff;
+  --nagi-c-border: #d0d7de;
+  --nagi-c-text-1: #24292f;
+  --nagi-c-text-2: #57606a;
+  --nagi-c-brand-1: #0969da;
+  --nagi-font-family-base: ui-sans-serif, system-ui, sans-serif;
+  --nagi-font-family-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --nagi-code-line-height: 1.5;
+
+  --twoslash-border-color: var(--nagi-c-border);
+  --twoslash-underline-color: var(--nagi-c-brand-1);
+  --twoslash-popup-bg: var(--nagi-c-bg-elv);
+  --twoslash-popup-color: var(--nagi-c-text-1);
+  --twoslash-popup-shadow: 0 8px 30px rgb(0 0 0 / 12%);
+  --twoslash-popup-radius: 8px;
+  --twoslash-docs-color: var(--nagi-c-text-2);
+  --twoslash-docs-font: var(--nagi-font-family-base);
+  --twoslash-code-font: var(--nagi-font-family-mono);
+  --twoslash-code-font-size: 0.875em;
+  --twoslash-popup-code-line-height: 1.2;
+  --twoslash-popup-code-padding: 8px 12px;
+  --twoslash-popup-docs-padding: 12px;
+  --twoslash-popup-docs-font-size: 0.9em;
+  --twoslash-popup-docs-line-height: 1.6;
+  --twoslash-popup-inline-code-bg: rgb(175 184 193 / 20%);
+  --twoslash-popup-inline-code-radius: 4px;
+  --twoslash-cursor-color: var(--nagi-c-brand-1);
+  --twoslash-matched-color: var(--nagi-c-brand-1);
+  --twoslash-unmatched-color: var(--nagi-c-text-2);
+}

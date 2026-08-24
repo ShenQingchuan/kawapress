@@ -109,12 +109,22 @@ export default nagi({
 
 插件包的默认入口负责导出带类型的插件工厂与生成侧能力；可选的 `./runtime-plugin` 入口承载 Runtime Plugin。KawaPress 根据逻辑插件身份自动关联运行侧。站点用户不导入 `kawa-analytics/runtime-plugin`。
 
+Runtime Plugin 解析必须支持 Preset 内置插件：当插件包不是站点的直接依赖时，KawaPress 继续从已解析的 Preset/Plugin 包依赖图中查找其 package exports，不要求站点重复声明 Preset 已经携带的依赖。
+
 ```json
 {
   "name": "kawa-analytics",
   "exports": {
-    ".": "./dist/index.js",
-    "./runtime-plugin": "./dist/runtime-plugin.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./runtime-plugin": {
+      "types": "./dist/runtime-plugin.d.ts",
+      "import": "./dist/runtime-plugin.js",
+      "default": "./dist/runtime-plugin.js"
+    }
   }
 }
 ```
@@ -344,6 +354,37 @@ Markdown 引擎使用 `markdown-exit`：
 
 代码高亮使用 Shiki，并作为原子 Plugin 接入 `markdown()`。Shiki transformer 保持可配置。Twoslash 不属于 0.1 范围，等待 Runtime Plugin 与浮层 UI 能力稳定后再实现。
 
+### 7.1 Shiki 与 Twoslash 增强
+
+0.1 检查点完成后，Shiki 从核心包迁移为普通逻辑插件包 `@kawapress/plugin-shiki`：
+
+```text
+@kawapress/plugin-shiki
+├─ 默认入口：Shiki 高亮与可选 Twoslash transformer
+└─ ./runtime-plugin：TwoslashFloatingVue 与浮层样式
+```
+
+公开配置使用同一个 `shikiPlugin()` 工厂：
+
+```ts
+shikiPlugin({ twoslash: false })
+shikiPlugin({ twoslash: true })
+shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
+```
+
+规则：
+
+- `twoslash` 未填写或为 `false` 时只执行普通 Shiki 高亮。
+- `twoslash: true` 使用 KawaPress 基于 `@shikijs/twoslash` 与 `twoslash-vue` 组装的默认配置；默认 `explicitTrigger: true`，只有带 `twoslash` meta 的代码块执行分析。
+- 对象形式使用 KawaPress 导出的 `TwoslashOptions`，它基于通用 `TransformerTwoslashOptions`，不暴露自定义 renderer 与 twoslasher；其中的函数、缓存和 TypeScript 对象只留在生成侧，不传入 Runtime graph。
+- Nagi 明确组合 `shikiPlugin({ twoslash: true })`，不在 Preset 内实现私有 Twoslash 逻辑。
+- KawaPress 自己维护 Floating Vue renderer、Runtime Plugin 和 CSS，不依赖 `@shikijs/vitepress-twoslash` 或 VitePress 运行时。
+- Runtime Plugin 在 SSR 与 client 创建 Vue App 时都直接安装 `floating-vue`，并导入通用 Twoslash 样式及 KawaPress 自有适配样式，保证两侧组件树一致。
+- 当前 Runtime Plugin 协议不传递生成侧选项，因此只要安装 `@kawapress/plugin-shiki` 就会加载其 Runtime Plugin；`twoslash: false` 只关闭生成侧分析，不作为运行侧裁剪开关。
+- 生成侧与运行侧之间只通过生成后的 Vue template 标记、class 和 CSS 约定衔接，不共享 transformer、TypeScript Program、闭包或模块实例。
+- 普通代码块使用 KawaPress 自有的 `v-pre` Shiki transformer 保护 Vue 插值；活跃 Twoslash 代码块由 KawaPress transformer 移除 `v-pre` 并完成花括号转义，不再使用高亮后恢复 `{{ }}` 的方案。
+- Twoslash 的浮层 UI 使用 Floating Vue；本阶段不自制 Tooltip/Popover 组件，也不开放 Floating Vue 运行侧配置。
+
 ## 八、配置与数据
 
 核心配置至少包含：
@@ -388,8 +429,11 @@ examples/playground
 - 全仓库使用 TypeScript 6。
 - Vue 代码使用 Composition API、`<script setup>` 与 TypeScript。
 - 依赖版本通过具名 pnpm catalogs 管理，禁止裸 `catalog:`。
-- 工作区源码通过 package exports 的 `source` condition 暴露。
-- TypeScript 与 Vite 都启用 `source` condition。
+- 0.1 官方包直接发布 TypeScript、Vue SFC 与 CSS 源码，不执行独立的 package build；生成侧源码由 Jiti 加载，运行侧源码由 Vite 加载。
+- 源码发布包使用标准 package exports：`types`、`import` 与 `default` 均指向源码，不使用自定义 `source` condition，也不使用旧式 `module` 字段或 condition。
+- 第三方插件可以发布源码或预编译产物；KawaPress 不要求插件声明 `source` condition。预编译包将 `types` 指向声明文件，并将 `import`、`default` 指向 ESM 产物。
+- KawaPress 不在 TypeScript、Vitest 或 Vite 中启用自定义 `source` condition。Vite 的 SSR plugin pipeline 单独使用 `module` condition，确保进入 Module Runner 的 Vue 依赖选择 ESM 入口；否则 dev SSR 会把 `@vue/server-renderer` 的 CommonJS 入口与 top-level await 放入同一执行图并触发 `ERR_AMBIGUOUS_MODULE_SYNTAX`。这是 SSR 依赖解析约束，不是插件 package exports 约定。
+- Runtime Plugin 静态导入的 Vue SFC 与 CSS 由用户站点的 Vite 自动打包；用户不需要单独导入主题或插件 CSS。
 - Node.js 正式支持版本与 Vite 8 对齐，为 22.12 及以上。
 - CLI 提供 `kawapress dev` 与 `kawapress build`。
 - 开源协议为 MIT。
