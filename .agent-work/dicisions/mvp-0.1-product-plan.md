@@ -440,7 +440,11 @@ declare function usePageData(): ComputedRef<PageData | undefined>
 
 核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据生成自动侧边栏，并读取各内容目录旁的 `_meta.json` 管理目录与页面的显示顺序和本地化名称，不使用 frontmatter `order`。`_meta.json` 使用按展示顺序排列的数组，字符串条目只声明文件或目录名，对象条目可以通过 `type`、`name` 与 `label` 区分文件、目录并覆盖显示名称；未列出的现有页面或目录继续按路径顺序追加。每个 locale 可以拥有自己目录下的 `_meta.json`，因此 Sidebar 结构与标签自然随路径语言切换。nagi 的 Generator Plugin 通过 JSON 虚拟模块把这些结构化内容元数据交给运行侧；该模块只传标准 JSON，不承载主题配置或生成侧对象。
 
-nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。本地全文搜索使用独立、按需加载的搜索索引，不复用全量 pageData。
+nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。
+
+本地全文搜索由独立逻辑插件包 `@kawapress/plugin-search` 提供，不写死在 Core 或 nagi 内部。Generator Plugin 独立扫描 `srcDir` 下的 Markdown，按标题层级切成搜索段落，以公开路由作为结果地址；frontmatter 中显式设置 `search: false` 的页面不进入索引。索引使用 MiniSearch 在生成侧预构建，并按 Core locale 路径拆成独立虚拟模块；浏览器首屏只得到很小的 locale loader 映射，用户首次打开搜索时才加载 MiniSearch 运行时和当前语言索引，不能把索引或全站正文打进主入口。中英文共用大小写归一化与 CJK 感知分词，搜索只返回当前 URL locale 的结果。插件不向 Core 增加 `usePages()`、全量 pageData 或搜索专用运行时 API。
+
+`@kawapress/plugin-search/runtime-plugin` 注册可复用的真实 Vue 搜索组件并自动导入基础样式，稳定结构 class 使用 `.kawa-search*` 命名空间；其他 Preset 可以组合同一插件并把组件放进自己的界面。nagi Preset 默认组合 `searchPlugin()`，NavBar 只引入公开搜索组件并通过 CSS 变量适配主题视觉，不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
 
 pageData 必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含页面路由、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
 

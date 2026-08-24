@@ -1,9 +1,6 @@
 /* Adapted from the VitePress default theme (MIT). */
 
-.nagi,
-.nagi *,
-.nagi ::before,
-.nagi ::after {
+:where(.nagi, .nagi *, .nagi ::before, .nagi ::after) {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -112,11 +109,16 @@ body {
   cursor: pointer;
 }
 
-.nagi :where(button, input, textarea, select):focus {
+:where(.nagi) :where(button:focus, input:focus, textarea:focus, select:focus) {
   outline: none;
 }
 
-.nagi :where(button, input, textarea, select):focus-visible {
+:where(.nagi) :where(
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible
+) {
   outline: 2px solid var(--nagi-c-brand-1);
   outline-offset: 2px;
 }

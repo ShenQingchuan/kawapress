@@ -1,14 +1,19 @@
 {
-  "name": "@kawapress/preset-nagi",
+  "name": "@kawapress/plugin-search",
   "type": "module",
   "version": "0.0.0",
-  "description": "Default preset for KawaPress",
+  "description": "Lazy local full-text search plugin for KawaPress",
   "license": "MIT",
   "exports": {
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "import": "./src/client.ts",
+      "default": "./src/client.ts"
     },
     "./runtime-plugin": {
       "types": "./src/runtime-plugin.ts",
@@ -25,11 +30,10 @@
     "vue": "catalog:frontend"
   },
   "dependencies": {
-    "@kawapress/plugin-code-group": "workspace:*",
-    "@kawapress/plugin-search": "workspace:*",
-    "@kawapress/plugin-shiki": "workspace:*",
-    "overlayscrollbars": "catalog:frontend",
-    "overlayscrollbars-vue": "catalog:frontend"
+    "@mdit-vue/plugin-frontmatter": "catalog:markdown",
+    "markdown-exit": "catalog:markdown",
+    "markdown-it-anchor": "catalog:markdown",
+    "minisearch": "catalog:frontend"
   },
   "devDependencies": {
     "kawapress": "workspace:*",

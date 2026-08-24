@@ -34,6 +34,9 @@ catalogs:
     floating-vue:
       specifier: ^5.2.2
       version: 5.2.2
+    minisearch:
+      specifier: ^7.2.0
+      version: 7.2.0
     overlayscrollbars:
       specifier: ^2.16.0
       version: 2.16.0
@@ -211,6 +214,34 @@ importers:
         specifier: catalog:frontend
         version: 3.5.41(typescript@6.0.3)
 
+  packages/plugin-search:
+    dependencies:
+      '@mdit-vue/plugin-frontmatter':
+        specifier: catalog:markdown
+        version: 3.0.2
+      markdown-exit:
+        specifier: catalog:markdown
+        version: 1.1.0-beta.2
+      markdown-it-anchor:
+        specifier: catalog:markdown
+        version: 9.2.1(@types/markdown-it@14.2.0)(markdown-it@14.3.0)
+      minisearch:
+        specifier: catalog:frontend
+        version: 7.2.0
+    devDependencies:
+      kawapress:
+        specifier: workspace:*
+        version: link:../kawapress
+      typescript:
+        specifier: catalog:dev
+        version: 6.0.3
+      vite:
+        specifier: catalog:node
+        version: 8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0)
+      vue:
+        specifier: catalog:frontend
+        version: 3.5.41(typescript@6.0.3)
+
   packages/plugin-shiki:
     dependencies:
       '@shikijs/twoslash':
@@ -250,6 +281,9 @@ importers:
       '@kawapress/plugin-code-group':
         specifier: workspace:*
         version: link:../plugin-code-group
+      '@kawapress/plugin-search':
+        specifier: workspace:*
+        version: link:../plugin-search
       '@kawapress/plugin-shiki':
         specifier: workspace:*
         version: link:../plugin-shiki
@@ -1900,6 +1934,9 @@ packages:
   minimatch@10.2.6:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
+
+  minisearch@7.2.0:
+    resolution: {integrity: sha512-dqT2XBYUOZOiC5t2HRnwADjhNS2cecp9u+TJRiJ1Qp/f5qjkeT5APcGPjHw+bz89Ms8Jp+cG4AlE+QZ/QnDglg==}
 
   mlly@1.8.2:
     resolution: {integrity: sha512-d+ObxMQFmbt10sretNDytwt85VrbkhhUA/JBGm1MPaWJ65Cl4wOgLaB1NYvJSZ0Ef03MMEU/0xpPMXUIQ29UfA==}
@@ -4372,6 +4409,8 @@ snapshots:
   minimatch@10.2.6:
     dependencies:
       brace-expansion: 5.0.9
+
+  minisearch@7.2.0: {}
 
   mlly@1.8.2:
     dependencies:

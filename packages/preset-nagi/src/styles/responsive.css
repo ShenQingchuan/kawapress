@@ -257,6 +257,10 @@
 }
 
 @media (max-width: 39.999rem) {
+  .nagi-home-features {
+    width: calc(100% - 2rem);
+  }
+
   .nagi-doc-navigation {
     grid-template-columns: minmax(0, 1fr);
   }

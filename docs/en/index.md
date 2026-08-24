@@ -4,7 +4,7 @@ title: KawaPress
 hero:
   name: KawaPress
   text: Vite & Vue Powered Static Site Generator
-  tagline: Markdown to beautiful docs in minutes
+  tagline: Let your content flow, let your extensions grow.
   image:
     light: /kawapress-logo.png
     dark: /kawapress-logo-dark.png

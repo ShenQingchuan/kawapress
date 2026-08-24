@@ -103,6 +103,17 @@
     transparent
   );
 
+  --kawa-search-c-bg: var(--nagi-c-bg-elv);
+  --kawa-search-c-bg-soft: var(--nagi-c-bg-soft);
+  --kawa-search-c-border: var(--nagi-c-border);
+  --kawa-search-c-divider: var(--nagi-c-divider);
+  --kawa-search-c-text-1: var(--nagi-c-text-1);
+  --kawa-search-c-text-2: var(--nagi-c-text-2);
+  --kawa-search-c-text-3: var(--nagi-c-text-3);
+  --kawa-search-c-brand: var(--nagi-c-brand-1);
+  --kawa-search-font-family: var(--nagi-font-family-base);
+  --kawa-search-shadow: var(--nagi-shadow-3);
+
   --twoslash-border-color: var(--nagi-c-border);
   --twoslash-underline-color: var(--nagi-c-brand-1);
   --twoslash-popup-bg: var(--nagi-c-bg-elv);

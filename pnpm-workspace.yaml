@@ -22,6 +22,7 @@ catalogs:
     '@unhead/vue': ^3.3.2
     '@vue/server-renderer': ^3.5.41
     floating-vue: ^5.2.2
+    minisearch: ^7.2.0
     overlayscrollbars: ^2.16.0
     overlayscrollbars-vue: ^0.5.10
     vue: ^3.5.41
