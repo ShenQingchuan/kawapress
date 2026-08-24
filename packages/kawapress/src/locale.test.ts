@@ -9,6 +9,7 @@ interface TestThemeConfig {
 
 const site: SiteData<TestThemeConfig> = {
   title: 'KawaPress',
+  base: '/kawapress/',
   themeConfig: {
     menu: 'Menu',
     outline: 'Contents',
@@ -42,6 +43,7 @@ describe('locale routing', () => {
       localeIndex: 'zh',
       lang: 'zh-CN',
       title: 'KawaPress 中文',
+      link: '/kawapress/zh',
       themeConfig: {
         menu: '菜单',
         outline: 'Contents',
@@ -50,11 +52,11 @@ describe('locale routing', () => {
   })
 
   it('keeps the relative page, query, and hash when changing locale', () => {
-    expect(resolveLocaleLink(site, '/', 'zh')).toBe('/zh')
-    expect(resolveLocaleLink(site, '/zh', 'root')).toBe('/')
+    expect(resolveLocaleLink(site, '/', 'zh')).toBe('/kawapress/zh')
+    expect(resolveLocaleLink(site, '/zh', 'root')).toBe('/kawapress/')
     expect(resolveLocaleLink(site, '/guide/start?tab=api#setup', 'zh'))
-      .toBe('/zh/guide/start?tab=api#setup')
+      .toBe('/kawapress/zh/guide/start?tab=api#setup')
     expect(resolveLocaleLink(site, '/zh/guide/start?tab=api#setup', 'root'))
-      .toBe('/guide/start?tab=api#setup')
+      .toBe('/kawapress/guide/start?tab=api#setup')
   })
 })

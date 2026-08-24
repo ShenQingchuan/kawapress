@@ -13,6 +13,7 @@ export interface LocaleConfig<ThemeConfig extends object = object> {
 
 export interface SiteConfig<ThemeConfig extends object = object> {
   title?: string
+  base?: string
   srcDir?: string
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>
@@ -21,6 +22,7 @@ export interface SiteConfig<ThemeConfig extends object = object> {
 /** Raw site data exposed to the client via virtual module. */
 export interface SiteData<ThemeConfig extends object = object> {
   title: string
+  base: string
   themeConfig?: ThemeConfig
   locales: Record<string, LocaleConfig<ThemeConfig>>
 }
@@ -28,6 +30,7 @@ export interface SiteData<ThemeConfig extends object = object> {
 /** Site data resolved for the current route and locale. */
 export interface ResolvedSiteData<ThemeConfig extends object = object> {
   title: string
+  base: string
   themeConfig: ThemeConfig
   localeIndex: string
   label?: string

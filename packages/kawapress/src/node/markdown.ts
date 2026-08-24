@@ -7,6 +7,7 @@ import { headersPlugin } from '@mdit-vue/plugin-headers'
 import { sfcPlugin } from '@mdit-vue/plugin-sfc'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
+import { withBase } from '../base'
 import { stringifyJsonForScript } from '../json'
 
 interface MarkdownEnv {
@@ -25,6 +26,7 @@ export interface CompiledPage {
 }
 
 export interface MarkdownCompilerOptions {
+  base?: string
   pluginRunner?: GeneratorPluginRunner
 }
 
@@ -45,9 +47,25 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   })
   // include h1: page title inference reads it; outline rendering filters to h2+ itself
   md.use(headersPlugin as any, { level: [1, 2, 3] })
+  installBaseLinkRenderer(md, options.base ?? '/')
 
   await options.pluginRunner?.runMarkdown(md)
   return md
+}
+
+function installBaseLinkRenderer(md: MarkdownExit, base: string): void {
+  const defaultRender = md.renderer.rules.link_open
+  md.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
+    const token = tokens[index]
+    const href = token.attrGet('href')
+    if (href?.startsWith('/') && !href.startsWith('//')) {
+      token.attrSet('href', withBase(href, base))
+    }
+
+    return defaultRender
+      ? defaultRender(tokens, index, options, env, renderer)
+      : renderer.renderToken(tokens, index, options)
+  }
 }
 
 export interface ParsedMarkdown {

@@ -3,6 +3,7 @@ import type { LocaleConfig } from './site'
 
 export interface KawapressConfig<ThemeConfig extends object = object> {
   title?: string
+  base?: string
   srcDir?: string
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>

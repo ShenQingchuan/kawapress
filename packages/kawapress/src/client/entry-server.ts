@@ -4,6 +4,7 @@ import consola from 'consola'
 import { createKawapressApp } from './app'
 
 export { pages } from 'virtual:kawapress-pages'
+export { site } from 'virtual:kawapress-site'
 
 export interface RenderResult {
   html: string

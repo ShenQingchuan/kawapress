@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { RunnableDevEnvironment, ViteDevServer } from 'vite'
 import { isCSSRequest } from 'vite'
+import { withoutBase } from '../base'
 import { entryClientPath, entryServerPath } from './entries'
 import { toFsModuleUrl } from './module-url'
 import { renderHtmlTemplate } from './template'
@@ -17,9 +18,10 @@ export function createRequestHandler(
     res: ServerResponse,
   ) {
     const url = (req.url ?? '/').split('?')[0].split('#')[0]
+    const routeUrl = withoutBase(url, vite.config.base) ?? '/404'
     try {
       const { render } = await serverEnv.runner.import(entryServerUrl)
-      const { html: appHtml, found, head, htmlAttrs } = await render(url)
+      const { html: appHtml, found, head, htmlAttrs } = await render(routeUrl)
       const cssUrls = collectDevCssUrls(
         serverEnv.moduleGraph.urlToModuleMap.values(),
       )

@@ -16,6 +16,7 @@ export interface MarkdownPageLoader {
 
 export interface MarkdownPageLoaderOptions {
   root: string
+  base: string
   srcDir: string
   pluginRunner: GeneratorPluginRunner
 }
@@ -25,6 +26,7 @@ export function createMarkdownPageLoader(
 ): MarkdownPageLoader {
   const sourceRoot = resolve(options.root, options.srcDir)
   const mdPromise = createMarkdownCompiler({
+    base: options.base,
     pluginRunner: options.pluginRunner,
   })
   const cache = new Map<string, CachedPage>()

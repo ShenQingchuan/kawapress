@@ -1,4 +1,5 @@
 import type { LocaleLink, ResolvedSiteData, SiteData } from './site'
+import { withBase } from './base'
 
 const EXTERNAL_URL_RE = /^(?:[a-z][a-z\d+.-]*:)?\/\//i
 const PATH_SUFFIX_RE = /([?#].*)$/
@@ -39,12 +40,13 @@ export function resolveSiteDataByPath<ThemeConfig extends object>(
 
   return {
     title: locale?.title ?? site.title,
+    base: site.base,
     themeConfig,
     localeIndex,
     label: locale?.label,
     lang: locale?.lang,
     dir: locale?.dir,
-    link: getLocaleHome(site, localeIndex),
+    link: withBase(getLocaleHome(site, localeIndex), site.base),
   }
 }
 
@@ -63,7 +65,7 @@ export function resolveLocaleLink<ThemeConfig extends object>(
   const currentLocale = getLocaleIndex(site, pathname)
   const relativePath = removeLocalePrefix(pathname, currentLocale)
   const targetPath = joinLocalePath(targetHome, relativePath)
-  return `${targetPath}${suffix}`
+  return `${withBase(targetPath, site.base)}${suffix}`
 }
 
 export function resolveLocaleLinks<ThemeConfig extends object>(

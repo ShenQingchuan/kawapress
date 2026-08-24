@@ -1,7 +1,9 @@
+import type { SiteData } from '../site'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { consola } from 'consola'
+import { withBase } from '../base'
 import { parseJson } from '../json'
 import { renderHtmlTemplate } from './template'
 
@@ -20,12 +22,13 @@ interface RenderResult {
 interface ServerBundle {
   render: (path: string) => Promise<RenderResult>
   pages: Record<string, unknown>
+  site: SiteData
 }
 
 export async function prerenderPages(root: string): Promise<void> {
   const distDir = join(root, 'dist')
   const serverEntry = join(distDir, '.server/entry-server.js')
-  const { render, pages } = await import(
+  const { render, pages, site } = await import(
     pathToFileURL(serverEntry).href,
   ) as ServerBundle
 
@@ -43,7 +46,7 @@ export async function prerenderPages(root: string): Promise<void> {
     Object
       .values(manifest)
       .flatMap(chunk => chunk.css ?? [])
-      .map(file => `/${file}`),
+      .map(file => withBase(file, site.base)),
   )]
 
   const paths = [...Object.keys(pages), '/404']
@@ -54,7 +57,7 @@ export async function prerenderPages(root: string): Promise<void> {
     await writeFile(file, renderHtmlTemplate({
       head,
       appHtml: html,
-      clientEntryUrl: `/${entry.file}`,
+      clientEntryUrl: withBase(entry.file, site.base),
       cssUrls,
       htmlAttrs,
     }))

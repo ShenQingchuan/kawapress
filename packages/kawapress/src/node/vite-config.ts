@@ -13,6 +13,7 @@ export function createBaseViteConfig(
 ): InlineConfig {
   return {
     root,
+    base: siteConfig.base,
     appType: 'custom',
     resolve: {
       alias: [{
@@ -37,6 +38,7 @@ function createBasePlugins(
 ): Plugin[] {
   const pageLoader = createMarkdownPageLoader({
     root,
+    base: siteConfig.base,
     srcDir: siteConfig.srcDir,
     pluginRunner: siteConfig.pluginRunner,
   })
@@ -58,6 +60,7 @@ function createBasePlugins(
     }),
     virtualSitePlugin({
       title: siteConfig.title,
+      base: siteConfig.base,
       locales: siteConfig.locales,
       ...(
         siteConfig.themeConfig === undefined

@@ -404,6 +404,7 @@ interface LocaleConfig<ThemeConfig> {
 
 interface KawaPressConfig<ThemeConfig extends object = object> {
   title?: string
+  base?: string
   srcDir?: string
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>
@@ -411,7 +412,7 @@ interface KawaPressConfig<ThemeConfig extends object = object> {
 }
 ```
 
-`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型使用 ThemeConfig 泛型，使 Preset 能为顶层与各语言的 `themeConfig` 提供同一份类型推断，Core 不解释主题私有字段。
+`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型使用 ThemeConfig 泛型，使 Preset 能为顶层与各语言的 `themeConfig` 提供同一份类型推断，Core 不解释主题私有字段。`base` 表示站点部署路径，归一化为以 `/` 开头和结尾的绝对路径；Vite 资源、Vue Router history、Markdown 根路径链接、站点与 locale 首页链接、开发 SSR 和预渲染 HTML 必须统一使用它，保证 GitHub Pages 等子路径部署可用。
 
 pageData 至少包含：
 
@@ -477,6 +478,7 @@ docs
 - 中文文档使用自然、亲和、温暖的高语境表达，循序渐进地帮助用户理解；英文文档使用直接、明确、低语境的表达，不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。
 - 文档只记录当前代码已经实现并通过 dogfooding 的行为，不写无法运行的未来安装或 API 承诺。
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
+- 官方文档通过 GitHub Actions 构建并部署到 GitHub Pages；`main` 每次推送触发部署，CI 使用 `KAWAPRESS_BASE=/kawapress/`，上传 `docs/dist`，本地开发未设置该变量时继续使用根路径 `/`。
 - Node.js 正式支持版本与 Vite 8 对齐，为 22.12 及以上。
 - CLI 提供 `kawapress dev` 与 `kawapress build`。
 - 开源协议为 MIT。

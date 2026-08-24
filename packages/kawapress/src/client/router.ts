@@ -1,7 +1,9 @@
 import type { Router, RouteRecordRaw } from 'vue-router'
 import { pageData, pages } from 'virtual:kawapress-pages'
+import { site } from 'virtual:kawapress-site'
 import { defineComponent, h, resolveComponent } from 'vue'
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
+import { withoutBase } from '../base'
 import { wrapPageLoader } from './page-data'
 
 const NotFoundRoute = defineComponent({
@@ -25,7 +27,9 @@ export function createRoutes(): RouteRecordRaw[] {
 
 export function createAppRouter(): Router {
   const router = createRouter({
-    history: import.meta.env.SSR ? createMemoryHistory() : createWebHistory(),
+    history: import.meta.env.SSR
+      ? createMemoryHistory(site.base)
+      : createWebHistory(site.base),
     routes: createRoutes(),
   })
   if (!import.meta.env.SSR) {
@@ -49,7 +53,17 @@ function installLinkInterceptor(router: Router): void {
     if (!href || href.startsWith('#') || externalRE.test(href)) {
       return
     }
+
+    const url = new URL(anchor.href)
+    if (url.origin !== window.location.origin) {
+      return
+    }
+    const routePath = withoutBase(url.pathname, site.base)
+    if (!routePath) {
+      return
+    }
+
     event.preventDefault()
-    router.push(href)
+    router.push(`${routePath}${url.search}${url.hash}`)
   })
 }

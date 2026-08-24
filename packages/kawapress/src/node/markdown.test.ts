@@ -5,9 +5,11 @@ import { compileMarkdownToVue, createMarkdownCompiler } from './markdown'
 import { createGeneratorPluginRunner } from './plugin-runner'
 
 let md: MarkdownExit
+let mdWithBase: MarkdownExit
 let mdWithShiki: MarkdownExit
 beforeAll(async () => {
   md = await createMarkdownCompiler()
+  mdWithBase = await createMarkdownCompiler({ base: '/kawapress/' })
   mdWithShiki = await createMarkdownCompiler({
     pluginRunner: await createGeneratorPluginRunner([shikiPlugin()]),
   })
@@ -36,6 +38,15 @@ describe('compileMarkdownToVue', () => {
       level: 1,
       slug: 'hello-world',
     })
+  })
+
+  it('prefixes rooted internal links with the site base', async () => {
+    const { code } = await compileMarkdownToVue(
+      mdWithBase,
+      '[Guide](/guide)\n',
+      '/index',
+    )
+    expect(code).toContain('href="/kawapress/guide"')
   })
 
   it('keeps script setup blocks out of the template', async () => {

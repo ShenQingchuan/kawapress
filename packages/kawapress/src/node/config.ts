@@ -3,10 +3,12 @@ import type { KawaPressPlugin } from '../plugin-api'
 import type { LocaleConfig, SiteConfig } from '../site'
 import type { GeneratorPluginRunner } from './plugin-runner'
 import { isAbsolute } from 'node:path'
+import { normalizeBase } from '../base'
 import { createGeneratorPluginRunner } from './plugin-runner'
 
 export interface ResolvedSiteConfig {
   title: string
+  base: string
   srcDir: string
   themeConfig?: object
   locales: Record<string, LocaleConfig>
@@ -28,6 +30,7 @@ export async function resolveSiteConfig(
   const pluginRunner = await createGeneratorPluginRunner(plugins)
   const site: SiteConfig = {
     title: userConfig.title,
+    base: userConfig.base,
     srcDir: userConfig.srcDir,
     themeConfig: userConfig.themeConfig,
     locales: userConfig.locales,
@@ -44,6 +47,7 @@ export async function resolveSiteConfig(
 
   return {
     title: site.title ?? 'KawaPress',
+    base: normalizeBase(site.base),
     srcDir,
     themeConfig: site.themeConfig,
     locales,
