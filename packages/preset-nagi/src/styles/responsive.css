@@ -179,6 +179,20 @@
   background: oklch(0 0 0 / 60%);
 }
 
+.nagi-nav-screen-enter-active,
+.nagi-nav-screen-leave-active {
+  transition:
+    clip-path 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: clip-path, opacity;
+}
+
+.nagi-nav-screen-enter-from,
+.nagi-nav-screen-leave-to {
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+}
+
 .nagi-sidebar-drawer-enter-active {
   transition:
     opacity 400ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -253,12 +267,24 @@
 }
 
 @media (max-width: 59.999rem) {
+  .nagi-nav__controls--desktop {
+    display: none;
+  }
+
+  .nagi-nav__menu {
+    display: grid;
+  }
+
   .nagi-sidebar--desktop {
     display: none;
   }
 }
 
 @media (min-width: 60rem) {
+  .nagi-nav-screen {
+    display: none;
+  }
+
   .nagi-sidebar--drawer,
   .nagi-backdrop {
     display: none;
@@ -268,11 +294,13 @@
 @media (prefers-reduced-motion: reduce) {
   .nagi-outline-dropdown-enter-active,
   .nagi-outline-dropdown-leave-active,
+  .nagi-nav-screen-enter-active,
+  .nagi-nav-screen-leave-active,
   .nagi-sidebar-drawer-enter-active,
   .nagi-sidebar-drawer-leave-active,
   .nagi-backdrop-enter-active,
   .nagi-backdrop-leave-active,
-  .nagi-language-menu__chevron {
+  .nagi-nav__menu-icon span {
     transition-duration: 0s;
   }
 }
