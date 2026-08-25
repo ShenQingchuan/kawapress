@@ -129,8 +129,25 @@
   list-style: none;
 }
 
-.nagi-outline__items {
+.nagi-outline__tree {
+  position: relative;
   border-left: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-outline__marker {
+  position: absolute;
+  top: 0;
+  left: -1.5px;
+  z-index: 1;
+  width: 3px;
+  height: 1.25rem;
+  border-radius: 2px;
+  background: var(--nagi-c-brand-1);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    top 0.25s cubic-bezier(0, 1, 0.5, 1),
+    opacity 0.25s;
 }
 
 .nagi-outline-item__items {
@@ -139,21 +156,21 @@
 
 .nagi-outline-item__link {
   display: block;
-  margin-left: -1px;
   padding: 0.25rem 0 0.25rem 1rem;
   color: var(--nagi-c-text-2);
   font-size: 0.8125rem;
   line-height: 1.5;
   text-decoration: none;
-  border-left: 1px solid transparent;
-  transition:
-    color 0.25s,
-    border-color 0.25s;
+  transition: color 0.25s;
 }
 
-.nagi-outline-item__link:hover {
+.nagi-outline-item__link:hover,
+.nagi-outline-item__link.is-active {
   color: var(--nagi-c-text-1);
-  border-left-color: var(--nagi-c-brand-1);
+}
+
+.nagi-outline-item__link.is-active {
+  font-weight: 600;
 }
 
 .nagi-sidebar--drawer {

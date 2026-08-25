@@ -286,34 +286,6 @@
   margin-bottom: 0;
 }
 
-@media (min-width: 40rem) {
-  .nagi-doc pre.shiki {
-    border-radius: var(--nagi-code-block-radius);
-  }
-}
-
-@media not all and (min-width: 40rem) {
-  .nagi-doc pre.shiki {
-    width: calc(100% + 3rem);
-    margin-right: -1.5rem;
-    margin-left: -1.5rem;
-    border-radius: 0;
-  }
-
-  .nagi-doc .kawa-code-group {
-    width: calc(100% + 3rem);
-    margin-right: -1.5rem;
-    margin-left: -1.5rem;
-    border-radius: 0;
-  }
-
-  .nagi-doc .kawa-code-group__panel > pre.shiki {
-    width: 100%;
-    margin-right: 0;
-    margin-left: 0;
-  }
-}
-
 @media (min-width: 48rem) {
   .nagi-doc h1 {
     font-size: 2rem;
