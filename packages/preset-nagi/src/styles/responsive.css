@@ -137,10 +137,10 @@
 .nagi-outline__marker {
   position: absolute;
   top: 0;
-  left: -1px;
+  left: -1.5px;
   z-index: 1;
-  width: 2px;
-  height: 1.125rem;
+  width: 3px;
+  height: 1.25rem;
   border-radius: 2px;
   background: var(--nagi-c-brand-1);
   opacity: 0;
