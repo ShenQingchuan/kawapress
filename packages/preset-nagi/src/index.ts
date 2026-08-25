@@ -41,9 +41,9 @@ export function nagi(userConfig: NagiConfig = {}): NagiConfig {
       nagiThemePlugin(),
       containerPlugin(),
       githubAlertsPlugin(),
-      codeGroupPlugin(),
       unocssPlugin(),
       codeBlockPlugin(codeBlock),
+      codeGroupPlugin(),
       searchPlugin({
         containers: true,
         githubAlerts: true,

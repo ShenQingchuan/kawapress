@@ -173,7 +173,7 @@ function renderCodeBlock(
   const languageId = info.language || 'text'
   const languageLabel = languageLabels.get(languageId) ?? languageId
   const lineNumbers = info.lineNumbers
-    ? renderLineNumbers(source, info.startLine)
+    ? renderLineNumbers(rendered, source, info.startLine)
     : undefined
   const modeClass = info.lineNumbers ? ' kawa-code-block--line-numbers' : ''
   const lineNumberStyle = lineNumbers
@@ -223,11 +223,13 @@ function parseFenceInfo(info: string, defaultLineNumbers: boolean): FenceInfo {
 }
 
 function renderLineNumbers(
+  rendered: string,
   source: string,
   startLine: number,
 ): RenderedLineNumbers {
   const code = source.replace(/\r?\n$/, '')
-  const lineCount = code.split(/\r?\n/).length
+  const lineCount = getRenderedLineCount(rendered)
+    ?? code.split(/\r?\n/).length
   const lastLine = startLine + lineCount - 1
   const lines = Array.from({ length: lineCount }, (_, index) => (
     `<span class="kawa-code-block__line-number">${startLine + index}</span>`
@@ -236,6 +238,17 @@ function renderLineNumbers(
     digits: Math.max(String(startLine).length, String(lastLine).length),
     html: `<div class="kawa-code-block__line-numbers" aria-hidden="true">${lines}</div>`,
   }
+}
+
+function getRenderedLineCount(rendered: string): number | undefined {
+  const match = rendered.match(
+    /\bdata-kawa-line-count=(?:"(\d+)"|'(\d+)')/,
+  )
+  if (!match) {
+    return
+  }
+  const count = Number.parseInt(match[1] ?? match[2], 10)
+  return count > 0 ? count : undefined
 }
 
 function resolveCopyLabels(

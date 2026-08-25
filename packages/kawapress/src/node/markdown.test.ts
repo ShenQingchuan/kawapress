@@ -220,6 +220,23 @@ pnpm add kawapress
     expect(code).toContain('<pre class="shiki')
   })
 
+  it('keeps line numbers aligned when annotations remove control lines', async () => {
+    const { code } = await compileMarkdownToVue(
+      mdWithCallouts,
+      `\`\`\`ts:line-numbers=7
+// [!code focus]
+const focused = true
+\`\`\`
+`,
+      '/guide/annotated-lines',
+    )
+
+    expect(code.match(/class="kawa-code-block__line-number"/g)).toHaveLength(1)
+    expect(code).toContain('class="kawa-code-block__line-number">7</span>')
+    expect(code).toContain('class="line has-focus"')
+    expect(code).toContain('data-kawa-line-count="1"')
+  })
+
   it('configures the built-in code block plugin through nagi once', async () => {
     const config = nagi({
       codeBlock: {

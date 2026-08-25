@@ -395,6 +395,7 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 - KawaPress 自己维护 Floating Vue renderer、Runtime Plugin 和 CSS，不依赖 `@shikijs/vitepress-twoslash` 或 VitePress 运行时。
 - Runtime Plugin 在 SSR 与 client 创建 Vue App 时都直接安装 `floating-vue`，并导入通用 Twoslash 样式及 KawaPress 自有适配样式，保证两侧组件树一致。
 - 当前 Runtime Plugin 协议不传递生成侧选项，因此只要安装 `@kawapress/plugin-shiki` 就会加载其 Runtime Plugin；`twoslash: false` 只关闭生成侧分析，不作为运行侧裁剪开关。
+- Shiki Plugin 默认依次安装官方 `transformerMetaHighlight()`、`transformerNotationDiff()`、`transformerNotationFocus()`、`transformerNotationHighlight()` 与 `transformerNotationErrorLevel()`，支持 fence meta `{1,3-5}` 以及语言感知的 `[!code highlight]`、`[!code focus]`、`[!code ++]`、`[!code --]`、`[!code warning]`、`[!code error]` 注释。默认数组顺序为官方标注、KawaPress 语义补充、`v-pre`、Twoslash、用户 transformers 和最终可见行计数；用户仍可使用 Shiki 原生 `enforce` 显式调整自己的执行阶段。控制注释不进入最终可见代码；高亮与聚焦行使用语义 `mark`，新增与删除行使用 `ins`/`del`，同时保留官方稳定 class。Shiki 把最终可见行数写入稳定的 `data-kawa-line-count`，Code Block Plugin 优先使用它生成行号，避免独占控制注释删除整行后数字与代码错位。nagi 只解释这些结构和 class，不增加浏览器 Runtime 行为。
 - 生成侧与运行侧之间只通过生成后的 Vue template 标记、class 和 CSS 约定衔接，不共享 transformer、TypeScript Program、闭包或模块实例。
 - 普通代码块使用 KawaPress 自有的 `v-pre` Shiki transformer 保护 Vue 插值；活跃 Twoslash 代码块由 KawaPress transformer 移除 `v-pre` 并完成花括号转义，不再使用高亮后恢复 `{{ }}` 的方案。
 - Twoslash 的浮层 UI 使用 Floating Vue；本阶段不自制 Tooltip/Popover 组件，也不开放 Floating Vue 运行侧配置。KawaPress 只提供一层透明的 `KawaTwoslashMenu` 适配组件，用 Vue `useId()` 向 Floating Vue 传入 SSR/client 稳定一致的 `ariaId`，避免其随机 ID 造成 hydration mismatch。

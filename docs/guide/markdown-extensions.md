@@ -193,3 +193,50 @@ export default nagi({
 ```
 
 开启后，可以使用 `:no-line-numbers` 关闭某一个代码块的行号。
+
+### 代码标注 {#code-annotations}
+
+代码标注只改变需要关注的行，不会把控制文字显示给读者。它们写在当前语言支持的注释中，例如 JavaScript 的 `//`、Shell 的 `#` 或 HTML 的 `<!-- -->`。
+
+在代码围栏中使用 `{2,4-5}`，可以直接按行号高亮：
+
+````md
+```ts {2,4-5}
+const first = 1
+const second = 2
+const third = 3
+const fourth = 4
+const fifth = 5
+```
+````
+
+也可以使用 `[!code highlight]` 标记当前行：
+
+```ts {1}
+const ordinary = '按行号高亮'
+const highlighted = '按注释高亮' // [!code highlight]
+```
+
+使用 `[!code focus]` 聚焦一行。其他行会暂时淡出，把鼠标移入代码块或用键盘聚焦后即可查看全部内容：
+
+```ts
+const before = '辅助信息'
+const target = '当前重点' // [!code focus]
+const after = '辅助信息'
+```
+
+使用 `[!code --]` 和 `[!code ++]` 表示删除与新增；复制代码时会自动排除删除行：
+
+```ts
+const mode = 'legacy' // [!code --]
+const mode = 'modern' // [!code ++]
+```
+
+最后，可以用 `[!code warning]` 和 `[!code error]` 标出风险：
+
+```ts
+console.warn('请先检查配置') // [!code warning]
+throw new Error('配置无效') // [!code error]
+```
+
+在标注后加上数字，例如 `[!code focus:2]`，可以从当前行开始连续标记两行。

@@ -433,6 +433,92 @@
   line-height: var(--nagi-code-line-height);
 }
 
+.nagi-doc .kawa-code-block code :is(mark.line, ins.line, del.line) {
+  color: inherit;
+  text-decoration: none;
+  background: transparent;
+}
+
+.nagi-doc .kawa-code-block code .line:is(.highlighted, .diff) {
+  position: relative;
+  display: inline-block;
+  width: calc(100% + 3rem);
+  margin: 0 -1.5rem;
+  padding: 0 1.5rem;
+  transition: background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nagi-doc .kawa-code-block code .line.highlighted {
+  background: var(--nagi-code-line-highlight-bg);
+}
+
+.nagi-doc .kawa-code-block code .line.highlighted.info {
+  background: var(--nagi-code-line-info-bg);
+}
+
+.nagi-doc .kawa-code-block code .line.highlighted.warning {
+  background: var(--nagi-code-line-warning-bg);
+}
+
+.nagi-doc .kawa-code-block code .line.highlighted.warning::before {
+  position: absolute;
+  left: 0.625rem;
+  color: var(--nagi-c-warning-1);
+  font-weight: 700;
+  content: '!';
+}
+
+.nagi-doc .kawa-code-block code .line.highlighted.error {
+  background: var(--nagi-code-line-error-bg);
+}
+
+.nagi-doc .kawa-code-block code .line.highlighted.error::before {
+  position: absolute;
+  left: 0.625rem;
+  color: var(--nagi-c-danger-1);
+  font-weight: 700;
+  content: '×';
+}
+
+.nagi-doc .kawa-code-block code .line.diff::before {
+  position: absolute;
+  left: 0.625rem;
+  font-weight: 600;
+}
+
+.nagi-doc .kawa-code-block code .line.diff.add {
+  background: var(--nagi-code-line-diff-add-bg);
+}
+
+.nagi-doc .kawa-code-block code .line.diff.add::before {
+  color: var(--nagi-c-success-1);
+  content: '+';
+}
+
+.nagi-doc .kawa-code-block code .line.diff.remove {
+  background: var(--nagi-code-line-diff-remove-bg);
+  opacity: 0.72;
+}
+
+.nagi-doc .kawa-code-block code .line.diff.remove::before {
+  color: var(--nagi-c-danger-1);
+  content: '-';
+}
+
+.nagi-doc .kawa-code-block .has-focused-lines .line:not(.has-focus) {
+  filter: blur(0.095rem);
+  opacity: 0.45;
+  transition:
+    filter 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nagi-doc .kawa-code-block:is(:hover, :focus-within)
+  .has-focused-lines .line:not(.has-focus) {
+  filter: blur(0);
+  opacity: 1;
+}
+
 .nagi-doc .kawa-code-block__language {
   position: absolute;
   z-index: 1;

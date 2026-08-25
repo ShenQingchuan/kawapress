@@ -25,6 +25,7 @@
     "vue": "catalog:frontend"
   },
   "dependencies": {
+    "@shikijs/transformers": "catalog:markdown",
     "@shikijs/twoslash": "catalog:markdown",
     "floating-vue": "catalog:frontend",
     "mdast-util-from-markdown": "catalog:markdown",
@@ -35,6 +36,7 @@
     "typescript": "catalog:dev"
   },
   "devDependencies": {
+    "markdown-exit": "catalog:markdown",
     "vue": "catalog:frontend"
   }
 }

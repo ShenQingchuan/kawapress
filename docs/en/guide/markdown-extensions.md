@@ -193,3 +193,50 @@ export default nagi({
 ```
 
 Once enabled, use `:no-line-numbers` to disable them for one code block.
+
+### Code Annotations {#code-annotations}
+
+Code annotations draw attention to selected lines without showing their control text to readers. Put them in comments supported by the current language, such as `//` in JavaScript, `#` in Shell, or `<!-- -->` in HTML.
+
+Use `{2,4-5}` in the opening fence to highlight lines by number:
+
+````md
+```ts {2,4-5}
+const first = 1
+const second = 2
+const third = 3
+const fourth = 4
+const fifth = 5
+```
+````
+
+Use `[!code highlight]` to highlight the current line instead:
+
+```ts {1}
+const ordinary = 'Highlighted by line number'
+const highlighted = 'Highlighted by notation' // [!code highlight]
+```
+
+Use `[!code focus]` to focus one line. Other lines remain subdued until the reader hovers the code block or focuses it with the keyboard:
+
+```ts
+const before = 'Supporting context'
+const target = 'Current focus' // [!code focus]
+const after = 'Supporting context'
+```
+
+Use `[!code --]` and `[!code ++]` for removed and added lines. Copying the block automatically excludes removed lines:
+
+```ts
+const mode = 'legacy' // [!code --]
+const mode = 'modern' // [!code ++]
+```
+
+Use `[!code warning]` and `[!code error]` to mark risks:
+
+```ts
+console.warn('Check the configuration first') // [!code warning]
+throw new Error('Invalid configuration') // [!code error]
+```
+
+Append a count, such as `[!code focus:2]`, to annotate consecutive lines starting with the current line.

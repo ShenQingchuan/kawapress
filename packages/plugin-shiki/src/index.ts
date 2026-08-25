@@ -3,6 +3,13 @@ import type {
 } from '@shikijs/twoslash'
 import type { KawaPressPlugin } from 'kawapress'
 import type { ShikiTransformer } from 'shiki'
+import {
+  transformerMetaHighlight,
+  transformerNotationDiff,
+  transformerNotationErrorLevel,
+  transformerNotationFocus,
+  transformerNotationHighlight,
+} from '@shikijs/transformers'
 import { createTransformerFactory } from '@shikijs/twoslash'
 import { definePlugin } from 'kawapress'
 import { createHighlighter } from 'shiki'
@@ -93,7 +100,18 @@ type Highlighter = Awaited<ReturnType<typeof createHighlighter>>
 function createTransformers(
   options: ShikiPluginOptions,
 ): ShikiTransformer[] {
-  const transformers: ShikiTransformer[] = [createVPreTransformer()]
+  const transformers: ShikiTransformer[] = [
+    transformerMetaHighlight(),
+    transformerNotationDiff(),
+    transformerNotationFocus({
+      classActiveLine: 'has-focus',
+      classActivePre: 'has-focused-lines',
+    }),
+    transformerNotationHighlight(),
+    transformerNotationErrorLevel(),
+    createSemanticAnnotationTransformer(),
+    createVPreTransformer(),
+  ]
 
   if (options.twoslash) {
     const twoslashOptions = options.twoslash === true
@@ -103,14 +121,65 @@ function createTransformers(
   }
 
   transformers.push(...(options.transformers ?? []))
+  transformers.push(createRenderedLineCountTransformer())
   return transformers
+}
+
+function createSemanticAnnotationTransformer(): ShikiTransformer {
+  return {
+    name: 'kawapress:semantic-code-annotations',
+    code(node) {
+      for (const child of node.children) {
+        if (child.type !== 'element') {
+          continue
+        }
+        const classes = child.properties.class
+        const classNames = new Set(Array.isArray(classes)
+          ? classes.map(String)
+          : classes ? [String(classes)] : [])
+        if (!classNames.has('line')) {
+          continue
+        }
+        if (classNames.has('diff') && classNames.has('remove')) {
+          child.tagName = 'del'
+        }
+        else if (classNames.has('diff') && classNames.has('add')) {
+          child.tagName = 'ins'
+        }
+        else if (classNames.has('highlighted') || classNames.has('has-focus')) {
+          child.tagName = 'mark'
+        }
+      }
+    },
+  }
+}
+
+function createRenderedLineCountTransformer(): ShikiTransformer {
+  return {
+    name: 'kawapress:rendered-line-count',
+    code(node) {
+      const lineCount = node.children.filter((child) => {
+        if (child.type !== 'element') {
+          return false
+        }
+        const classes = child.properties.class
+        return Array.isArray(classes)
+          ? classes.map(String).includes('line')
+          : typeof classes === 'string'
+            && classes.split(/\s+/).includes('line')
+      }).length
+      this.pre.properties['data-kawa-line-count'] = Math.max(1, lineCount)
+    },
+  }
 }
 
 function createVPreTransformer(): ShikiTransformer {
   return {
     name: V_PRE_TRANSFORMER_NAME,
     pre(node) {
-      node.properties['v-pre'] = ''
+      if (!this.meta.twoslash) {
+        node.properties['v-pre'] = ''
+      }
     },
   }
 }
@@ -130,18 +199,6 @@ function createTwoslashTransformer(
   return {
     ...transformer,
     name: 'kawapress:twoslash',
-    preprocess(code, context) {
-      const result = transformer.preprocess?.call(this, code, context)
-      if (this.meta.twoslash) {
-        const vPre = context.transformers?.find(
-          item => item.name === V_PRE_TRANSFORMER_NAME,
-        )
-        if (vPre) {
-          context.transformers?.splice(context.transformers.indexOf(vPre), 1)
-        }
-      }
-      return result
-    },
     postprocess(html) {
       if (this.meta.twoslash) {
         return html.replaceAll('{', '&#123;')

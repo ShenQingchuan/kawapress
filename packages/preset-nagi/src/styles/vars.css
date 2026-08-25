@@ -94,6 +94,36 @@
     var(--nagi-c-text-3) 14%,
     transparent
   );
+  --nagi-code-line-highlight-bg: color-mix(
+    in oklab,
+    var(--nagi-c-brand-1) 12%,
+    transparent
+  );
+  --nagi-code-line-info-bg: color-mix(
+    in oklab,
+    var(--nagi-c-info-1) 12%,
+    transparent
+  );
+  --nagi-code-line-warning-bg: color-mix(
+    in oklab,
+    var(--nagi-c-warning-1) 14%,
+    transparent
+  );
+  --nagi-code-line-error-bg: color-mix(
+    in oklab,
+    var(--nagi-c-danger-1) 13%,
+    transparent
+  );
+  --nagi-code-line-diff-add-bg: color-mix(
+    in oklab,
+    var(--nagi-c-success-1) 13%,
+    transparent
+  );
+  --nagi-code-line-diff-remove-bg: color-mix(
+    in oklab,
+    var(--nagi-c-danger-1) 13%,
+    transparent
+  );
 
   --nagi-scrollbar-thumb: color-mix(
     in oklab,
