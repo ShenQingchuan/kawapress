@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@kawapress/plugin-code-group": "workspace:*",
+    "@kawapress/plugin-container": "workspace:*",
     "@kawapress/plugin-search": "workspace:*",
     "@kawapress/plugin-shiki": "workspace:*",
     "@kawapress/plugin-unocss": "workspace:*",

@@ -1,6 +1,7 @@
 import type { PresetConfig } from 'kawapress'
 import type { NagiThemeConfig, ResolvedNagiThemeConfig } from './theme-config'
 import { codeGroupPlugin } from '@kawapress/plugin-code-group'
+import { containerPlugin } from '@kawapress/plugin-container'
 import { searchPlugin } from '@kawapress/plugin-search'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
 import { unocssPlugin } from '@kawapress/plugin-unocss'
@@ -31,6 +32,7 @@ export type { NagiThemeConfig } from './theme-config'
 export function nagi(userConfig: NagiConfig = {}): NagiConfig {
   const createConfig = definePreset<NagiThemeConfig>({
     plugins: [
+      containerPlugin(),
       codeGroupPlugin(),
       searchPlugin(),
       shikiPlugin({

@@ -62,6 +62,9 @@ catalogs:
     '@mdit-vue/plugin-sfc':
       specifier: ^3.0.2
       version: 3.0.2
+    '@mdit/plugin-attrs':
+      specifier: 1.1.1
+      version: 1.1.1
     '@mdit/plugin-container':
       specifier: ^1.0.2
       version: 1.0.2
@@ -164,6 +167,9 @@ importers:
       '@mdit-vue/plugin-sfc':
         specifier: catalog:markdown
         version: 3.0.2
+      '@mdit/plugin-attrs':
+        specifier: catalog:markdown
+        version: 1.1.1(markdown-it@14.3.0)
       '@unhead/vue':
         specifier: catalog:frontend
         version: 3.3.2(@oxc-project/types@0.146.0)(lightningcss@1.33.0)(oxc-parser@0.131.0)(rolldown@1.2.5)(vite@8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
@@ -217,11 +223,27 @@ importers:
         specifier: catalog:frontend
         version: 3.5.41(typescript@6.0.3)
 
+  packages/plugin-container:
+    dependencies:
+      '@mdit/plugin-container':
+        specifier: catalog:markdown
+        version: 1.0.2(markdown-it@14.3.0)
+      kawapress:
+        specifier: workspace:*
+        version: link:../kawapress
+    devDependencies:
+      markdown-exit:
+        specifier: catalog:markdown
+        version: 1.1.0-beta.2
+
   packages/plugin-search:
     dependencies:
       '@mdit-vue/plugin-frontmatter':
         specifier: catalog:markdown
         version: 3.0.2
+      '@mdit/plugin-attrs':
+        specifier: catalog:markdown
+        version: 1.1.1(markdown-it@14.3.0)
       markdown-exit:
         specifier: catalog:markdown
         version: 1.1.0-beta.2
@@ -300,6 +322,9 @@ importers:
       '@kawapress/plugin-code-group':
         specifier: workspace:*
         version: link:../plugin-code-group
+      '@kawapress/plugin-container':
+        specifier: workspace:*
+        version: link:../plugin-container
       '@kawapress/plugin-search':
         specifier: workspace:*
         version: link:../plugin-search
@@ -610,6 +635,24 @@ packages:
   '@mdit-vue/types@3.0.2':
     resolution: {integrity: sha512-00aAZ0F0NLik6I6Yba2emGbHLxv+QYrPH00qQ5dFKXlAo1Ll2RHDXwY7nN2WAfrx2pP+WrvSRFTGFCNGdzBDHw==}
     engines: {node: '>=20.0.0'}
+
+  '@mdit/helper@1.0.1':
+    resolution: {integrity: sha512-zAzShsRZmkqjuoOFg6/zTCYVpvghj9a30Cl/eOGkE0xzRJJJG8T18eqb2lgceQhjVLWHK02HNVkzyfNHc429lQ==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      markdown-it: ^14.2.0
+    peerDependenciesMeta:
+      markdown-it:
+        optional: true
+
+  '@mdit/plugin-attrs@1.1.1':
+    resolution: {integrity: sha512-DgBqzdg8stCGtCsQUJLWhHsyk2HnNp/2d/h5WV9Op2lMGnHA8hjOgnHbmwp0AD8djfv+uUCD6VlOCw3y4L/rGQ==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      markdown-it: ^14.2.0
+    peerDependenciesMeta:
+      markdown-it:
+        optional: true
 
   '@mdit/plugin-container@1.0.2':
     resolution: {integrity: sha512-gCpqmadamWVbDI7+OgkywDGjfgqxrjZo3U+iK+sH7vERnZyX4sx1X65pXbqrem8Q5/4yO5t0d+kWkPC733ceRw==}
@@ -3198,6 +3241,19 @@ snapshots:
       markdown-it: 14.3.0
 
   '@mdit-vue/types@3.0.2': {}
+
+  '@mdit/helper@1.0.1(markdown-it@14.3.0)':
+    dependencies:
+      '@types/markdown-it': 14.2.0
+    optionalDependencies:
+      markdown-it: 14.3.0
+
+  '@mdit/plugin-attrs@1.1.1(markdown-it@14.3.0)':
+    dependencies:
+      '@mdit/helper': 1.0.1(markdown-it@14.3.0)
+      '@types/markdown-it': 14.2.0
+    optionalDependencies:
+      markdown-it: 14.3.0
 
   '@mdit/plugin-container@1.0.2(markdown-it@14.3.0)':
     dependencies:

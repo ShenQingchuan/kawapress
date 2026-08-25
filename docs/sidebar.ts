@@ -42,5 +42,20 @@ export const sidebars = defineLocalizedSidebars({
         },
       ],
     },
+    {
+      text: {
+        zhCN: '写作',
+        en: 'Writing',
+      },
+      items: [
+        {
+          text: {
+            zhCN: 'Markdown 语法扩展',
+            en: 'Markdown Extensions',
+          },
+          link: '/guide/markdown-extensions',
+        },
+      ],
+    },
   ],
 })

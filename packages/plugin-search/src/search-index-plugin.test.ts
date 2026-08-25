@@ -53,6 +53,25 @@ title: 入门
     ])
   })
 
+  it('indexes custom container content without its fence markers', () => {
+    const documents = createSearchDocuments(`# Page\n\n::: tip\nKeep this searchable.\n:::\n`, '/guide/page')
+
+    expect(documents[0]).toMatchObject({
+      id: '/guide/page',
+      text: 'Keep this searchable.',
+    })
+  })
+
+  it('uses custom heading anchors for search section links', () => {
+    const documents = createSearchDocuments(`# 页面\n\n介绍。\n\n## 配置 {#configuration}\n\n配置正文。\n`, '/guide/page')
+
+    expect(documents[1]).toMatchObject({
+      id: '/guide/page#configuration',
+      title: '配置',
+      text: '配置正文。',
+    })
+  })
+
   it('excludes pages that disable search', () => {
     expect(createSearchDocuments(`---
 search: false

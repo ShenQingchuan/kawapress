@@ -360,7 +360,13 @@ Markdown 引擎使用 `markdown-exit`：
 
 代码高亮使用 Shiki，并作为原子 Plugin 接入 `markdown()`。Shiki transformer 保持可配置。Twoslash 不属于 0.1 范围，等待 Runtime Plugin 与浮层 UI 能力稳定后再实现。
 
-### 7.1 Shiki 与 Twoslash 增强
+### 7.1 标题锚点与自定义锚点
+
+标题身份属于 Core 的 Markdown 编译契约。KawaPress 在 `markdown-it-anchor` 之前使用 `@mdit/plugin-attrs`，只启用 `heading` 规则并只允许 `id` 属性，从而支持 VitePress 风格的标题后缀 `## 标题 {#stable-id}`，但不顺带开放标题 `class`、`style` 或事件属性。后缀不进入可见标题；显式 ID 直接成为标题 DOM `id` 和 permalink `href`。自动锚点继续根据标题生成并对重复值追加数字后缀；重复的显式 ID 在构建时直接报错。
+
+同一个标题 token 上的最终 `id` 必须同时进入 `pageData.headers`、nagi 本页目录、初始 hash active 与本地搜索章节链接，不能由各功能再次独立 slugify。Search Plugin 的索引 Markdown 解析器安装同样的 heading attrs 与 anchor 顺序。官方双语《Markdown 语法扩展 / Markdown Extensions》使用相同的英文自定义 ID dogfood 多语言稳定锚点；用户文档只解释语法、slugify、稳定章节链接和多语言共享 ID 的用途，不写个人归属或项目历史故事。
+
+### 7.2 Shiki 与 Twoslash 增强
 
 0.1 检查点完成后，Shiki 从核心包迁移为普通逻辑插件包 `@kawapress/plugin-shiki`：
 
@@ -391,17 +397,23 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 - 普通代码块使用 KawaPress 自有的 `v-pre` Shiki transformer 保护 Vue 插值；活跃 Twoslash 代码块由 KawaPress transformer 移除 `v-pre` 并完成花括号转义，不再使用高亮后恢复 `{{ }}` 的方案。
 - Twoslash 的浮层 UI 使用 Floating Vue；本阶段不自制 Tooltip/Popover 组件，也不开放 Floating Vue 运行侧配置。KawaPress 只提供一层透明的 `KawaTwoslashMenu` 适配组件，用 Vue `useId()` 向 Floating Vue 传入 SSR/client 稳定一致的 `ariaId`，避免其随机 ID 造成 hydration mismatch。
 
-### 7.2 Code Group
+### 7.3 Code Group
 
 通用代码 Tab 能力由独立逻辑插件包 `@kawapress/plugin-code-group` 提供，不写死在 Core 或 nagi 组件中。默认入口在 Markdown 管线解析 VitePress 风格的 `::: code-group` 容器与代码围栏后的 `[标签]`，生成结构稳定的 `KawaCodeGroup` 组件槽位；`./runtime-plugin` 注册真实 Vue 组件，负责 Tab 选择、方向键、Home、End、ARIA 关系与 SSR/client 稳定 ID。容器只接受 fenced code block，其他正文直接给出可执行的编译错误。
 
 插件只负责结构、状态和 `.kawa-code-group*` 稳定 class；nagi 负责其视觉样式。nagi 的 Code Group Tab 栏纵向严格裁切，不出现原生滚动条或越界滚动；Tab 过多时仍可横向滑动，但隐藏原生滚动条并阻止滚动越界传递。nagi Preset 默认组合该插件，官方《快速开始》使用它展示 npm、pnpm 与 Yarn 命令，不能把三个高频包管理器命令堆成连续普通代码块。
 
-### 7.3 UnoCSS
+### 7.4 UnoCSS
 
 原子 CSS 能力由独立逻辑插件包 `@kawapress/plugin-unocss` 提供，不写死在 Core。Generator Plugin 通过公开的 `api.vite()` 注入 `unocss/vite`；`./runtime-plugin` 静态导入 `virtual:uno.css`，让 SSR 与 client 使用同一份样式入口，站点用户不手动导入生成 CSS。插件接受 UnoCSS 的类型化 Vite 配置，并继续让 UnoCSS 从站点根目录发现和热更新 `uno.config.*` 或 `unocss.config.*`。
 
 nagi Preset 默认组合该插件，并默认启用 `presetWind4`、`presetIcons` 与 `presetWebFonts`。Wind4 保留按需 theme 变量和 property 生成，但显式关闭会影响 nagi 与其他独立 Plugin 的全局 reset。默认 Icons 不捆绑具体 Iconify 图标集，默认 Web Fonts 不声明字体且不发起网络请求；站点只有在实际配置图标集或字体时才承担对应资源。只使用默认工具类的 nagi 站点仍只安装 `kawapress`；站点需要在 `uno.config.ts` 直接导入 UnoCSS API、额外 preset 或 Iconify collection 时，应显式安装并声明对应包。官方文档里的 UnoCSS 示例直接使用 Wind4 调色板值，不依赖 nagi 私有 CSS 变量；示例卡片使用 `bg-indigo-500/8` 低透明度背景，文字继承 nagi 已针对明暗模式调好的正文颜色，不使用侧边粗色条，并在渲染结果下方直接展示对应 HTML。
+
+### 7.5 Custom Container
+
+通用提示容器由独立生成侧插件包 `@kawapress/plugin-container` 提供，不写死在 Core、nagi 或 Shiki 中。0.1 支持 `info`、`tip`、`warning`、`danger` 与使用原生 `<details>/<summary>` 的 `details`；标题可以省略或在容器类型后显式填写，并允许普通 Markdown 行内内容。插件只输出语义 HTML 与 `.kawa-container*` 稳定 class，不需要浏览器 Runtime Plugin；nagi 默认组合该插件并负责明暗主题视觉。
+
+默认标题根据当前页面 URL locale 对应配置的 `lang` 决定，内置中文和英文，其他语言回退英文；插件选项允许按全局或 locale key 覆盖标题。Core 在 Markdown env 中提供当前公开路由 `path`，只用于生成期插件解析当前页面上下文，不进入 pageData 或公开运行时 API。`raw` 不进入本插件：它同时涉及主题 CSS 隔离与 Router 链接接管，是未来单独设计的沙箱边界。GitHub 风格 Alerts 也使用独立插件，避免把两种作者语法绑定为同一安装单元。
 
 ## 八、配置与数据
 
@@ -495,7 +507,7 @@ docs
 - KawaPress 不在 TypeScript、Vitest 或 Vite 中启用自定义 `source` condition。Vite 的 SSR plugin pipeline 单独使用 `module` condition，确保进入 Module Runner 的 Vue 依赖选择 ESM 入口；否则 dev SSR 会把 `@vue/server-renderer` 的 CommonJS 入口与 top-level await 放入同一执行图并触发 `ERR_AMBIGUOUS_MODULE_SYNTAX`。这是 SSR 依赖解析约束，不是插件 package exports 约定。
 - Runtime Plugin 静态导入的 Vue SFC 与 CSS 由用户站点的 Vite 自动打包；用户不需要单独导入主题或插件 CSS。
 - KawaPress 使用 `docs` 工作区维护并构建自己的真实文档，不保留独立 playground；根目录的 `pnpm dev`、`pnpm build` 与 `pnpm preview` 分别代理文档站命令。新增功能直接进入真实文档，文档写作与构建过程作为持续 dogfooding。
-- 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。简介分组依次放置《KawaPress 是什么？》《快速开始》《路由》《部署》；《部署》只说明构建、生产预览、`base`、通用静态托管要求与缓存，不维护重复前文的发布检查清单，也不维护各托管平台的专属部署指南。
+- 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。简介分组依次放置《KawaPress 是什么？》《快速开始》《路由》《部署》；《部署》只说明构建、生产预览、`base`、通用静态托管要求与缓存，不维护重复前文的发布检查清单，也不维护各托管平台的专属部署指南。简介之后建立“写作 / Writing”分组，第一篇为《Markdown 语法扩展 / Markdown Extensions》；自定义锚点章节只解释语法、slugify、稳定章节链接和跨语言共享英文语义 ID 的用途。
 - 中文文档使用自然、亲和、温暖的高语境表达，循序渐进地帮助用户理解；英文文档使用直接、明确、低语境的表达，不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。
 - 官方文档以 KawaPress 0.1 的预期终态为准，按正式发布后用户真正使用产品的方式编写，不暴露 `workspace:*`、未发布版本号、仓库内部代理命令等开发期临时状态。文档可以先于对应实现成文，但不得超出本文确定的 0.1 交付范围；功能完成后必须通过 `docs` dogfooding 校验文档中的命令、配置与行为。
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。

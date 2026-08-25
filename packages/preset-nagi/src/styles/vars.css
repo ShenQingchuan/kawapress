@@ -49,6 +49,10 @@
     oklch(0.55 0.2 25),
     oklch(0.72 0.16 20)
   );
+  --nagi-c-success-1: light-dark(
+    oklch(0.5 0.14 150),
+    oklch(0.76 0.13 150)
+  );
   --nagi-c-warning-1: light-dark(
     oklch(0.55 0.13 75),
     oklch(0.78 0.13 80)

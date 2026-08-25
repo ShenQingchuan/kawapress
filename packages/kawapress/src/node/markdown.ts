@@ -5,12 +5,14 @@ import { componentPlugin } from '@mdit-vue/plugin-component'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
 import { headersPlugin } from '@mdit-vue/plugin-headers'
 import { sfcPlugin } from '@mdit-vue/plugin-sfc'
+import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../base'
 import { stringifyJsonForScript } from '../json'
 
 interface MarkdownEnv {
+  path: string
   frontmatter?: Record<string, unknown>
   headers?: PageHeader[]
   sfcBlocks?: {
@@ -36,6 +38,10 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   md.use(frontmatterPlugin as any)
   md.use(sfcPlugin as any)
   md.use(componentPlugin as any)
+  md.use(attrsPlugin as any, {
+    allowed: ['id'],
+    rule: ['heading'],
+  })
   md.use(anchorPlugin as any, {
     level: [1, 2, 3, 4, 5, 6],
     permalink: anchorPlugin.permalink.linkInsideHeader({
@@ -75,7 +81,7 @@ export interface ParsedMarkdown {
 }
 
 export function parseMarkdown(md: MarkdownExit, src: string, path: string): ParsedMarkdown {
-  const env: MarkdownEnv = {}
+  const env: MarkdownEnv = { path }
   // markdown-exit's renderAsync drops env writes from core-ruler plugins (@mdit-vue); sync render works
   const html = md.render(src, env)
 

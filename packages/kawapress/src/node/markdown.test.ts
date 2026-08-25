@@ -40,6 +40,32 @@ describe('compileMarkdownToVue', () => {
     })
   })
 
+  it('keeps custom heading anchors in rendered HTML and page data', async () => {
+    const { code, pageData } = compileMarkdownToVue(
+      md,
+      '## **配置指南** {#configuration}\n',
+      '/guide/configuration',
+    )
+
+    expect(code).toContain('<h2 id="configuration"')
+    expect(code).toContain('class="header-anchor" href="#configuration"')
+    expect(code).not.toContain('{#configuration}')
+    expect(pageData.headers[0]).toMatchObject({
+      level: 2,
+      title: '配置指南',
+      slug: 'configuration',
+      link: '#configuration',
+    })
+  })
+
+  it('rejects duplicate custom heading anchors', () => {
+    expect(() => compileMarkdownToVue(
+      md,
+      '## One {#shared}\n\n## Two {#shared}\n',
+      '/duplicate-anchors',
+    )).toThrow('User defined `id` attribute `shared` is not unique')
+  })
+
   it('prefixes rooted internal links with the site base', async () => {
     const { code } = await compileMarkdownToVue(
       mdWithBase,

@@ -5,6 +5,7 @@ import type { SearchDocument } from './search'
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
+import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { stringifyJson } from 'kawapress'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
@@ -34,6 +35,10 @@ interface MutableSearchSection {
 
 const searchMarkdown = createMarkdownExit({ html: true })
 searchMarkdown.use(frontmatterPlugin as any)
+searchMarkdown.use(attrsPlugin as any, {
+  allowed: ['id'],
+  rule: ['heading'],
+})
 searchMarkdown.use(anchorPlugin as any, { level: [1, 2, 3, 4, 5, 6] })
 
 export function searchIndexPlugin(
@@ -219,15 +224,27 @@ export function createSearchDocuments(
 }
 
 function getInlineText(token: Token): string {
-  return normalizeText((token.children ?? [])
-    .filter(child => child.type === 'text' || child.type === 'code_inline')
-    .map(child => child.content)
-    .join(''))
+  return normalizeText(getInlineRawText(token))
+}
+
+function getInlineRawText(token: Token): string {
+  return (token.children ?? [])
+    .filter(child => child.type === 'text'
+      || child.type === 'code_inline'
+      || child.type === 'softbreak'
+      || child.type === 'hardbreak')
+    .map(child => child.type === 'softbreak' || child.type === 'hardbreak'
+      ? '\n'
+      : child.content)
+    .join('')
 }
 
 function getTokenText(token: Token): string {
   if (token.type === 'inline') {
-    return getInlineText(token)
+    return normalizeText(getInlineRawText(token)
+      .split(/\r?\n/)
+      .filter(line => !/^:::(?:\s+\S.*)?$/.test(line.trim()))
+      .join('\n'))
   }
   if (token.type === 'fence' || token.type === 'code_block') {
     return token.content

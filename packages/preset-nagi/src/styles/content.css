@@ -109,6 +109,90 @@
   margin-top: 0.5rem;
 }
 
+.nagi-doc .kawa-container {
+  --kawa-container-accent: var(--nagi-c-brand-1);
+
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  color: var(--nagi-c-text-2);
+  border: 1px solid color-mix(
+    in oklab,
+    var(--kawa-container-accent) 24%,
+    var(--nagi-c-divider)
+  );
+  border-radius: 0.75rem;
+  background: color-mix(
+    in oklab,
+    var(--kawa-container-accent) 7%,
+    var(--nagi-c-bg)
+  );
+}
+
+.nagi-doc .kawa-container--tip {
+  --kawa-container-accent: var(--nagi-c-success-1);
+}
+
+.nagi-doc .kawa-container--warning {
+  --kawa-container-accent: var(--nagi-c-warning-1);
+}
+
+.nagi-doc .kawa-container--danger {
+  --kawa-container-accent: var(--nagi-c-danger-1);
+}
+
+.nagi-doc .kawa-container--details {
+  --kawa-container-accent: var(--nagi-c-text-2);
+
+  background: var(--nagi-c-bg-soft);
+}
+
+.nagi-doc .kawa-container > .kawa-container__title {
+  margin: 0;
+  color: var(--kawa-container-accent);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.nagi-doc .kawa-container > :last-child {
+  margin-bottom: 0;
+}
+
+.nagi-doc .kawa-container > .kawa-container__title + :where(p, ul, ol, pre) {
+  margin-top: 0.625rem;
+}
+
+.nagi-doc details.kawa-container > summary.kawa-container__title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.nagi-doc details.kawa-container > summary.kawa-container__title::-webkit-details-marker {
+  display: none;
+}
+
+.nagi-doc details.kawa-container > summary.kawa-container__title::after {
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-left: auto;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  content: '';
+  transform: rotate(45deg) translate(-0.1rem, 0.1rem);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nagi-doc details.kawa-container[open] > summary.kawa-container__title::after {
+  transform: rotate(225deg) translate(-0.1rem, 0.1rem);
+}
+
+.nagi-doc details.kawa-container > summary.kawa-container__title:focus-visible {
+  outline: 2px solid var(--nagi-c-brand-1);
+  outline-offset: 0.25rem;
+}
+
 .nagi-doc a {
   margin-inline: 0.25rem;
   color: var(--nagi-c-brand-1);

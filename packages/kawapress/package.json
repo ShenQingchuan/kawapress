@@ -40,6 +40,7 @@
     "@mdit-vue/plugin-frontmatter": "catalog:markdown",
     "@mdit-vue/plugin-headers": "catalog:markdown",
     "@mdit-vue/plugin-sfc": "catalog:markdown",
+    "@mdit/plugin-attrs": "catalog:markdown",
     "@unhead/vue": "catalog:frontend",
     "@vitejs/plugin-vue": "catalog:node",
     "@vue/server-renderer": "catalog:frontend",
