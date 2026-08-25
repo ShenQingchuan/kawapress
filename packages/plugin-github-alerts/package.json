@@ -1,0 +1,27 @@
+{
+  "name": "@kawapress/plugin-github-alerts",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "GitHub-style Markdown alerts for KawaPress",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "kawapress": "workspace:*"
+  },
+  "dependencies": {
+    "@mdit/plugin-alert": "catalog:markdown"
+  },
+  "devDependencies": {
+    "markdown-exit": "catalog:markdown"
+  }
+}

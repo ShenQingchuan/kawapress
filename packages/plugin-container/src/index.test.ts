@@ -33,13 +33,24 @@ Hidden details.
 :::
 `)
 
-    expect(html).toContain('<div class="kawa-container kawa-container--info"><p class="kawa-container__title">Info</p>')
-    expect(html).toContain('<div class="kawa-container kawa-container--tip"><p class="kawa-container__title">Tip</p>')
-    expect(html).toContain('<div class="kawa-container kawa-container--warning"><p class="kawa-container__title">Warning</p>')
-    expect(html).toContain('<div class="kawa-container kawa-container--danger"><p class="kawa-container__title">Danger</p>')
-    expect(html).toContain('<details class="kawa-container kawa-container--details"><summary class="kawa-container__title">Details</summary>')
-    expect(html).toContain('<p>Hidden details.</p>')
-    expect(html).toContain('</details>')
+    expect(html).toMatchInlineSnapshot(`
+      "<div class="kawa-container kawa-container--info"><p class="kawa-container__title">Info</p>
+      <p>Information.</p>
+      </div>
+      <div class="kawa-container kawa-container--tip"><p class="kawa-container__title">Tip</p>
+      <p>A useful tip.</p>
+      </div>
+      <div class="kawa-container kawa-container--warning"><p class="kawa-container__title">Warning</p>
+      <p>Take care.</p>
+      </div>
+      <div class="kawa-container kawa-container--danger"><p class="kawa-container__title">Danger</p>
+      <p>Stop here.</p>
+      </div>
+      <details class="kawa-container kawa-container--details"><summary class="kawa-container__title">Details</summary>
+      <p>Hidden details.</p>
+      </details>
+      "
+    `)
   })
 
   it('renders inline Markdown in custom titles and nested content', () => {
@@ -52,9 +63,15 @@ Hidden details.
 :::
 `)
 
-    expect(html).toContain('<p class="kawa-container__title"><strong>Read carefully</strong></p>')
-    expect(html).toContain('<ul>')
-    expect(html).toContain('<li>First</li>')
+    expect(html).toMatchInlineSnapshot(`
+      "<div class="kawa-container kawa-container--warning"><p class="kawa-container__title"><strong>Read carefully</strong></p>
+      <ul>
+      <li>First</li>
+      <li>Second</li>
+      </ul>
+      </div>
+      "
+    `)
   })
 
   it('does not claim raw or GitHub alert syntax', () => {
@@ -69,8 +86,16 @@ Content
 > Content
 `)
 
-    expect(html).not.toContain('kawa-container')
-    expect(html).toContain('[!NOTE]')
+    expect(html).toMatchInlineSnapshot(`
+      "<p>::: raw
+      Content
+      :::</p>
+      <blockquote>
+      <p>[!NOTE]
+      Content</p>
+      </blockquote>
+      "
+    `)
   })
 
   it('localizes default titles from the page locale and accepts overrides', async () => {
@@ -94,12 +119,29 @@ Content
     const markdown = createMarkdownExit({ html: true })
     await handlers.markdown(markdown)
 
-    expect(markdown.render('::: tip\n内容\n:::', { path: '/guide' }))
-      .toContain('class="kawa-container__title">提示</p>')
-    expect(markdown.render('::: tip\nContent\n:::', { path: '/en/guide' }))
-      .toContain('class="kawa-container__title">Hint</p>')
-    expect(markdown.render('::: danger\nContent\n:::', { path: '/en/guide' }))
-      .toContain('class="kawa-container__title">Risk</p>')
+    expect({
+      chinese: markdown.render('::: tip\n内容\n:::', { path: '/guide' }),
+      english: markdown.render('::: tip\nContent\n:::', { path: '/en/guide' }),
+      globalOverride: markdown.render(
+        '::: danger\nContent\n:::',
+        { path: '/en/guide' },
+      ),
+    }).toMatchInlineSnapshot(`
+      {
+        "chinese": "<div class="kawa-container kawa-container--tip"><p class="kawa-container__title">提示</p>
+      <p>内容</p>
+      </div>
+      ",
+        "english": "<div class="kawa-container kawa-container--tip"><p class="kawa-container__title">Hint</p>
+      <p>Content</p>
+      </div>
+      ",
+        "globalOverride": "<div class="kawa-container kawa-container--danger"><p class="kawa-container__title">Risk</p>
+      <p>Content</p>
+      </div>
+      ",
+      }
+    `)
   })
 })
 

@@ -4,7 +4,7 @@ import { nagiSidebarMetaPlugin } from './sidebar-meta-plugin'
 
 const RUNTIME_DEPENDENCIES = ['overlayscrollbars-vue']
 
-export function createNagiPlugin(): KawaPressPlugin {
+export function nagiThemePlugin(): KawaPressPlugin {
   let siteConfig: SiteConfig | undefined
 
   return definePlugin({

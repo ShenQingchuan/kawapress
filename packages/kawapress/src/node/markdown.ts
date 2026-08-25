@@ -1,3 +1,4 @@
+import type { MarkdownSfcBlocks } from '@mdit-vue/plugin-sfc'
 import type { MarkdownExit } from 'markdown-exit'
 import type { PageData, PageHeader } from '../site'
 import type { GeneratorPluginRunner } from './plugin-runner'
@@ -10,16 +11,13 @@ import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../base'
 import { stringifyJsonForScript } from '../json'
+import { useMarkdownItPlugin } from '../markdown-it-compat'
 
 interface MarkdownEnv {
   path: string
   frontmatter?: Record<string, unknown>
   headers?: PageHeader[]
-  sfcBlocks?: {
-    scripts: { content: string }[]
-    styles: { content: string }[]
-    customBlocks: { content: string }[]
-  }
+  sfcBlocks?: MarkdownSfcBlocks
 }
 
 export interface CompiledPage {
@@ -34,15 +32,15 @@ export interface MarkdownCompilerOptions {
 
 export async function createMarkdownCompiler(options: MarkdownCompilerOptions = {}): Promise<MarkdownExit> {
   const md = createMarkdownExit({ html: true })
-  // @mdit-vue plugins are typed against markdown-it; runtime-compatible with markdown-exit
-  md.use(frontmatterPlugin as any)
-  md.use(sfcPlugin as any)
-  md.use(componentPlugin as any)
-  md.use(attrsPlugin as any, {
+  useMarkdownItPlugin(md, frontmatterPlugin)
+  useMarkdownItPlugin(md, sfcPlugin)
+  installAsyncSfcRenderCompatibility(md)
+  useMarkdownItPlugin(md, componentPlugin)
+  useMarkdownItPlugin(md, attrsPlugin, {
     allowed: ['id'],
     rule: ['heading'],
   })
-  md.use(anchorPlugin as any, {
+  useMarkdownItPlugin(md, anchorPlugin, {
     level: [1, 2, 3, 4, 5, 6],
     permalink: anchorPlugin.permalink.linkInsideHeader({
       class: 'header-anchor',
@@ -52,11 +50,35 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
     }),
   })
   // include h1: page title inference reads it; outline rendering filters to h2+ itself
-  md.use(headersPlugin as any, { level: [1, 2, 3] })
+  useMarkdownItPlugin(md, headersPlugin, { level: [1, 2, 3] })
   installBaseLinkRenderer(md, options.base ?? '/')
 
   await options.pluginRunner?.runMarkdown(md)
   return md
+}
+
+function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {
+  const renderAsync = md.renderAsync.bind(md)
+  md.renderAsync = async (source, env = {}) => {
+    const sfcBlocks: MarkdownSfcBlocks = {
+      template: null,
+      script: null,
+      scriptSetup: null,
+      scripts: [],
+      styles: [],
+      customBlocks: [],
+    }
+    env.sfcBlocks = sfcBlocks
+    const html = await renderAsync(source, env)
+    sfcBlocks.template = {
+      type: 'template',
+      content: `<template>${html}</template>`,
+      contentStripped: html,
+      tagOpen: '<template>',
+      tagClose: '</template>',
+    }
+    return html
+  }
 }
 
 function installBaseLinkRenderer(md: MarkdownExit, base: string): void {
@@ -80,10 +102,13 @@ export interface ParsedMarkdown {
   pageData: PageData
 }
 
-export function parseMarkdown(md: MarkdownExit, src: string, path: string): ParsedMarkdown {
+export async function parseMarkdown(
+  md: MarkdownExit,
+  src: string,
+  path: string,
+): Promise<ParsedMarkdown> {
   const env: MarkdownEnv = { path }
-  // markdown-exit's renderAsync drops env writes from core-ruler plugins (@mdit-vue); sync render works
-  const html = md.render(src, env)
+  const html = await md.renderAsync(src, env)
 
   const frontmatter = env.frontmatter ?? {}
   const headers = env.headers ?? []
@@ -96,12 +121,12 @@ export function parseMarkdown(md: MarkdownExit, src: string, path: string): Pars
   return { html, env, pageData }
 }
 
-export function compileMarkdownToVue(
+export async function compileMarkdownToVue(
   md: MarkdownExit,
   src: string,
   path: string,
-): CompiledPage {
-  const { html, env, pageData } = parseMarkdown(md, src, path)
+): Promise<CompiledPage> {
+  const { html, env, pageData } = await parseMarkdown(md, src, path)
   return { code: assembleVueSfc(html, env, pageData), pageData }
 }
 

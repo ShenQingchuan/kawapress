@@ -111,3 +111,85 @@ Never commit access tokens to a Git repository.
 ::: details View the complete configuration
 This can contain paragraphs, lists, and code blocks.
 :::
+
+## GitHub-Style Alerts {#github-alerts}
+
+GitHub-style alerts use blockquote syntax. They are useful when the same callout should work in both KawaPress documentation and a GitHub README. Put the alert type on the first line of the blockquote:
+
+```md
+> [!NOTE]
+> Information readers should not overlook, even when skimming.
+
+> [!TIP]
+> Advice that helps readers complete a task more smoothly.
+
+> [!IMPORTANT]
+> Information required to complete the current task.
+
+> [!WARNING]
+> A potential risk that needs immediate attention.
+
+> [!CAUTION]
+> A serious consequence that an action may cause.
+```
+
+The result is shown below. Alert names are case-insensitive, and visible titles follow the current page language:
+
+> [!NOTE]
+> Information readers should not overlook, even when skimming.
+
+> [!TIP]
+> Advice that helps readers complete a task more smoothly.
+
+> [!IMPORTANT]
+> Information required to complete the current task.
+
+> [!WARNING]
+> A potential risk that needs immediate attention.
+
+> [!CAUTION]
+> A serious consequence that an action may cause.
+
+## Code Blocks {#code-blocks}
+
+Add a language after the opening fence. KawaPress displays the language label and a copy button automatically:
+
+````md
+```ts
+const greeting = 'Hello, KawaPress'
+```
+````
+
+The button briefly confirms a successful copy. Its text follows the current page language.
+
+### Line Numbers {#line-numbers}
+
+Add `:line-numbers` after the language to show line numbers. Append a starting value when the snippet should begin at a specific line:
+
+````md
+```ts:line-numbers=5
+const first = 'Line five'
+const second = 'Line six'
+```
+````
+
+The result is:
+
+```ts:line-numbers=5
+const first = 'Line five'
+const second = 'Line six'
+```
+
+Enable line numbers in the nagi configuration when every code block should show them by default:
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  codeBlock: {
+    lineNumbers: true,
+  },
+})
+```
+
+Once enabled, use `:no-line-numbers` to disable them for one code block.

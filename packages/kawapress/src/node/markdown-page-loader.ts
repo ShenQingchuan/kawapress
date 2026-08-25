@@ -40,7 +40,7 @@ export function createMarkdownPageLoader(
       }
 
       const parsed = mdPromise.then(async (md) => {
-        const result = parseMarkdown(
+        const result = await parseMarkdown(
           md,
           source,
           markdownFileToRoutePath(file, sourceRoot),

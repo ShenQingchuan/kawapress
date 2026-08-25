@@ -45,6 +45,10 @@
     oklch(0.42 0.17 275),
     oklch(0.84 0.1 275)
   );
+  --nagi-c-info-1: light-dark(
+    oklch(0.52 0.16 245),
+    oklch(0.76 0.13 245)
+  );
   --nagi-c-danger-1: light-dark(
     oklch(0.55 0.2 25),
     oklch(0.72 0.16 20)

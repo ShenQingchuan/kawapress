@@ -111,3 +111,85 @@ KawaPress 提供五种容器。省略标题时，标题会根据当前页面语�
 ::: details 查看完整配置
 这里可以放普通段落、列表和代码块。
 :::
+
+## GitHub 风格的警报 {#github-alerts}
+
+GitHub 风格的警报使用引用块语法，适合需要在 KawaPress 文档与 GitHub README 之间保持一致的提示内容。警报类型单独写在引用块的第一行：
+
+```md
+> [!NOTE]
+> 即使快速浏览文档，也不应忽略的信息。
+
+> [!TIP]
+> 帮助读者更顺利完成目标的建议。
+
+> [!IMPORTANT]
+> 完成当前任务不可缺少的信息。
+
+> [!WARNING]
+> 需要立即留意的潜在风险。
+
+> [!CAUTION]
+> 某个操作可能带来的严重后果。
+```
+
+实际效果如下。警报名称不区分大小写，显示标题会跟随当前页面语言：
+
+> [!NOTE]
+> 即使快速浏览文档，也不应忽略的信息。
+
+> [!TIP]
+> 帮助读者更顺利完成目标的建议。
+
+> [!IMPORTANT]
+> 完成当前任务不可缺少的信息。
+
+> [!WARNING]
+> 需要立即留意的潜在风险。
+
+> [!CAUTION]
+> 某个操作可能带来的严重后果。
+
+## 代码块 {#code-blocks}
+
+在代码围栏后写上语言名称，KawaPress 会显示语言标签和复制按钮：
+
+````md
+```ts
+const greeting = '你好，KawaPress'
+```
+````
+
+复制成功后，按钮会短暂显示反馈。按钮文案会跟随当前页面语言。
+
+### 行号 {#line-numbers}
+
+在语言名称后加上 `:line-numbers` 可以显示行号。再写一个起始数字，就能从指定位置开始计数：
+
+````md
+```ts:line-numbers=5
+const first = '第五行'
+const second = '第六行'
+```
+````
+
+实际效果如下：
+
+```ts:line-numbers=5
+const first = '第五行'
+const second = '第六行'
+```
+
+需要让所有代码块默认显示行号时，可以在 nagi 配置中开启：
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  codeBlock: {
+    lineNumbers: true,
+  },
+})
+```
+
+开启后，可以使用 `:no-line-numbers` 关闭某一个代码块的行号。

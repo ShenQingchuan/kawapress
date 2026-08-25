@@ -2,7 +2,7 @@ import type { MarkdownItContainerOptions } from '@mdit/plugin-container'
 import type { KawaPressPlugin } from 'kawapress'
 import type { MarkdownExit } from 'markdown-exit'
 import { container } from '@mdit/plugin-container'
-import { definePlugin } from 'kawapress'
+import { definePlugin, useMarkdownItPlugin } from 'kawapress'
 
 const OPEN_TOKEN = 'container_code-group_open'
 const CLOSE_TOKEN = 'container_code-group_close'
@@ -36,7 +36,7 @@ export function installCodeGroup(markdown: MarkdownExit): void {
     },
     closeRender: () => '</KawaCodeGroup>\n',
   }
-  markdown.use(container as any, options)
+  useMarkdownItPlugin(markdown, container, options)
 
   markdown.core.ruler.after('block', 'kawapress:code-group', (state) => {
     const groups: { labels: string[], open: number }[] = []
@@ -76,9 +76,13 @@ export function installCodeGroup(markdown: MarkdownExit): void {
       ? renderFence(tokens, index, options, env, renderer)
       : renderer.renderToken(tokens, index, options)
     const panel = getCodeGroupMeta(tokens[index]).panel
-    return panel === undefined
-      ? html
-      : `<template #panel-${panel}>\n${html}</template>\n`
+    if (panel === undefined) {
+      return html
+    }
+    const wrap = (rendered: string): string => (
+      `<template #panel-${panel}>\n${rendered}</template>\n`
+    )
+    return typeof html === 'string' ? wrap(html) : html.then(wrap)
   }
 }
 

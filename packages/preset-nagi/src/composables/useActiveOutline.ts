@@ -14,6 +14,7 @@ let scrollRoot: HTMLElement | null = null
 let article: HTMLElement | null = null
 let frame = 0
 let ignoreUntil = 0
+let bindGeneration = 0
 let stopPageWatch: (() => void) | undefined
 
 export function useActiveOutline() {
@@ -79,6 +80,12 @@ export function useActiveOutline() {
     return true
   }
 
+  function onHashChange(): void {
+    if (!scrollToLocationHash()) {
+      updateActive()
+    }
+  }
+
   function onScroll(): void {
     if (Date.now() < ignoreUntil) {
       return
@@ -93,15 +100,25 @@ export function useActiveOutline() {
   }
 
   async function bind(): Promise<void> {
+    const generation = ++bindGeneration
+    let nextScrollRoot: HTMLElement | null = null
+    let nextArticle: HTMLElement | null = null
+
     await nextTick()
     for (let attempt = 0; attempt < 8; attempt += 1) {
-      scrollRoot = getScrollElement()
-      article = document.querySelector<HTMLElement>('.nagi-main--doc .nagi-doc')
-      if (scrollRoot && article) {
+      nextScrollRoot = getScrollElement()
+      nextArticle = document.querySelector<HTMLElement>('.nagi-main--doc .nagi-doc')
+      if (nextScrollRoot && nextArticle) {
         break
       }
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
     }
+    if (generation !== bindGeneration || subscriberCount === 0) {
+      return
+    }
+
+    scrollRoot = nextScrollRoot
+    article = nextArticle
     scrollRoot?.addEventListener('scroll', onScroll, { passive: true })
     if (!scrollToLocationHash()) {
       updateActive()
@@ -109,6 +126,7 @@ export function useActiveOutline() {
   }
 
   function unbind(): void {
+    bindGeneration += 1
     scrollRoot?.removeEventListener('scroll', onScroll)
     if (frame) {
       window.cancelAnimationFrame(frame)
@@ -122,7 +140,7 @@ export function useActiveOutline() {
     subscriberCount += 1
     if (subscriberCount === 1) {
       void bind()
-      window.addEventListener('hashchange', updateActive)
+      window.addEventListener('hashchange', onHashChange)
       stopPageWatch = watch(() => page.value?.path, () => {
         activateLink(
           flattenOutlineHeaders(getOutlineHeaders(page.value?.headers ?? []))[0]?.link ?? null,
@@ -138,7 +156,7 @@ export function useActiveOutline() {
     if (subscriberCount === 0) {
       stopPageWatch?.()
       stopPageWatch = undefined
-      window.removeEventListener('hashchange', updateActive)
+      window.removeEventListener('hashchange', onHashChange)
       unbind()
     }
   })

@@ -5,7 +5,7 @@ import type {
 } from 'kawapress'
 import type { MarkdownExit } from 'markdown-exit'
 import { container } from '@mdit/plugin-container'
-import { definePlugin } from 'kawapress'
+import { definePlugin, useMarkdownItPlugin } from 'kawapress'
 
 export const CONTAINER_TYPES = [
   'info',
@@ -98,7 +98,10 @@ export function installContainers(
           type,
           env as ContainerRenderEnv,
         ) || ENGLISH_LABELS[type]
-        const renderedTitle = markdown.renderInline(title, env)
+        const renderedTitle = markdown.renderInline(
+          title,
+          createInlineRenderEnv(env),
+        )
 
         if (type === 'details') {
           return `<details class="kawa-container kawa-container--details"><summary class="kawa-container__title">${renderedTitle}</summary>\n`
@@ -109,7 +112,7 @@ export function installContainers(
       closeRender: () => type === 'details' ? '</details>\n' : '</div>\n',
     }
 
-    markdown.use(container as any, containerOptions)
+    useMarkdownItPlugin(markdown, container, containerOptions)
   }
 }
 
@@ -142,6 +145,12 @@ function resolveLocaleIndex(
       const prefix = `/${locale}`
       return pathname === prefix || pathname.startsWith(`${prefix}/`)
     }) ?? 'root'
+}
+
+function createInlineRenderEnv(env: unknown): Record<string, unknown> {
+  return env && typeof env === 'object'
+    ? { ...env }
+    : {}
 }
 
 function readContainerType(params: string): string {

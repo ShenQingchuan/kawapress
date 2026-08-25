@@ -170,13 +170,15 @@ function highlightCode(
     meta: { __raw: attrs },
   }
 
+  const code = str.replace(/\r?\n$/, '')
+
   return themeOptions.themes
-    ? highlighter.codeToHtml(str.trimEnd(), {
+    ? highlighter.codeToHtml(code, {
         ...commonOptions,
         themes: themeOptions.themes,
         defaultColor: 'light-dark()',
       })
-    : highlighter.codeToHtml(str.trimEnd(), {
+    : highlighter.codeToHtml(code, {
         ...commonOptions,
         theme: themeOptions.theme,
       })

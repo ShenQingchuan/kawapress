@@ -1,12 +1,15 @@
-import type { Token } from 'markdown-exit'
+import type { MarkdownItContainerOptions } from '@mdit/plugin-container'
+import type { MarkdownExit, Token } from 'markdown-exit'
 import type { Dirent } from 'node:fs'
 import type { Plugin } from 'vite'
 import type { SearchDocument } from './search'
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
+import { alert as alertPlugin } from '@mdit/plugin-alert'
 import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
-import { stringifyJson } from 'kawapress'
+import { container as containerPlugin } from '@mdit/plugin-container'
+import { stringifyJson, useMarkdownItPlugin } from 'kawapress'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { createSearchIndex } from './search'
@@ -17,13 +20,43 @@ const INDEX_MODULE_PREFIX = `${SEARCH_INDEX_MODULE_ID}/`
 const RESOLVED_INDEX_MODULE_PREFIX = `\0${INDEX_MODULE_PREFIX}`
 const IGNORED_DIRECTORIES = new Set(['dist', 'node_modules'])
 
+export type SearchGitHubAlertType = 'note'
+  | 'tip'
+  | 'important'
+  | 'warning'
+  | 'caution'
+
+export type SearchGitHubAlertLabels = Record<SearchGitHubAlertType, string>
+
+export interface SearchCalloutOptions {
+  containers?: boolean
+  githubAlerts?: boolean | {
+    labels?: Partial<SearchGitHubAlertLabels>
+    localeLabels?: Record<string, Partial<SearchGitHubAlertLabels>>
+  }
+}
+
 interface SearchIndexPluginOptions {
   srcDir: string
   locales: string[]
+  localeLanguages?: Record<string, string | undefined>
+  callouts?: SearchCalloutOptions
 }
 
 interface SearchMarkdownEnv {
   frontmatter?: Record<string, unknown>
+  references?: Record<string, { title: string, href: string }>
+}
+
+interface CreateSearchDocumentsOptions {
+  language?: string
+  localeIndex?: string
+  callouts?: SearchCalloutOptions
+}
+
+interface LoadSearchIndexesOptions {
+  localeLanguages?: Record<string, string | undefined>
+  callouts?: SearchCalloutOptions
 }
 
 interface MutableSearchSection {
@@ -33,13 +66,66 @@ interface MutableSearchSection {
   text: string[]
 }
 
-const searchMarkdown = createMarkdownExit({ html: true })
-searchMarkdown.use(frontmatterPlugin as any)
-searchMarkdown.use(attrsPlugin as any, {
-  allowed: ['id'],
-  rule: ['heading'],
-})
-searchMarkdown.use(anchorPlugin as any, { level: [1, 2, 3, 4, 5, 6] })
+const SEARCH_CONTAINER_TYPES = [
+  'info',
+  'tip',
+  'warning',
+  'danger',
+  'details',
+] as const
+
+const DEFAULT_GITHUB_ALERT_LABELS = {
+  en: {
+    note: 'Note',
+    tip: 'Tip',
+    important: 'Important',
+    warning: 'Warning',
+    caution: 'Caution',
+  },
+  zh: {
+    note: '注意',
+    tip: '提示',
+    important: '重要',
+    warning: '警告',
+    caution: '小心',
+  },
+} as const
+
+const searchMarkdownCache = new Map<string, MarkdownExit>()
+
+function getSearchMarkdown(callouts: SearchCalloutOptions = {}): MarkdownExit {
+  const key = `${Boolean(callouts.containers)}:${Boolean(callouts.githubAlerts)}`
+  const cached = searchMarkdownCache.get(key)
+  if (cached) {
+    return cached
+  }
+
+  const markdown = createMarkdownExit({ html: true })
+  useMarkdownItPlugin(markdown, frontmatterPlugin)
+  useMarkdownItPlugin(markdown, attrsPlugin, {
+    allowed: ['id'],
+    rule: ['heading'],
+  })
+  useMarkdownItPlugin(markdown, anchorPlugin, { level: [1, 2, 3, 4, 5, 6] })
+  if (callouts.githubAlerts) {
+    useMarkdownItPlugin(markdown, alertPlugin, {
+      alertNames: ['note', 'tip', 'important', 'warning', 'caution'],
+      deep: false,
+    })
+  }
+  if (callouts.containers) {
+    for (const type of SEARCH_CONTAINER_TYPES) {
+      const options: MarkdownItContainerOptions = {
+        name: type,
+        validate: params => params.trim().split(/\s+/, 1)[0] === type,
+      }
+      useMarkdownItPlugin(markdown, containerPlugin, options)
+    }
+  }
+
+  searchMarkdownCache.set(key, markdown)
+  return markdown
+}
 
 export function searchIndexPlugin(
   options: SearchIndexPluginOptions,
@@ -51,7 +137,14 @@ export function searchIndexPlugin(
   const resolvedIndexModules = new Set<string>()
 
   function getIndexes(): Promise<Record<string, string>> {
-    return cachedIndexes ??= loadSearchIndexes(sourceRoot, localeIndexes)
+    return cachedIndexes ??= loadSearchIndexes(
+      sourceRoot,
+      localeIndexes,
+      {
+        localeLanguages: options.localeLanguages,
+        callouts: options.callouts,
+      },
+    )
   }
 
   return {
@@ -116,6 +209,7 @@ export function searchIndexPlugin(
 export async function loadSearchIndexes(
   sourceRoot: string,
   locales: string[],
+  options: LoadSearchIndexesOptions = {},
 ): Promise<Record<string, string>> {
   const localeIndexes = Object.fromEntries(locales.map(locale => (
     [locale, createSearchIndex()]
@@ -128,7 +222,15 @@ export async function loadSearchIndexes(
     const locale = getLocaleIndex(route, locales)
     const index = localeIndexes[locale]
     if (index) {
-      index.addAll(createSearchDocuments(source, route))
+      index.addAll(createSearchDocuments(
+        source,
+        route,
+        {
+          language: options.localeLanguages?.[locale],
+          localeIndex: locale,
+          callouts: options.callouts,
+        },
+      ))
     }
   }
 
@@ -140,9 +242,16 @@ export async function loadSearchIndexes(
 export function createSearchDocuments(
   source: string,
   route: string,
+  options: CreateSearchDocumentsOptions = {},
 ): SearchDocument[] {
   const env: SearchMarkdownEnv = {}
-  const tokens = searchMarkdown.parse(source, env)
+  const markdown = getSearchMarkdown(options.callouts)
+  const tokens = markdown.parse(source, env)
+  const alertLabels = resolveGitHubAlertLabels(
+    options.callouts?.githubAlerts,
+    options.localeIndex ?? 'root',
+    options.language ?? 'en',
+  )
   if (env.frontmatter?.search === false) {
     return []
   }
@@ -213,8 +322,8 @@ export function createSearchDocuments(
       continue
     }
 
-    const text = getTokenText(token)
-    if (text && !text.trimStart().startsWith(':::')) {
+    const text = getTokenText(token, markdown, env, alertLabels)
+    if (text) {
       ensureSection()?.text.push(text)
     }
   }
@@ -239,17 +348,59 @@ function getInlineRawText(token: Token): string {
     .join('')
 }
 
-function getTokenText(token: Token): string {
+function getTokenText(
+  token: Token,
+  markdown: MarkdownExit,
+  env: SearchMarkdownEnv,
+  alertLabels: SearchGitHubAlertLabels | undefined,
+): string {
+  if (token.type === 'alert_title') {
+    return alertLabels?.[token.markup.toLowerCase() as SearchGitHubAlertType] ?? ''
+  }
+  if (token.type.startsWith('container_') && token.type.endsWith('_open')) {
+    const type = token.type.slice('container_'.length, -'_open'.length)
+    const customTitle = token.info.trim().slice(type.length).trim()
+    return customTitle ? getInlineSourceText(customTitle, markdown, env) : ''
+  }
   if (token.type === 'inline') {
-    return normalizeText(getInlineRawText(token)
-      .split(/\r?\n/)
-      .filter(line => !/^:::(?:\s+\S.*)?$/.test(line.trim()))
-      .join('\n'))
+    return normalizeText(getInlineRawText(token))
   }
   if (token.type === 'fence' || token.type === 'code_block') {
     return token.content
   }
   return ''
+}
+
+function getInlineSourceText(
+  source: string,
+  markdown: MarkdownExit,
+  env: SearchMarkdownEnv,
+): string {
+  const inline = markdown.parseInline(source, {
+    references: env.references,
+  })[0]
+  return inline ? getInlineText(inline) : ''
+}
+
+function resolveGitHubAlertLabels(
+  options: SearchCalloutOptions['githubAlerts'],
+  localeIndex: string,
+  language: string,
+): SearchGitHubAlertLabels | undefined {
+  if (!options) {
+    return undefined
+  }
+  const builtIn = language.toLowerCase().startsWith('zh')
+    ? DEFAULT_GITHUB_ALERT_LABELS.zh
+    : DEFAULT_GITHUB_ALERT_LABELS.en
+  if (options === true) {
+    return builtIn
+  }
+  return {
+    ...builtIn,
+    ...options.labels,
+    ...options.localeLabels?.[localeIndex],
+  }
 }
 
 function normalizeText(text: string): string {

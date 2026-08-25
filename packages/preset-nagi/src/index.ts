@@ -1,14 +1,19 @@
+import type { CodeBlockPluginOptions } from '@kawapress/plugin-code-block'
 import type { PresetConfig } from 'kawapress'
 import type { NagiThemeConfig, ResolvedNagiThemeConfig } from './theme-config'
+import { codeBlockPlugin } from '@kawapress/plugin-code-block'
 import { codeGroupPlugin } from '@kawapress/plugin-code-group'
 import { containerPlugin } from '@kawapress/plugin-container'
+import { githubAlertsPlugin } from '@kawapress/plugin-github-alerts'
 import { searchPlugin } from '@kawapress/plugin-search'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
 import { unocssPlugin } from '@kawapress/plugin-unocss'
 import { definePreset } from 'kawapress'
-import { createNagiPlugin } from './nagi-plugin'
+import { nagiThemePlugin } from './theme-plugin'
 
-export type NagiConfig = PresetConfig<ResolvedNagiThemeConfig>
+export type NagiConfig = PresetConfig<ResolvedNagiThemeConfig> & {
+  codeBlock?: CodeBlockPluginOptions
+}
 export type {
   NagiHomeAction,
   NagiHomeFeature,
@@ -30,11 +35,17 @@ export type {
 export type { NagiThemeConfig } from './theme-config'
 
 export function nagi(userConfig: NagiConfig = {}): NagiConfig {
+  const { codeBlock, ...siteConfig } = userConfig
   const createConfig = definePreset<NagiThemeConfig>({
     plugins: [
       containerPlugin(),
+      githubAlertsPlugin(),
+      codeBlockPlugin(codeBlock),
       codeGroupPlugin(),
-      searchPlugin(),
+      searchPlugin({
+        containers: true,
+        githubAlerts: true,
+      }),
       shikiPlugin({
         twoslash: true,
         themes: {
@@ -42,12 +53,12 @@ export function nagi(userConfig: NagiConfig = {}): NagiConfig {
           dark: 'github-dark',
         },
       }),
-      createNagiPlugin(),
+      nagiThemePlugin(),
       unocssPlugin(),
     ],
   })
 
-  return createConfig(userConfig)
+  return createConfig(siteConfig)
 }
 
 export default nagi

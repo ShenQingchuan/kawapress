@@ -356,7 +356,9 @@ Markdown 引擎使用 `markdown-exit`：
 - SFC block；
 - 链接信息与后续死链检查入口。
 
-基础能力使用兼容的 `@mdit-vue` 独立插件实现。外部插件通过 `GeneratorPluginAPI` 的 `markdown()` 获得真实 `MarkdownExit` 实例。
+基础能力使用兼容的 `@mdit-vue` 独立插件实现。外部插件通过 `GeneratorPluginAPI` 的 `markdown()` 获得真实 `MarkdownExit` 实例。Core 统一等待 `renderAsync()` 完成 Markdown 渲染；`markdown-exit` 版本不得低于 1.3.0，以保证异步入口会执行 markdown-it 生态中对 `renderer.render` 的同步包装，并保留插件写入 env 的 headers 等元数据。包装同步 `renderer.render` 的插件与真正异步 renderer rule 同时存在时由 `markdown-exit` 明确报错，不静默降级或丢数据。
+
+markdown-it 生态插件的公开类型把第一个参数绑定为 `MarkdownIt`，与运行时兼容的 `MarkdownExit` 仍因递归 parser state 类型不同而不能直接通过 TypeScript 检查。KawaPress 从主入口公开 `useMarkdownItPlugin()` 作为唯一兼容边界：它保留插件参数类型，只在内部集中一次经过审计的类型转换。Core、官方 Plugin 与第三方 Plugin 均使用该 helper，不在各调用点散落 `as any`。
 
 代码高亮使用 Shiki，并作为原子 Plugin 接入 `markdown()`。Shiki transformer 保持可配置。Twoslash 不属于 0.1 范围，等待 Runtime Plugin 与浮层 UI 能力稳定后再实现。
 
@@ -413,7 +415,21 @@ nagi Preset 默认组合该插件，并默认启用 `presetWind4`、`presetIcons
 
 通用提示容器由独立生成侧插件包 `@kawapress/plugin-container` 提供，不写死在 Core、nagi 或 Shiki 中。0.1 支持 `info`、`tip`、`warning`、`danger` 与使用原生 `<details>/<summary>` 的 `details`；标题可以省略或在容器类型后显式填写，并允许普通 Markdown 行内内容。插件只输出语义 HTML 与 `.kawa-container*` 稳定 class，不需要浏览器 Runtime Plugin；nagi 默认组合该插件并负责明暗主题视觉。
 
-默认标题根据当前页面 URL locale 对应配置的 `lang` 决定，内置中文和英文，其他语言回退英文；插件选项允许按全局或 locale key 覆盖标题。Core 在 Markdown env 中提供当前公开路由 `path`，只用于生成期插件解析当前页面上下文，不进入 pageData 或公开运行时 API。`raw` 不进入本插件：它同时涉及主题 CSS 隔离与 Router 链接接管，是未来单独设计的沙箱边界。GitHub 风格 Alerts 也使用独立插件，避免把两种作者语法绑定为同一安装单元。
+默认标题根据当前页面 URL locale 对应配置的 `lang` 决定，内置中文和英文，其他语言回退英文；插件选项允许按全局或 locale key 覆盖标题。原生 `<summary>` 在鼠标或触控快速连续触发时禁止标题文字选择，容器展开后的正文仍可正常选择和复制。Core 在 Markdown env 中提供当前公开路由 `path`，只用于生成期插件解析当前页面上下文，不进入 pageData 或公开运行时 API。`raw` 不进入本插件：它同时涉及主题 CSS 隔离与 Router 链接接管，是未来单独设计的沙箱边界。GitHub 风格 Alerts 也使用独立插件，避免把两种作者语法绑定为同一安装单元。
+
+### 7.6 GitHub Alerts
+
+GitHub 风格警报由独立生成侧插件包 `@kawapress/plugin-github-alerts` 提供，不依赖 Custom Container Plugin。插件使用 `@mdit/plugin-alert` 解析根层级 blockquote 中的 `[!NOTE]`、`[!TIP]`、`[!IMPORTANT]`、`[!WARNING]` 与 `[!CAUTION]`，输出 `.kawa-alert*` 稳定结构 class；它不需要 Runtime Plugin，nagi 默认组合并负责图标、颜色和明暗主题样式。默认保持 GitHub 的根层级语义，不启用嵌套 alert 扩展。
+
+Alert 标题与 Custom Container 一样由生成期页面 `path` 和 locale `lang` 决定，内置中英文并允许全局或 locale key 覆盖。标题文本始终真实存在于 HTML 中，类型图标只作视觉补充，不能用 `role="alert"` 打断屏幕阅读器。Search Plugin 建索引时删除 `[!TYPE]` 控制标记但保留标题与正文。Custom Container 与 GitHub Alerts 可以在同一 Preset 中组合，却保持独立安装、独立 parser 和独立稳定 class。
+
+### 7.7 Code Block UI
+
+代码块外壳由独立逻辑插件包 `@kawapress/plugin-code-block` 提供，不依赖 Shiki。Generator Plugin 在标准 fence renderer 外增加 `.kawa-code-block*` 稳定结构，显示语言标签、可访问的复制按钮和可选行号；Runtime Plugin 只使用一次 document 事件委托处理复制，不为每个代码块创建 Vue App 或组件。nagi 在 Code Group 之前安装本插件，使每个 Tab panel 包含完整代码块外壳，再由主题负责图标、颜色、间距和复制成功状态。nagi 从顶层 `codeBlock` 字段接收这一个内置插件的选项并在生成 Config 前移除该字段，用户不通过追加第二个同名 Plugin 来覆盖默认实例。
+
+普通代码块默认不显示行号；围栏语言后的 `:line-numbers` 显式开启，`:line-numbers=N` 指定起始数字，站点全局开启后可用 `:no-line-numbers` 对单个代码块关闭。插件在调用后续 fence renderer 前只临时移除自己的指令，必须保留 Twoslash、代码组标题和其他 meta，并同时兼容同步与异步 renderer。行号由源码行数生成到 `aria-hidden` 的独立列，不进入 `<code>` 或复制文本。
+
+复制按钮在 SSR HTML 中包含当前 locale 的 `aria-label`、tooltip 和 `aria-live` 状态节点；复制时优先使用 Clipboard API，失败后使用隐藏 textarea 回退。成功状态持续两秒后恢复，不能改变 SSR/client 初始节点结构。复制内容来自 `<pre><code>`，排除 `.kawa-code-block__copy-ignore` 与 diff 删除行，不包含行号。语言 label、复制文案与 locale 覆盖属于插件配置，nagi 只提供默认视觉。
 
 ## 八、配置与数据
 
@@ -462,7 +478,7 @@ declare function usePageData(): ComputedRef<PageData | undefined>
 
 nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。
 
-本地全文搜索由独立逻辑插件包 `@kawapress/plugin-search` 提供，不写死在 Core 或 nagi 内部。Generator Plugin 独立扫描 `srcDir` 下的 Markdown，按标题层级切成搜索段落，以公开路由作为结果地址；frontmatter 中显式设置 `search: false` 的页面不进入索引。索引使用 MiniSearch 在生成侧预构建，并按 Core locale 路径拆成独立虚拟模块；浏览器首屏只得到很小的 locale loader 映射，用户首次打开搜索时才加载 MiniSearch 运行时和当前语言索引，不能把索引或全站正文打进主入口。中英文共用大小写归一化与 CJK 感知分词，搜索只返回当前 URL locale 的结果。插件不向 Core 增加 `usePages()`、全量 pageData 或搜索专用运行时 API。
+本地全文搜索由独立逻辑插件包 `@kawapress/plugin-search` 提供，不写死在 Core 或 nagi 内部。Generator Plugin 独立扫描 `srcDir` 下的 Markdown，按标题层级切成搜索段落，以公开路由作为结果地址；frontmatter 中显式设置 `search: false` 的页面不进入索引。Search 不擅自把可选语法当成已安装能力：只有 `searchPlugin()` 显式启用 `containers` 或 `githubAlerts` 时才按对应 parser 语义移除控制标记，nagi 因为默认组合这两个插件而同步启用；自定义 Preset 覆盖 Alert 标题时把同一组全局与 locale labels 同时传给 Search，保证索引标题与可见标题一致。索引使用 MiniSearch 在生成侧预构建，并按 Core locale 路径拆成独立虚拟模块；浏览器首屏只得到很小的 locale loader 映射，用户首次打开搜索时才加载 MiniSearch 运行时和当前语言索引，不能把索引或全站正文打进主入口。中英文共用大小写归一化与 CJK 感知分词，搜索只返回当前 URL locale 的结果。插件不向 Core 增加 `usePages()`、全量 pageData 或搜索专用运行时 API。
 
 `@kawapress/plugin-search/runtime-plugin` 注册可复用的真实 Vue 搜索组件并自动导入基础样式，稳定结构 class 使用 `.kawa-search*` 命名空间；其他 Preset 可以组合同一插件并把组件放进自己的界面。nagi Preset 默认组合 `searchPlugin()`，NavBar 只引入公开搜索组件并通过 CSS 变量适配主题视觉，不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。静态 SSR 无法从构建环境预知访客平台；Search Runtime Plugin 在 SSR `<head>` 注入一段内容固定的同步平台检测脚本，在浏览器绘制正文前为 `<html>` 写入平台属性。搜索按钮始终输出同时包含 `⌘` 与 `Ctrl` 的稳定 DOM，由 CSS 根据该属性从首帧开始只显示正确标记；Vue hydration 不再替换文字，避免首屏文案与宽度跳变。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
 

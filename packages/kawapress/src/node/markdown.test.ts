@@ -1,17 +1,43 @@
 import type { MarkdownExit } from 'markdown-exit'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
+import { nagi } from '@kawapress/preset-nagi'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { definePlugin } from '../plugin-api'
 import { compileMarkdownToVue, createMarkdownCompiler } from './markdown'
 import { createGeneratorPluginRunner } from './plugin-runner'
 
 let md: MarkdownExit
 let mdWithBase: MarkdownExit
 let mdWithShiki: MarkdownExit
+let mdWithCallouts: MarkdownExit
 beforeAll(async () => {
   md = await createMarkdownCompiler()
   mdWithBase = await createMarkdownCompiler({ base: '/kawapress/' })
   mdWithShiki = await createMarkdownCompiler({
     pluginRunner: await createGeneratorPluginRunner([shikiPlugin()]),
+  })
+  const calloutConfig = nagi({
+    locales: {
+      root: { label: '简体中文', lang: 'zh-CN' },
+      en: { label: 'English', lang: 'en' },
+    },
+    plugins: [definePlugin({
+      name: 'test:inline-render-env',
+      setup(api) {
+        api.markdown((markdown) => {
+          markdown.renderer.rules.em_open = (_tokens, _index, _options, env) => (
+            `<em data-page-path="${markdown.utils.escapeHtml(env.path ?? '')}">`
+          )
+        })
+      },
+    })],
+  })
+  const calloutRunner = await createGeneratorPluginRunner(
+    calloutConfig.plugins ?? [],
+  )
+  await calloutRunner.runConfig(calloutConfig)
+  mdWithCallouts = await createMarkdownCompiler({
+    pluginRunner: calloutRunner,
   })
 })
 
@@ -41,7 +67,7 @@ describe('compileMarkdownToVue', () => {
   })
 
   it('keeps custom heading anchors in rendered HTML and page data', async () => {
-    const { code, pageData } = compileMarkdownToVue(
+    const { code, pageData } = await compileMarkdownToVue(
       md,
       '## **配置指南** {#configuration}\n',
       '/guide/configuration',
@@ -58,12 +84,161 @@ describe('compileMarkdownToVue', () => {
     })
   })
 
-  it('rejects duplicate custom heading anchors', () => {
-    expect(() => compileMarkdownToVue(
+  it('only accepts id from heading attribute syntax', async () => {
+    const { code } = await compileMarkdownToVue(
+      md,
+      '## Safe {#safe .unsafe style="color:red" onclick="alert(1)"}\n',
+      '/safe-heading-attributes',
+    )
+
+    expect(code).toContain('<h2 id="safe"')
+    expect(code).not.toContain('class="unsafe"')
+    expect(code).not.toContain('style="color:red"')
+    expect(code).not.toContain('onclick=')
+  })
+
+  it('deduplicates automatic anchors and rejects collisions with explicit ids', async () => {
+    const automatic = await compileMarkdownToVue(
+      md,
+      '## Shared\n\n## Shared\n',
+      '/automatic-anchors',
+    )
+    expect(automatic.pageData.headers.map(header => header.slug))
+      .toEqual(['shared', 'shared-1'])
+
+    await expect(compileMarkdownToVue(
+      md,
+      '## Shared\n\n## Custom {#shared}\n',
+      '/mixed-anchor-collision',
+    )).rejects.toThrow('User defined `id` attribute `shared` is not unique')
+  })
+
+  it('rejects duplicate custom heading anchors', async () => {
+    await expect(compileMarkdownToVue(
       md,
       '## One {#shared}\n\n## Two {#shared}\n',
       '/duplicate-anchors',
-    )).toThrow('User defined `id` attribute `shared` is not unique')
+    )).rejects.toThrow('User defined `id` attribute `shared` is not unique')
+  })
+
+  it('keeps headers and locale context through async callout rendering', async () => {
+    const { code, pageData } = await compileMarkdownToVue(
+      mdWithCallouts,
+      `# 页面
+
+## 开始
+
+::: tip *[文档][docs]*
+容器正文。
+:::
+
+> [!IMPORTANT]
+> 警报正文。
+
+## 结束
+
+[docs]: /guide
+`,
+      '/guide/callouts',
+    )
+
+    expect({
+      headers: pageData.headers,
+      template: code.slice(0, code.indexOf('</template>') + '</template>'.length),
+    }).toMatchInlineSnapshot(`
+      {
+        "headers": [
+          {
+            "children": [
+              {
+                "children": [],
+                "level": 2,
+                "link": "#%E5%BC%80%E5%A7%8B",
+                "slug": "%E5%BC%80%E5%A7%8B",
+                "title": "开始",
+              },
+              {
+                "children": [],
+                "level": 2,
+                "link": "#%E7%BB%93%E6%9D%9F",
+                "slug": "%E7%BB%93%E6%9D%9F",
+                "title": "结束",
+              },
+            ],
+            "level": 1,
+            "link": "#%E9%A1%B5%E9%9D%A2",
+            "slug": "%E9%A1%B5%E9%9D%A2",
+            "title": "页面",
+          },
+        ],
+        "template": "<template><h1 id="%E9%A1%B5%E9%9D%A2" tabindex="-1">页面 <a class="header-anchor" href="#%E9%A1%B5%E9%9D%A2">#</a></h1>
+      <h2 id="%E5%BC%80%E5%A7%8B" tabindex="-1">开始 <a class="header-anchor" href="#%E5%BC%80%E5%A7%8B">#</a></h2>
+      <div class="kawa-container kawa-container--tip"><p class="kawa-container__title"><em data-page-path="/guide/callouts"><a href="/guide">文档</a></em></p>
+      <p>容器正文。</p>
+      </div>
+      <div class="kawa-alert kawa-alert--important">
+      <p class="kawa-alert__title">重要</p>
+      <p>警报正文。</p>
+      </div>
+      <h2 id="%E7%BB%93%E6%9D%9F" tabindex="-1">结束 <a class="header-anchor" href="#%E7%BB%93%E6%9D%9F">#</a></h2>
+      </template>",
+      }
+    `)
+  })
+
+  it('wires code block UI around standalone and grouped Shiki output', async () => {
+    const { code } = await compileMarkdownToVue(
+      mdWithCallouts,
+      `# 代码
+
+\`\`\`ts:line-numbers=8
+const first = 1
+const second = 2
+
+\`\`\`
+
+::: code-group
+\`\`\`sh [pnpm]
+pnpm add kawapress
+\`\`\`
+:::
+`,
+      '/guide/code',
+    )
+
+    expect(code).toContain('class="kawa-code-block language-ts kawa-code-block--line-numbers"')
+    expect(code).toContain('aria-label="复制代码"')
+    expect(code).toContain('class="kawa-code-block__line-number">8</span>')
+    expect(code).toContain('class="kawa-code-block__line-number">9</span>')
+    expect(code).toContain('class="kawa-code-block__line-number">10</span>')
+    const standalone = code.slice(
+      code.indexOf('<div class="kawa-code-block'),
+      code.indexOf('<KawaCodeGroup'),
+    )
+    expect(standalone.match(/class="line"/g)).toHaveLength(3)
+    expect(code).toContain('<template #panel-0>\n<div class="kawa-code-block language-sh"')
+    expect(code).toContain('<pre class="shiki')
+  })
+
+  it('configures the built-in code block plugin through nagi once', async () => {
+    const config = nagi({
+      codeBlock: {
+        lineNumbers: true,
+      },
+    })
+    const runner = await createGeneratorPluginRunner(config.plugins ?? [])
+    await runner.runConfig(config)
+    const compiler = await createMarkdownCompiler({ pluginRunner: runner })
+    const { code } = await compileMarkdownToVue(
+      compiler,
+      '```js\nconst value = 1\n```\n',
+      '/code-defaults',
+    )
+
+    expect(code.match(/class="kawa-code-block language-js/g)).toHaveLength(1)
+    expect(code).toContain('kawa-code-block--line-numbers')
+    expect(code).toContain('class="kawa-code-block__line-number">1</span>')
+    expect('codeBlock' in config).toBe(false)
   })
 
   it('prefixes rooted internal links with the site base', async () => {
