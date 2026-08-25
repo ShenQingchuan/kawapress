@@ -1,9 +1,11 @@
 import type { PageHeader } from 'kawapress'
 import { describe, expect, it } from 'vitest'
 import {
+  findOutlineHeaderByHash,
   flattenOutlineHeaders,
   getOutlineHeaders,
   resolveActiveOutlineLink,
+  resolveDisplayedOutlineLink,
 } from './outline'
 
 function header(
@@ -38,6 +40,35 @@ describe('nagi outline headers', () => {
     ])
     expect(flattenOutlineHeaders(getOutlineHeaders(tree)).map(item => item.slug))
       .toEqual(['setup', 'install', 'usage'])
+  })
+
+  it('finds the heading addressed by an encoded URL hash', () => {
+    const headers = [
+      header(2, '部署到子路径', '部署到子路径'),
+      header(2, 'Usage', 'usage'),
+    ]
+
+    expect(findOutlineHeaderByHash(
+      headers,
+      '#%E9%83%A8%E7%BD%B2%E5%88%B0%E5%AD%90%E8%B7%AF%E5%BE%84',
+    )?.slug).toBe('部署到子路径')
+    expect(findOutlineHeaderByHash(headers, '#usage:~:text=example')?.slug)
+      .toBe('usage')
+    expect(findOutlineHeaderByHash(headers, '#missing')).toBeUndefined()
+  })
+
+  it('uses the first heading until the measured active link is ready', () => {
+    const headers = [
+      header(2, 'Setup', 'setup', [
+        header(3, 'Install', 'install'),
+      ]),
+      header(2, 'Usage', 'usage'),
+    ]
+
+    expect(resolveDisplayedOutlineLink(headers, null)).toBe('#setup')
+    expect(resolveDisplayedOutlineLink(headers, '#install')).toBe('#install')
+    expect(resolveDisplayedOutlineLink(headers, '#old-page-heading')).toBe('#setup')
+    expect(resolveDisplayedOutlineLink([], null)).toBeNull()
   })
 
   it('highlights the last heading that has crossed the scroll offset', () => {

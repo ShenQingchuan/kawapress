@@ -21,6 +21,36 @@ export function flattenOutlineHeaders(headers: PageHeader[]): PageHeader[] {
   ])
 }
 
+export function findOutlineHeaderByHash(
+  headers: PageHeader[],
+  hash: string,
+): PageHeader | undefined {
+  const normalizedHash = normalizeHash(hash.split(':~:')[0] ?? '')
+  return flattenOutlineHeaders(headers).find(
+    header => normalizeHash(header.link) === normalizedHash,
+  )
+}
+
+export function resolveDisplayedOutlineLink(
+  headers: PageHeader[],
+  activeLink: string | null,
+): string | null {
+  const flattened = flattenOutlineHeaders(headers)
+  if (activeLink && flattened.some(header => header.link === activeLink)) {
+    return activeLink
+  }
+  return flattened[0]?.link ?? null
+}
+
+function normalizeHash(hash: string): string {
+  try {
+    return decodeURIComponent(hash)
+  }
+  catch {
+    return hash
+  }
+}
+
 export function resolveActiveOutlineLink(
   headers: readonly OutlineHeaderPosition[],
   scrollTop: number,

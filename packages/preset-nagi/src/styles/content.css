@@ -84,6 +84,31 @@
   font-size: 1rem;
 }
 
+.nagi-doc .nagi-doc-note {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: color-mix(
+    in oklab,
+    var(--nagi-c-brand-1) 8%,
+    transparent
+  );
+}
+
+.nagi-doc .nagi-doc-note > p {
+  margin: 0;
+  color: var(--nagi-c-text-2);
+}
+
+.nagi-doc .nagi-doc-note > .nagi-doc-note__title {
+  color: var(--nagi-c-text-1);
+  font-weight: 600;
+}
+
+.nagi-doc .nagi-doc-note > .nagi-doc-note__title + p {
+  margin-top: 0.5rem;
+}
+
 .nagi-doc a {
   margin-inline: 0.25rem;
   color: var(--nagi-c-brand-1);
@@ -207,6 +232,7 @@
   margin: 1rem 0;
   padding: var(--nagi-code-block-padding);
   overflow-x: auto;
+  border: 1px solid var(--nagi-c-divider);
   border-radius: var(--nagi-code-block-radius);
   text-align: left;
   tab-size: 4;
@@ -225,6 +251,7 @@
   margin: 1rem 0;
   overflow: hidden;
   background: var(--nagi-c-bg-soft);
+  border: 1px solid var(--nagi-c-divider);
   border-radius: var(--nagi-code-block-radius);
 }
 
@@ -233,7 +260,14 @@
   gap: 1rem;
   padding: 0 1rem;
   overflow-x: auto;
+  overflow-y: hidden;
   border-bottom: 1px solid var(--nagi-c-divider);
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.nagi-doc .kawa-code-group__tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .nagi-doc .kawa-code-group__tab {
@@ -250,7 +284,7 @@
 .nagi-doc .kawa-code-group__tab::after {
   position: absolute;
   right: 0;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
   height: 2px;
   background: var(--nagi-c-brand-1);
@@ -275,6 +309,7 @@
 .nagi-doc .kawa-code-group__panel > pre.shiki {
   width: 100%;
   margin: 0;
+  border: 0;
   border-radius: 0;
 }
 

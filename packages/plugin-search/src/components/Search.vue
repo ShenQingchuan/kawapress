@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { SearchTranslations } from '../translations'
-import { useSite } from 'kawapress/client'
+import { useHead, useSite } from 'kawapress/client'
 import { computed, nextTick, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from 'vue'
+import platformDetectionScript from '../platform-detection.js?raw'
 import { resolveSearchTranslations } from '../translations'
 import SearchOverlay from './SearchOverlay.vue'
 
@@ -12,19 +13,23 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   translations: () => ({}),
 })
+
 const site = useSite()
 const resolvedTranslations = computed(() => resolveSearchTranslations(
   props.translations,
   site.value.lang,
 ))
 const open = shallowRef(false)
-const shortcutModifier = shallowRef('Ctrl')
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 
+useHead({
+  script: [{
+    id: 'kawa-search-platform',
+    textContent: platformDetectionScript,
+  }],
+})
+
 onMounted(() => {
-  if (/Mac|iPhone|iPad|iPod/i.test(navigator.platform)) {
-    shortcutModifier.value = '⌘'
-  }
   window.addEventListener('keydown', handleGlobalKeydown)
 })
 
@@ -81,7 +86,11 @@ async function close(): Promise<void> {
     </svg>
     <span class="kawa-search-button__text">{{ resolvedTranslations.buttonLabel }}</span>
     <span class="kawa-search-button__keys" aria-hidden="true">
-      <kbd>{{ shortcutModifier }}</kbd><kbd>K</kbd>
+      <kbd class="kawa-search-button__modifier">
+        <span class="kawa-search-button__command">⌘</span>
+        <span class="kawa-search-button__control">Ctrl</span>
+      </kbd>
+      <kbd>K</kbd>
     </span>
   </button>
 

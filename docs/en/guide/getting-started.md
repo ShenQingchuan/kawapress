@@ -58,7 +58,10 @@ yarn add --dev kawapress
 ```
 :::
 
-KawaPress includes the default nagi preset and the Vue runtime it needs. A Markdown-only site does not need to install them again. Install `vue` as a direct project dependency only when your Markdown, config extensions, or custom theme imports Vue APIs or defines Vue components.
+<aside class="nagi-doc-note">
+  <p class="nagi-doc-note__title">Vue as a peer dependency</p>
+  <p>If you plan to customize your site with Vue components or APIs, explicitly install <code>vue</code> as a project dependency.</p>
+</aside>
 
 KawaPress is only required while developing and building the site. The deployed output does not require a Node.js server.
 
@@ -98,9 +101,15 @@ The `nagi()` preset installs the default documentation interface and its plugins
 
 nagi enables [UnoCSS](https://unocss.dev/) with `presetWind4`, `presetIcons`, and `presetWebFonts`. Wind4 utilities work directly in Markdown HTML:
 
-<div class="my-6 rounded-xl border-l-4 border-l-[var(--nagi-c-brand-1)] bg-[var(--nagi-c-bg-soft)] px-4 py-3 text-sm text-[var(--nagi-c-text-1)]">
-  UnoCSS generates this card's spacing, radius, and background colors.
+<div class="my-6 rounded-xl bg-indigo-500/8 px-4 py-3 text-sm">
+  UnoCSS generates this card's spacing, radius, and translucent background.
 </div>
+
+```html
+<div class="rounded-xl bg-indigo-500/8 px-4 py-3 text-sm">
+  UnoCSS generates this card's spacing, radius, and translucent background.
+</div>
+```
 
 The Wind4 global reset is disabled, so it does not overwrite nagi or other plugin foundations. The Icons and Web Fonts presets are ready, but they load assets only after you configure a specific icon collection or font.
 

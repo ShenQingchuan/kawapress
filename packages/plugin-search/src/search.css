@@ -381,6 +381,18 @@
   border-radius: 0.25rem;
 }
 
+.kawa-search-button__command {
+  display: none;
+}
+
+:root[data-kawa-platform='apple'] .kawa-search-button__command {
+  display: inline;
+}
+
+:root[data-kawa-platform='apple'] .kawa-search-button__control {
+  display: none;
+}
+
 @media (min-width: 48rem) {
   .kawa-search-button {
     display: flex;

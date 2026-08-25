@@ -60,7 +60,10 @@ yarn add --dev kawapress
 ```
 :::
 
-KawaPress 已经带上默认 nagi 及其运行所需的 Vue。只写 Markdown 时，不需要重复安装它们。只有当你要在 Markdown、配置扩展或自定义主题中直接导入 Vue API、编写 Vue 组件时，才需要把 `vue` 另行安装为项目依赖。
+<aside class="nagi-doc-note">
+  <p class="nagi-doc-note__title">Vue 作为 peer dependency</p>
+  <p>若要使用 Vue 组件或 API 进行自定义，还应该明确地将 <code>vue</code> 安装为项目依赖。</p>
+</aside>
 
 KawaPress 只在开发和构建时使用。部署完成后，站点不需要在服务器上继续运行 KawaPress 或 Node.js。
 
@@ -100,9 +103,15 @@ export default nagi({
 
 nagi 默认启用 [UnoCSS](https://unocss.dev/)，并准备好 `presetWind4`、`presetIcons` 与 `presetWebFonts`。你可以直接在 Markdown 的 HTML 中使用 Wind4 工具类：
 
-<div class="my-6 rounded-xl border-l-4 border-l-[var(--nagi-c-brand-1)] bg-[var(--nagi-c-bg-soft)] px-4 py-3 text-sm text-[var(--nagi-c-text-1)]">
-  这张提示卡的间距、圆角和背景色都由 UnoCSS 生成。
+<div class="my-6 rounded-xl bg-indigo-500/8 px-4 py-3 text-sm">
+  这张提示卡的间距、圆角和透明背景都由 UnoCSS 生成。
 </div>
+
+```html
+<div class="rounded-xl bg-indigo-500/8 px-4 py-3 text-sm">
+  这张提示卡的间距、圆角和透明背景都由 UnoCSS 生成。
+</div>
+```
 
 Wind4 的全局 reset 默认关闭，不会覆盖 nagi 或其他插件的基础样式。Icons 与 Web Fonts 预设也已经可用，但只有在你配置具体图标集或字体以后才会加载对应资源。
 

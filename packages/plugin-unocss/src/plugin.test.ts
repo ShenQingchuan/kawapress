@@ -24,15 +24,13 @@ describe('unocssPlugin', () => {
 
     const { css } = await generator.generate(new Set([
       'p-4',
-      'border-l-4',
-      'border-l-[var(--nagi-c-brand-1)]',
-      'bg-[var(--nagi-c-bg-soft)]',
-      'text-[var(--nagi-c-text-1)]',
+      'rounded-xl',
+      'bg-indigo-500/8',
     ]))
     expect(css).toContain('.p-4')
-    expect(css).toContain('--nagi-c-brand-1')
-    expect(css).toContain('--nagi-c-bg-soft')
-    expect(css).toContain('--nagi-c-text-1')
+    expect(css).toContain('.rounded-xl')
+    expect(css).toContain('--colors-indigo-500')
+    expect(css).toContain('color-mix')
     expect(css).not.toContain('box-sizing:border-box')
   })
 

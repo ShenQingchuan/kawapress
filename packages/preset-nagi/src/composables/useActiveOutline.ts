@@ -1,6 +1,7 @@
 import { usePageData } from 'kawapress/client'
 import { nextTick, onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import {
+  findOutlineHeaderByHash,
   flattenOutlineHeaders,
   getOutlineHeaders,
   resolveActiveOutlineLink,
@@ -55,6 +56,29 @@ export function useActiveOutline() {
     ))
   }
 
+  function scrollToLocationHash(): boolean {
+    const root = scrollRoot
+    const doc = article
+    if (!root || !doc || !window.location.hash) {
+      return false
+    }
+
+    const header = findOutlineHeaderByHash(
+      getOutlineHeaders(page.value?.headers ?? []),
+      window.location.hash,
+    )
+    const target = header
+      ? doc.querySelector<HTMLElement>(`#${CSS.escape(header.slug)}`)
+      : null
+    if (!header || !target) {
+      return false
+    }
+
+    target.scrollIntoView({ block: 'start' })
+    activateLink(header.link, true)
+    return true
+  }
+
   function onScroll(): void {
     if (Date.now() < ignoreUntil) {
       return
@@ -79,7 +103,9 @@ export function useActiveOutline() {
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
     }
     scrollRoot?.addEventListener('scroll', onScroll, { passive: true })
-    updateActive()
+    if (!scrollToLocationHash()) {
+      updateActive()
+    }
   }
 
   function unbind(): void {
@@ -98,6 +124,9 @@ export function useActiveOutline() {
       void bind()
       window.addEventListener('hashchange', updateActive)
       stopPageWatch = watch(() => page.value?.path, () => {
+        activateLink(
+          flattenOutlineHeaders(getOutlineHeaders(page.value?.headers ?? []))[0]?.link ?? null,
+        )
         unbind()
         void bind()
       })

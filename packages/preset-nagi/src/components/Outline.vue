@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { usePageData } from 'kawapress/client'
-import { computed, nextTick, useTemplateRef, watch } from 'vue'
+import { useHead, usePageData } from 'kawapress/client'
+import { computed } from 'vue'
 import { useActiveOutline } from '../composables/useActiveOutline'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
-import { getOutlineHeaders } from '../outline'
+import { getOutlineHeaders, resolveDisplayedOutlineLink } from '../outline'
+import outlineInitializerScript from '../outline-initializer.js?raw'
 import OutlineItem from './OutlineItem.vue'
 
 withDefaults(defineProps<{
@@ -19,27 +20,26 @@ const emit = defineEmits<{
 const page = usePageData()
 const theme = useNagiThemeConfig()
 const items = computed(() => getOutlineHeaders(page.value?.headers ?? []))
-const list = useTemplateRef<HTMLElement>('list')
-const marker = useTemplateRef<HTMLElement>('marker')
 const { activeOutlineLink, activateLink } = useActiveOutline()
+const initialActiveLink = import.meta.env.SSR
+  ? null
+  : (window as Window & {
+      __KAWA_NAGI_INITIAL_OUTLINE_LINK__?: string
+    }).__KAWA_NAGI_INITIAL_OUTLINE_LINK__ ?? null
+const initialPagePath = page.value?.path
+const displayedActiveLink = computed(() => {
+  const currentActiveLink = activeOutlineLink.value ?? (
+    page.value?.path === initialPagePath ? initialActiveLink : null
+  )
+  return resolveDisplayedOutlineLink(items.value, currentActiveLink)
+})
 
-watch([activeOutlineLink, items], async () => {
-  await nextTick()
-  const listEl = list.value
-  const markerEl = marker.value
-  if (!listEl || !markerEl) {
-    return
-  }
-
-  const active = listEl.querySelector<HTMLElement>('.nagi-outline-item__link.is-active')
-  if (!active) {
-    markerEl.style.opacity = '0'
-    return
-  }
-
-  markerEl.style.top = `${active.offsetTop + (active.offsetHeight - markerEl.offsetHeight) / 2}px`
-  markerEl.style.opacity = '1'
-}, { flush: 'post', immediate: true })
+useHead({
+  script: [{
+    id: 'nagi-outline-initial-hash',
+    textContent: outlineInitializerScript,
+  }],
+})
 
 function onNavigate(link: string): void {
   activateLink(link, true)
@@ -56,18 +56,13 @@ function onNavigate(link: string): void {
     <p v-if="showTitle" class="nagi-outline__title">
       {{ theme.outlineLabel }}
     </p>
-    <div ref="list" class="nagi-outline__tree">
-      <span
-        ref="marker"
-        class="nagi-outline__marker"
-        aria-hidden="true"
-      />
+    <div class="nagi-outline__tree">
       <ul class="nagi-outline__items">
         <OutlineItem
           v-for="item in items"
           :key="item.link"
           :item="item"
-          :active-link="activeOutlineLink"
+          :active-link="displayedActiveLink"
           @navigate="onNavigate"
         />
       </ul>
