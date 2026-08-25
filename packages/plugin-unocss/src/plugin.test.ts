@@ -22,8 +22,17 @@ describe('unocssPlugin', () => {
         },
       })
 
-    const { css } = await generator.generate(new Set(['p-4']))
+    const { css } = await generator.generate(new Set([
+      'p-4',
+      'bg-[var(--nagi-c-bg-soft)]',
+      'text-[var(--nagi-c-text-2)]',
+      'ring-1',
+      'ring-[var(--nagi-c-divider)]',
+    ]))
     expect(css).toContain('.p-4')
+    expect(css).toContain('--nagi-c-bg-soft')
+    expect(css).toContain('--nagi-c-text-2')
+    expect(css).toContain('--nagi-c-divider')
     expect(css).not.toContain('box-sizing:border-box')
   })
 

@@ -98,7 +98,7 @@ The `nagi()` preset installs the default documentation interface and its plugins
 
 nagi enables [UnoCSS](https://unocss.dev/) with `presetWind4`, `presetIcons`, and `presetWebFonts`. Wind4 utilities work directly in Markdown HTML:
 
-<div class="my-6 rounded-xl bg-slate-100 p-4 text-sm dark:bg-slate-800">
+<div class="my-6 rounded-xl bg-[var(--nagi-c-bg-soft)] p-4 text-sm text-[var(--nagi-c-text-2)] ring-1 ring-[var(--nagi-c-divider)]">
   UnoCSS generates this card's spacing, radius, and background colors.
 </div>
 

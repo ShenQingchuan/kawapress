@@ -100,7 +100,7 @@ export default nagi({
 
 nagi 默认启用 [UnoCSS](https://unocss.dev/)，并准备好 `presetWind4`、`presetIcons` 与 `presetWebFonts`。你可以直接在 Markdown 的 HTML 中使用 Wind4 工具类：
 
-<div class="my-6 rounded-xl bg-slate-100 p-4 text-sm dark:bg-slate-800">
+<div class="my-6 rounded-xl bg-[var(--nagi-c-bg-soft)] p-4 text-sm text-[var(--nagi-c-text-2)] ring-1 ring-[var(--nagi-c-divider)]">
   这张提示卡的间距、圆角和背景色都由 UnoCSS 生成。
 </div>
 

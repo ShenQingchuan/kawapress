@@ -3,10 +3,11 @@ import type { PageHeader } from 'kawapress'
 
 defineProps<{
   item: PageHeader
+  activeLink: string | null
 }>()
 
 const emit = defineEmits<{
-  navigate: []
+  navigate: [link: string]
 }>()
 </script>
 
@@ -15,7 +16,9 @@ const emit = defineEmits<{
     <a
       :href="item.link"
       class="nagi-outline-item__link"
-      @click="emit('navigate')"
+      :class="{ 'is-active': item.link === activeLink }"
+      :aria-current="item.link === activeLink ? 'location' : undefined"
+      @click="emit('navigate', item.link)"
     >
       {{ item.title }}
     </a>
@@ -24,7 +27,8 @@ const emit = defineEmits<{
         v-for="child in item.children"
         :key="child.link"
         :item="child"
-        @navigate="emit('navigate')"
+        :active-link="activeLink"
+        @navigate="emit('navigate', $event)"
       />
     </ul>
   </li>

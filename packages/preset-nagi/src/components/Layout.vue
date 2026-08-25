@@ -2,7 +2,8 @@
 import type { HeadLink } from 'kawapress/client'
 import type { NagiHomeImage, NagiImageSource, NagiThemeableImage } from '../home'
 import { RouterView, useHead, usePageData, useSite, withBase } from 'kawapress/client'
-import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, provide, shallowRef, useTemplateRef, watch } from 'vue'
+import { nagiDocScrollKey } from '../composables/docScroll'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import DocNavigation from './DocNavigation.vue'
 import DocToolbar from './DocToolbar.vue'
@@ -24,6 +25,8 @@ const showSidebar = computed(() => Boolean(page.value) && layout.value === 'doc'
 const sidebarOpen = shallowRef(false)
 const outlineOpen = shallowRef(false)
 const docScroll = useTemplateRef<InstanceType<typeof OsScroll>>('docScroll')
+
+provide(nagiDocScrollKey, () => docScroll.value?.getScrollElement() ?? null)
 
 watch(() => page.value?.path, async () => {
   sidebarOpen.value = false
@@ -112,7 +115,7 @@ function resolveImageSrc(image: string | NagiImageSource): string {
           @toggle-outline="outlineOpen = !outlineOpen"
           @toggle-sidebar="sidebarOpen = !sidebarOpen"
         />
-        <OsScroll ref="docScroll" class="nagi-main__scroll">
+        <OsScroll ref="docScroll" class="nagi-main__scroll" :defer="false">
           <div class="nagi-main__content">
             <article class="nagi-doc">
               <RouterView />

@@ -399,7 +399,7 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 
 原子 CSS 能力由独立逻辑插件包 `@kawapress/plugin-unocss` 提供，不写死在 Core。Generator Plugin 通过公开的 `api.vite()` 注入 `unocss/vite`；`./runtime-plugin` 静态导入 `virtual:uno.css`，让 SSR 与 client 使用同一份样式入口，站点用户不手动导入生成 CSS。插件接受 UnoCSS 的类型化 Vite 配置，并继续让 UnoCSS 从站点根目录发现和热更新 `uno.config.*` 或 `unocss.config.*`。
 
-nagi Preset 默认组合该插件，并默认启用 `presetWind4`、`presetIcons` 与 `presetWebFonts`。Wind4 保留按需 theme 变量和 property 生成，但显式关闭会影响 nagi 与其他独立 Plugin 的全局 reset。默认 Icons 不捆绑具体 Iconify 图标集，默认 Web Fonts 不声明字体且不发起网络请求；站点只有在实际配置图标集或字体时才承担对应资源。只使用默认工具类的 nagi 站点仍只安装 `kawapress`；站点需要在 `uno.config.ts` 直接导入 UnoCSS API、额外 preset 或 Iconify collection 时，应显式安装并声明对应包。
+nagi Preset 默认组合该插件，并默认启用 `presetWind4`、`presetIcons` 与 `presetWebFonts`。Wind4 保留按需 theme 变量和 property 生成，但显式关闭会影响 nagi 与其他独立 Plugin 的全局 reset。默认 Icons 不捆绑具体 Iconify 图标集，默认 Web Fonts 不声明字体且不发起网络请求；站点只有在实际配置图标集或字体时才承担对应资源。只使用默认工具类的 nagi 站点仍只安装 `kawapress`；站点需要在 `uno.config.ts` 直接导入 UnoCSS API、额外 preset 或 Iconify collection 时，应显式安装并声明对应包。官方文档里的 UnoCSS 示例使用 nagi 主题 CSS 变量表达颜色，保证浅色与深色模式观感一致。
 
 ## 八、配置与数据
 
@@ -460,11 +460,11 @@ nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文�
 
 nagi 的主要滚动区域统一使用基于 `overlayscrollbars-vue` 的 `OsScroll`，配置 `os-theme-nagi`、离开时自动隐藏、轨道点击滚动和 6px 圆角滑块。正文、Sidebar、Home/Page 页面不得暴露操作系统原生滚动条外观。代码块、浮层等无法包裹组件的嵌套原生滚动区使用同一套 CSS scrollbar fallback，颜色与深浅色主题变量保持一致。
 
-nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。NavBar 在桌面端提供语言菜单、明暗模式切换按钮，以及可选的 GitHub 图标链接。语言菜单默认只显示图标，点击后弹出浮层列出全部语言，当前语言高亮。明暗模式未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。小于 60rem 时，NavBar 右侧只保留菜单按钮；点击后从 Header 下方向下渐变展开导航区，展示语言列表、明暗切换与 GitHub 链接，展开区域不得盖住顶部 Header。Runtime Plugin 在客户端模块求值、Vue hydration 之前恢复保存的根元素 class；图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
+nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。代码块与 Code Group 在所有断点都保持与正文相同的左右内边距和圆角，不向视口左右边缘拉满。NavBar 在桌面端提供语言菜单、明暗模式切换按钮，以及可选的 GitHub 图标链接。语言菜单默认只显示图标，点击后弹出浮层列出全部语言，当前语言高亮。明暗模式未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。小于 60rem 时，NavBar 右侧只保留菜单按钮；点击后从 Header 下方向下渐变展开导航区，展示语言列表、明暗切换与 GitHub 链接，展开区域不得盖住顶部 Header。Runtime Plugin 在客户端模块求值、Vue hydration 之前恢复保存的根元素 class；图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
 
 nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。Menu 抽屉、NavBar 导航展开区、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`navMenuLabel`、`outlineLabel`、`returnToTopLabel`、`langMenuLabel`、`previousPageLabel` 和 `nextPageLabel`；其他语言回退英文。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
 
-Markdown 编译阶段为 h1 至 h6 输出稳定、去重的 `id` 与 `.header-anchor` 永久链接；pageData outline 收集 h1 至 h3，nagi 当前页目录排除页面 h1 并递归显示 h2/h3。目录链接必须指向真实标题锚点，不能只生成无目标的 UI。
+Markdown 编译阶段为 h1 至 h6 输出稳定、去重的 `id` 与 `.header-anchor` 永久链接；pageData outline 收集 h1 至 h3，nagi 当前页目录排除页面 h1 并递归显示 h2/h3。目录链接必须指向真实标题锚点，不能只生成无目标的 UI。目录根据正文滚动容器的当前位置高亮对应章节，左侧指示条落在 active 标题旁；移动端工具条下拉目录与桌面右侧目录使用同一套高亮。
 
 KawaPress Core 内置基于路径的国际化模型，与文件路由直接对齐：`root` 表示无语言前缀的默认内容，其他 locale key 对应 `/<locale>/` 路径前缀。当前语言只由当前路由决定，不维护第二份可漂移的 locale 状态。官方文档以中文为 `root`，例如 `/guide`；英文使用 `en`，例如 `/en/guide`。locale 可覆盖 `label`、`lang`、`dir`、`link`、`title` 与泛型 `themeConfig`；当前主题配置由顶层 `themeConfig` 与 locale 的 `themeConfig` 浅合并。Core 公开响应式的 `useSite()`、`useThemeConfig()` 与 `useLocale()`，其中 `useLocale()` 提供当前语言、语言列表和保留当前相对页面的语言链接。SSR、hydration 与客户端导航使用同一套路径解析，SSR/SSG 同时把当前 `lang`、`dir` 写入 `<html>`。主题负责声明自己的 ThemeConfig 类型、默认文案与语言菜单界面，但不得自行解析 URL、维护当前语言或建立私有语言数据通道；用户通过每个 locale 的 `themeConfig` 覆盖主题文案。nagi必须提供语言切换入口，并优先跳到目标语言下的同一相对页面。
 
