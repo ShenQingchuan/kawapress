@@ -38,10 +38,12 @@ export function nagi(userConfig: NagiConfig = {}): NagiConfig {
   const { codeBlock, ...siteConfig } = userConfig
   const createConfig = definePreset<NagiThemeConfig>({
     plugins: [
+      nagiThemePlugin(),
       containerPlugin(),
       githubAlertsPlugin(),
-      codeBlockPlugin(codeBlock),
       codeGroupPlugin(),
+      unocssPlugin(),
+      codeBlockPlugin(codeBlock),
       searchPlugin({
         containers: true,
         githubAlerts: true,
@@ -53,8 +55,6 @@ export function nagi(userConfig: NagiConfig = {}): NagiConfig {
           dark: 'github-dark',
         },
       }),
-      nagiThemePlugin(),
-      unocssPlugin(),
     ],
   })
 

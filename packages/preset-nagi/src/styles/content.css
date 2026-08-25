@@ -480,25 +480,27 @@
 .nagi-doc .kawa-code-block__copy::before,
 .nagi-doc .kawa-code-block__copy::after {
   position: absolute;
-  width: 0.625rem;
-  height: 0.625rem;
-  border: 1.5px solid currentcolor;
-  border-radius: 0.125rem;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  background-color: currentcolor;
   content: '';
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
   transition:
     opacity 160ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .nagi-doc .kawa-code-block__copy::before {
-  top: 0.5625rem;
-  left: 0.5625rem;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216 32H88a8 8 0 0 0-8 8v40H40a8 8 0 0 0-8 8v128a8 8 0 0 0 8 8h128a8 8 0 0 0 8-8v-40h40a8 8 0 0 0 8-8V40a8 8 0 0 0-8-8m-56 176H48V96h112Zm48-48h-32V88a8 8 0 0 0-8-8H96V48h112Z'/%3E%3C/svg%3E");
 }
 
 .nagi-doc .kawa-code-block__copy::after {
-  top: 0.8125rem;
-  left: 0.8125rem;
-  background: var(--nagi-code-bg);
+  opacity: 0.2;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216 40v128h-48V88H88V40Z'/%3E%3C/svg%3E");
 }
 
 .nagi-doc .kawa-code-block__copy[data-copied='true'] {
@@ -510,8 +512,10 @@
   left: 0.75rem;
   width: 0.4375rem;
   height: 0.75rem;
+  border: solid currentcolor;
   border-width: 0 1.5px 1.5px 0;
-  border-radius: 0;
+  background-color: transparent;
+  mask-image: none;
   transform: rotate(45deg);
 }
 
