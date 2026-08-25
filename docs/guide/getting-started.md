@@ -16,8 +16,6 @@ description: 从安装依赖开始，创建并运行你的第一个 KawaPress �
 - npm、pnpm 或 Yarn 中任意一种包管理器；
 - 一个你用得顺手的 Markdown 编辑器。
 
-下面遇到包管理器命令时，可以直接在代码组里选择 npm、pnpm 或 Yarn。
-
 ## 创建项目
 
 先新建一个文件夹，并初始化 `package.json`：
@@ -97,6 +95,16 @@ export default nagi({
 ```
 
 这里的 `nagi()` 会为站点准备好默认文档界面和它所需的插件。主题样式也会自动进入最终应用，不需要再手动导入 CSS。
+
+## 使用 UnoCSS 工具类
+
+nagi 默认启用 [UnoCSS](https://unocss.dev/)，并准备好 `presetWind4`、`presetIcons` 与 `presetWebFonts`。你可以直接在 Markdown 的 HTML 中使用 Wind4 工具类：
+
+<div class="my-6 rounded-xl bg-slate-100 p-4 text-sm dark:bg-slate-800">
+  这张提示卡的间距、圆角和背景色都由 UnoCSS 生成。
+</div>
+
+Wind4 的全局 reset 默认关闭，不会覆盖 nagi 或其他插件的基础样式。Icons 与 Web Fonts 预设也已经可用，但只有在你配置具体图标集或字体以后才会加载对应资源。
 
 ## 写下第一批页面
 
@@ -199,7 +207,7 @@ yarn docs:preview
 
 预览服务器默认运行在 `http://localhost:4173`。确认没有问题后，把 `dist` 目录交给任意静态托管服务即可。
 
-## 你已经准备好了
+## 万事俱备
 
 到这里，你已经完成了一个最小但完整的 KawaPress 站点：
 

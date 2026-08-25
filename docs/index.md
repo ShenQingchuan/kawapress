@@ -21,10 +21,10 @@ features:
     title: 专注内容
     details: 使用 Markdown 安心写作，让 KawaPress 帮你管理页面、路由与静态构建。
   - icon: 🚀
-    title: 开发预览即真实 SSR
-    details: 首次请求始终经过服务端渲染，让问题更早出现，而不是留到部署以后。
-  - icon: 🌊
-    title: 舒服的默认体验
+    title: 一致的 SSR
+    details: 开发时请求也始终经过服务端渲染，让问题更早出现，而不是留到部署以后。
+  - icon: 🎐
+    title: 开箱即用
     details: nagi（凪）为你准备好响应式布局、明暗模式、代码高亮与多语言切换等多种内置能力。
   - icon: 🧩
     title: 自由扩展

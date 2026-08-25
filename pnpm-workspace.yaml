@@ -47,4 +47,5 @@ catalogs:
     consola: ^3.4.2
     jiti: ^2.7.0
     sirv: ^3.0.2
+    unocss: ^66.8.1
     vite: ^8.2.2

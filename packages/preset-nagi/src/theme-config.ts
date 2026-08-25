@@ -10,6 +10,8 @@ export interface ResolvedNagiThemeConfig {
   appearanceLabel: string
   previousPageLabel: string
   nextPageLabel: string
+  footerLicenseText: string
+  footerPoweredByText: string
   logo?: NagiHomeImage
   githubUrl?: string
   sidebar?: NagiSidebarConfig
@@ -26,6 +28,8 @@ const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
   appearanceLabel: 'Toggle light and dark mode',
   previousPageLabel: 'Previous page',
   nextPageLabel: 'Next page',
+  footerLicenseText: 'Released under the MIT License',
+  footerPoweredByText: 'Powered by KawaPress',
 }
 
 const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
@@ -37,6 +41,8 @@ const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
   appearanceLabel: '切换明暗模式',
   previousPageLabel: '上一篇',
   nextPageLabel: '下一篇',
+  footerLicenseText: '基于 MIT 许可发布',
+  footerPoweredByText: 'KawaPress 强力驱动',
 }
 
 export function resolveNagiThemeConfig(
@@ -56,6 +62,8 @@ export function resolveNagiThemeConfig(
     appearanceLabel: config.appearanceLabel ?? defaults.appearanceLabel,
     previousPageLabel: config.previousPageLabel ?? defaults.previousPageLabel,
     nextPageLabel: config.nextPageLabel ?? defaults.nextPageLabel,
+    footerLicenseText: config.footerLicenseText ?? defaults.footerLicenseText,
+    footerPoweredByText: config.footerPoweredByText ?? defaults.footerPoweredByText,
   }
   if (config.logo !== undefined) {
     resolved.logo = config.logo

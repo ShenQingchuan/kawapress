@@ -395,6 +395,12 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 
 插件只负责结构、状态和 `.kawa-code-group*` 稳定 class；nagi 负责其视觉样式。nagi Preset 默认组合该插件，官方《快速开始》使用它展示 npm、pnpm 与 Yarn 命令，不能把三个高频包管理器命令堆成连续普通代码块。
 
+### 7.3 UnoCSS
+
+原子 CSS 能力由独立逻辑插件包 `@kawapress/plugin-unocss` 提供，不写死在 Core。Generator Plugin 通过公开的 `api.vite()` 注入 `unocss/vite`；`./runtime-plugin` 静态导入 `virtual:uno.css`，让 SSR 与 client 使用同一份样式入口，站点用户不手动导入生成 CSS。插件接受 UnoCSS 的类型化 Vite 配置，并继续让 UnoCSS 从站点根目录发现和热更新 `uno.config.*` 或 `unocss.config.*`。
+
+nagi Preset 默认组合该插件，并默认启用 `presetWind4`、`presetIcons` 与 `presetWebFonts`。Wind4 保留按需 theme 变量和 property 生成，但显式关闭会影响 nagi 与其他独立 Plugin 的全局 reset。默认 Icons 不捆绑具体 Iconify 图标集，默认 Web Fonts 不声明字体且不发起网络请求；站点只有在实际配置图标集或字体时才承担对应资源。只使用默认工具类的 nagi 站点仍只安装 `kawapress`；站点需要在 `uno.config.ts` 直接导入 UnoCSS API、额外 preset 或 Iconify collection 时，应显式安装并声明对应包。
+
 ## 八、配置与数据
 
 核心配置至少包含：
@@ -448,9 +454,9 @@ nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可�
 
 pageData 必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含页面路由、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
 
-nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。只有 `doc` 页面显示并进入自动侧边栏。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。nagi 默认复用当前 `themeConfig.logo` 作为 favicon：单图生成一个 SSR `<link rel="icon">`，明暗图片生成带 `prefers-color-scheme` media 的两条 link，并统一应用站点 `base`，不要求官方文档再维护第三份 Logo 资源。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
+nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。只有 `doc` 页面显示并进入自动侧边栏。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层；右侧图片是与左侧标题相当的主视觉，不能缩成辅助性图标。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。nagi 默认复用当前 `themeConfig.logo` 作为 favicon：单图生成一个 SSR `<link rel="icon">`，明暗图片生成带 `prefers-color-scheme` media 的两条 link，并统一应用站点 `base`，不要求官方文档再维护第三份 Logo 资源。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
 
-nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文滚动容器占满剩余高度，页面外壳和 `body` 不滚动，长正文只在右侧内容区域滚动；Sidebar 菜单过长时在自己的区域内滚动。`doc` 不渲染 Footer。正文末尾根据当前已解析 Sidebar 的叶子链接顺序显示上一篇与下一篇，跨顶层分组时仍连续翻页；不显示 Edit this page on GitHub 或更新时间区域。`home` 与 `page` 在 nagi 自己的页面滚动容器内滚动并渲染 Footer；未命中页面按 `page` 布局处理。
+nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文滚动容器占满剩余高度，页面外壳和 `body` 不滚动，长正文只在右侧内容区域滚动；Sidebar 菜单过长时在自己的区域内滚动。`doc` 不渲染 Footer。正文末尾根据当前已解析 Sidebar 的叶子链接顺序显示上一篇与下一篇，跨顶层分组时仍连续翻页；不显示 Edit this page on GitHub 或更新时间区域。`home` 与 `page` 在 nagi 自己的页面滚动容器内滚动并渲染 Footer；未命中页面按 `page` 布局处理。Footer 默认显示本地化的 MIT 许可与 KawaPress 驱动信息，年份由运行时当前年份生成：中文为“基于 MIT 许可发布”和“© {year} KawaPress 强力驱动”，英文为“Released under the MIT License”和“© {year} Powered by KawaPress”。
 
 nagi 的主要滚动区域统一使用基于 `overlayscrollbars-vue` 的 `OsScroll`，配置 `os-theme-nagi`、离开时自动隐藏、轨道点击滚动和 6px 圆角滑块。正文、Sidebar、Home/Page 页面不得暴露操作系统原生滚动条外观。代码块、浮层等无法包裹组件的嵌套原生滚动区使用同一套 CSS scrollbar fallback，颜色与深浅色主题变量保持一致。
 

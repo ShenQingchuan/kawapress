@@ -14,8 +14,6 @@ You need:
 - npm, pnpm, or Yarn;
 - an editor with Markdown support.
 
-Whenever a package manager command appears, use the code group to choose npm, pnpm, or Yarn.
-
 ## Create a Project
 
 Create a directory and initialize its `package.json`:
@@ -95,6 +93,16 @@ export default nagi({
 ```
 
 The `nagi()` preset installs the default documentation interface and its plugins. Its styles are included automatically, so the site does not need a separate theme CSS import.
+
+## Use UnoCSS Utilities
+
+nagi enables [UnoCSS](https://unocss.dev/) with `presetWind4`, `presetIcons`, and `presetWebFonts`. Wind4 utilities work directly in Markdown HTML:
+
+<div class="my-6 rounded-xl bg-slate-100 p-4 text-sm dark:bg-slate-800">
+  UnoCSS generates this card's spacing, radius, and background colors.
+</div>
+
+The Wind4 global reset is disabled, so it does not overwrite nagi or other plugin foundations. The Icons and Web Fonts presets are ready, but they load assets only after you configure a specific icon collection or font.
 
 ## Add Your First Pages
 

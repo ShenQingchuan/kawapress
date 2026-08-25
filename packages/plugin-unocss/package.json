@@ -1,8 +1,8 @@
 {
-  "name": "@kawapress/preset-nagi",
+  "name": "@kawapress/plugin-unocss",
   "type": "module",
   "version": "0.0.0",
-  "description": "Default preset for KawaPress",
+  "description": "UnoCSS integration for KawaPress",
   "license": "MIT",
   "exports": {
     ".": {
@@ -21,21 +21,14 @@
     "src"
   ],
   "peerDependencies": {
-    "kawapress": "workspace:*",
-    "vue": "catalog:frontend"
+    "kawapress": "workspace:*"
   },
   "dependencies": {
-    "@kawapress/plugin-code-group": "workspace:*",
-    "@kawapress/plugin-search": "workspace:*",
-    "@kawapress/plugin-shiki": "workspace:*",
-    "@kawapress/plugin-unocss": "workspace:*",
-    "overlayscrollbars": "catalog:frontend",
-    "overlayscrollbars-vue": "catalog:frontend"
+    "unocss": "catalog:node"
   },
   "devDependencies": {
     "kawapress": "workspace:*",
     "typescript": "catalog:dev",
-    "vite": "catalog:node",
-    "vue": "catalog:frontend"
+    "vite": "catalog:node"
   }
 }

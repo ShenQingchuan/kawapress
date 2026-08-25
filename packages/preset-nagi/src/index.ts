@@ -3,6 +3,7 @@ import type { NagiThemeConfig, ResolvedNagiThemeConfig } from './theme-config'
 import { codeGroupPlugin } from '@kawapress/plugin-code-group'
 import { searchPlugin } from '@kawapress/plugin-search'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
+import { unocssPlugin } from '@kawapress/plugin-unocss'
 import { definePreset } from 'kawapress'
 import { createNagiPlugin } from './nagi-plugin'
 
@@ -40,6 +41,7 @@ export function nagi(userConfig: NagiConfig = {}): NagiConfig {
         },
       }),
       createNagiPlugin(),
+      unocssPlugin(),
     ],
   })
 

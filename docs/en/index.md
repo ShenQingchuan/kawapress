@@ -23,7 +23,7 @@ features:
   - icon: 🚀
     title: Real SSR in development
     details: Every initial request is server-rendered, so SSR problems appear before deployment.
-  - icon: 🌊
+  - icon: 🎐
     title: A complete default
     details: nagi (凪) includes responsive layouts, dark mode, syntax highlighting, and i18n.
   - icon: 🧩
