@@ -163,7 +163,7 @@ KawaPress 选择使用 Vue 官方的 [Vue Router](https://router.vuejs.org/)。M
 
 这不是“功能越多越好”。VitePress 优先追求小而专用；KawaPress 更看重统一的 Vue 扩展边界，让主题和 Runtime Plugin 不必再学习一套框架私有 Router。
 
-需要注意，`router.addRoute()` 只会修改正在运行的 Router。它不会自动告诉静态构建器新增了哪些页面，因此 KawaPress 0.1 不承诺由它添加的路由会被预渲染。
+静态构建会根据构建时发现的 Markdown 文件生成页面。`router.addRoute()` 更适合添加只在客户端运行期间需要的路由；如果一个页面需要支持直接访问和预渲染，请把它创建为 Markdown 文件。
 
 ## 未找到的页面
 

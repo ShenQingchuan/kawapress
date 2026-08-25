@@ -26,20 +26,19 @@ export const sidebars = defineLocalizedSidebars({
           },
           link: '/guide/getting-started',
         },
-      ],
-    },
-    {
-      text: {
-        zhCN: '指南',
-        en: 'Guide',
-      },
-      items: [
         {
           text: {
             zhCN: '路由',
             en: 'Routing',
           },
           link: '/guide/routing',
+        },
+        {
+          text: {
+            zhCN: '部署',
+            en: 'Deploy',
+          },
+          link: '/guide/deploy',
         },
       ],
     },

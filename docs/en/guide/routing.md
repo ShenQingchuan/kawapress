@@ -163,7 +163,7 @@ KawaPress uses the official [Vue Router](https://router.vuejs.org/). Markdown fi
 
 Neither choice is universally better. VitePress optimizes for a small, specialized runtime. KawaPress prioritizes a shared Vue extension boundary, so themes and Runtime Plugins do not need to learn a framework-specific router.
 
-One boundary still matters: `router.addRoute()` changes the running Router only. It does not tell the static builder which new pages to generate, so KawaPress 0.1 does not guarantee prerendering for routes added this way.
+The static build generates pages from Markdown files discovered at build time. Use `router.addRoute()` for routes needed only while the client app is running. If a page must support direct visits and prerendering, create it as a Markdown file.
 
 ## Not Found Pages
 
