@@ -5,6 +5,8 @@ export interface ResolvedNagiThemeConfig {
   sidebarMenuLabel: string
   navMenuLabel: string
   outlineLabel: string
+  outlineCollapseLabel: string
+  outlineExpandLabel: string
   returnToTopLabel: string
   langMenuLabel: string
   appearanceLabel: string
@@ -23,6 +25,8 @@ const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: 'Menu',
   navMenuLabel: 'Open navigation menu',
   outlineLabel: 'On this page',
+  outlineCollapseLabel: 'Collapse page outline',
+  outlineExpandLabel: 'Expand page outline',
   returnToTopLabel: 'Return to top',
   langMenuLabel: 'Change language',
   appearanceLabel: 'Toggle light and dark mode',
@@ -36,6 +40,8 @@ const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: '菜单',
   navMenuLabel: '打开导航菜单',
   outlineLabel: '本页目录',
+  outlineCollapseLabel: '收起本页目录',
+  outlineExpandLabel: '展开本页目录',
   returnToTopLabel: '返回顶部',
   langMenuLabel: '切换语言',
   appearanceLabel: '切换明暗模式',
@@ -57,6 +63,8 @@ export function resolveNagiThemeConfig(
     sidebarMenuLabel: config.sidebarMenuLabel ?? defaults.sidebarMenuLabel,
     navMenuLabel: config.navMenuLabel ?? defaults.navMenuLabel,
     outlineLabel: config.outlineLabel ?? defaults.outlineLabel,
+    outlineCollapseLabel: config.outlineCollapseLabel ?? defaults.outlineCollapseLabel,
+    outlineExpandLabel: config.outlineExpandLabel ?? defaults.outlineExpandLabel,
     returnToTopLabel: config.returnToTopLabel ?? defaults.returnToTopLabel,
     langMenuLabel: config.langMenuLabel ?? defaults.langMenuLabel,
     appearanceLabel: config.appearanceLabel ?? defaults.appearanceLabel,

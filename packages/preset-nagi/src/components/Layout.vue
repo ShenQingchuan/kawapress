@@ -5,11 +5,12 @@ import { RouterView, useHead, usePageData, useSite, withBase } from 'kawapress/c
 import { computed, nextTick, provide, shallowRef, useTemplateRef, watch } from 'vue'
 import { nagiDocScrollKey } from '../composables/docScroll'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
+import { getOutlineHeaders } from '../outline'
 import DocNavigation from './DocNavigation.vue'
 import DocToolbar from './DocToolbar.vue'
 import Home from './Home.vue'
 import OsScroll from './OsScroll.vue'
-import Outline from './Outline.vue'
+import OutlineAside from './OutlineAside.vue'
 
 const site = useSite()
 const page = usePageData()
@@ -22,8 +23,12 @@ const layout = computed(() => {
   return value === 'home' || value === 'page' ? value : 'doc'
 })
 const showSidebar = computed(() => Boolean(page.value) && layout.value === 'doc')
+const hasPageOutline = computed(
+  () => getOutlineHeaders(page.value?.headers ?? []).length > 0,
+)
 const sidebarOpen = shallowRef(false)
 const outlineOpen = shallowRef(false)
+const outlineAsideCollapsed = shallowRef(false)
 const docScroll = useTemplateRef<InstanceType<typeof OsScroll>>('docScroll')
 
 provide(nagiDocScrollKey, () => docScroll.value?.getScrollElement() ?? null)
@@ -88,7 +93,13 @@ function resolveImageSrc(image: string | NagiImageSource): string {
   <div class="nagi" :class="`nagi--${layout}`">
     <NavBar />
 
-    <div v-if="layout === 'doc'" class="nagi-content">
+    <div
+      v-if="layout === 'doc'"
+      class="nagi-content"
+      :class="{
+        'nagi-content--wide-doc': !hasPageOutline || outlineAsideCollapsed,
+      }"
+    >
       <Sidebar v-if="showSidebar" mode="desktop" />
 
       <Transition name="nagi-backdrop">
@@ -125,11 +136,11 @@ function resolveImageSrc(image: string | NagiImageSource): string {
         </OsScroll>
       </main>
 
-      <aside class="nagi-outline-aside">
-        <OsScroll class="nagi-outline-aside__scroll">
-          <Outline />
-        </OsScroll>
-      </aside>
+      <OutlineAside
+        v-if="hasPageOutline"
+        :collapsed="outlineAsideCollapsed"
+        @toggle="outlineAsideCollapsed = !outlineAsideCollapsed"
+      />
     </div>
 
     <OsScroll v-else class="nagi-page-scroll">

@@ -51,6 +51,8 @@ KawaPress 期望成为一个更好的 VitePress，是由 Vue 社区成员自主�
 - 路由路径清单可以进入浏览器，页面组件与 pageData 按需加载。
 - 0.1 不提供插件虚拟页面 API，也不提供 `addPage()`。
 
+KawaPress 选择 Vue 官方的 Vue Router，而不是为静态文档场景维护一套框架私有的轻量 Router。这个选择会增加一个通用运行时依赖，并携带基础文档站暂时用不到的能力；换来的结果是 SSR memory history、浏览器 web history、导航守卫、路由记录与 Runtime Plugin 共用同一套 Vue 生态标准接口，Core 不需要长期自行维护 URL、history、导航竞态和扩展协议。`router.addRoute()` 只修改运行时 Router，不自动进入静态预渲染页面清单。
+
 非 Markdown 内容源、动态路由、RSS、sitemap、归档页等能力留到后续内容层与路由方案中统一设计。
 
 ## 三、生成侧与运行侧
@@ -462,7 +464,7 @@ nagi 的主要滚动区域统一使用基于 `overlayscrollbars-vue` 的 `OsScro
 
 nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。代码块与 Code Group 在所有断点都保持与正文相同的左右内边距和圆角，不向视口左右边缘拉满。NavBar 在桌面端提供语言菜单、明暗模式切换按钮，以及可选的 GitHub 图标链接。语言菜单默认只显示图标，点击后弹出浮层列出全部语言，当前语言高亮。明暗模式未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。小于 60rem 时，NavBar 右侧只保留菜单按钮；点击后从 Header 下方向下渐变展开导航区，展示语言列表、明暗切换与 GitHub 链接，展开区域不得盖住顶部 Header。Runtime Plugin 在客户端模块求值、Vue hydration 之前恢复保存的根元素 class；图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
 
-nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。Menu 抽屉、NavBar 导航展开区、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`navMenuLabel`、`outlineLabel`、`returnToTopLabel`、`langMenuLabel`、`previousPageLabel` 和 `nextPageLabel`；其他语言回退英文。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
+nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。宽屏右侧目录默认展开，目录右上角提供无边框的面板收起图标；收起后目录完全退出布局，正文最大宽度同步使用释放出的全部空间，并在导航栏下方、距视口右上边缘留有安全间距的位置固定显示另一个无边框面板展开图标；没有可显示标题的页面直接回收目录空间。收起状态在当前 Vue App 的站内跳转期间保留，重新加载页面后恢复默认展开。Menu 抽屉、NavBar 导航展开区、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`navMenuLabel`、`outlineLabel`、`returnToTopLabel`、`langMenuLabel`、`previousPageLabel` 和 `nextPageLabel`；其他语言回退英文。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
 
 Markdown 编译阶段为 h1 至 h6 输出稳定、去重的 `id` 与 `.header-anchor` 永久链接；pageData outline 收集 h1 至 h3，nagi 当前页目录排除页面 h1 并递归显示 h2/h3。目录链接必须指向真实标题锚点，不能只生成无目标的 UI。目录根据正文滚动容器的当前位置高亮对应章节，左侧指示条落在 active 标题旁；移动端工具条下拉目录与桌面右侧目录使用同一套高亮。
 
