@@ -13,6 +13,7 @@
   "include": [
     "eslint.config.ts",
     "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.vue",
     "packages/*/src/**/*.d.ts",
     "packages/*/*.ts",
     "packages/*/*.config.ts"

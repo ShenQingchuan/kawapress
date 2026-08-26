@@ -1,6 +1,6 @@
 import FloatingVue from 'floating-vue'
 import { defineRuntimePlugin } from 'kawapress'
-import { TwoslashMenu } from './twoslash-menu'
+import TwoslashMenu from './TwoslashMenu.vue'
 import '@shikijs/twoslash/style-rich.css'
 import 'floating-vue/dist/style.css'
 import './twoslash.css'

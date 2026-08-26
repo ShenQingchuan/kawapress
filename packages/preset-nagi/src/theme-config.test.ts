@@ -14,6 +14,8 @@ describe('nagi theme translations', () => {
       appearanceLabel: '切换明暗模式',
       previousPageLabel: '上一篇',
       nextPageLabel: '下一篇',
+      notFoundMessage: '找不到页面',
+      notFoundHomeLabel: '返回首页',
       footerLicenseText: '基于 MIT 许可发布',
       footerPoweredByText: 'KawaPress 强力驱动',
     })
@@ -35,6 +37,8 @@ describe('nagi theme translations', () => {
         appearanceLabel: 'Toggle light and dark mode',
         previousPageLabel: 'Previous page',
         nextPageLabel: 'Next page',
+        notFoundMessage: 'page not found',
+        notFoundHomeLabel: 'back to home',
         footerLicenseText: 'Released under the MIT License',
         footerPoweredByText: 'Powered by KawaPress',
         githubUrl: 'https://github.com/example/docs',

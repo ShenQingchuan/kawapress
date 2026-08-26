@@ -1,18 +1,10 @@
 import type { Router, RouteRecordRaw } from 'vue-router'
 import { pageData, pages } from 'virtual:kawapress-pages'
 import { site } from 'virtual:kawapress-site'
-import { defineComponent, h, resolveComponent } from 'vue'
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
 import { withoutBase } from '../base'
+import NotFoundRoute from './NotFoundRoute.vue'
 import { wrapPageLoader } from './page-data'
-
-const NotFoundRoute = defineComponent({
-  name: 'KawaNotFound',
-  setup() {
-    const NotFound = resolveComponent('NotFound')
-    return () => h(NotFound)
-  },
-})
 
 export function createRoutes(): RouteRecordRaw[] {
   return [

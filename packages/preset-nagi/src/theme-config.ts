@@ -12,6 +12,8 @@ export interface ResolvedNagiThemeConfig {
   appearanceLabel: string
   previousPageLabel: string
   nextPageLabel: string
+  notFoundMessage: string
+  notFoundHomeLabel: string
   footerLicenseText: string
   footerPoweredByText: string
   logo?: NagiHomeImage
@@ -32,6 +34,8 @@ const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
   appearanceLabel: 'Toggle light and dark mode',
   previousPageLabel: 'Previous page',
   nextPageLabel: 'Next page',
+  notFoundMessage: 'page not found',
+  notFoundHomeLabel: 'back to home',
   footerLicenseText: 'Released under the MIT License',
   footerPoweredByText: 'Powered by KawaPress',
 }
@@ -47,6 +51,8 @@ const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
   appearanceLabel: '切换明暗模式',
   previousPageLabel: '上一篇',
   nextPageLabel: '下一篇',
+  notFoundMessage: '找不到页面',
+  notFoundHomeLabel: '返回首页',
   footerLicenseText: '基于 MIT 许可发布',
   footerPoweredByText: 'KawaPress 强力驱动',
 }
@@ -70,6 +76,8 @@ export function resolveNagiThemeConfig(
     appearanceLabel: config.appearanceLabel ?? defaults.appearanceLabel,
     previousPageLabel: config.previousPageLabel ?? defaults.previousPageLabel,
     nextPageLabel: config.nextPageLabel ?? defaults.nextPageLabel,
+    notFoundMessage: config.notFoundMessage ?? defaults.notFoundMessage,
+    notFoundHomeLabel: config.notFoundHomeLabel ?? defaults.notFoundHomeLabel,
     footerLicenseText: config.footerLicenseText ?? defaults.footerLicenseText,
     footerPoweredByText: config.footerPoweredByText ?? defaults.footerPoweredByText,
   }
