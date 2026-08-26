@@ -4,16 +4,16 @@ import type {
   Server,
   ServerResponse,
 } from 'node:http'
-import type { KawapressViteServer } from './vite'
+import type { KawapressViteServer } from '../generator/vite/dev-server'
 import { readFileSync, watch } from 'node:fs'
 import { resolve } from 'node:path'
 import { consola } from 'consola'
 import {
   CONFIG_FILE_NAME,
   loadSiteConfigWithDependencies,
-} from './load-config'
+} from '../generator/load-config'
+import { createViteServer } from '../generator/vite/dev-server'
 import { createRequestHandler } from './request-handler'
-import { createViteServer } from './vite'
 
 const RESTART_DELAY = 50
 

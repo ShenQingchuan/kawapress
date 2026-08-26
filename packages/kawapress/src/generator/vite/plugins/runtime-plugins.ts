@@ -4,7 +4,7 @@ import { findPackageJSON } from 'node:module'
 import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
-import { parseJson } from '../core/json'
+import { parseJson } from '../../../core/json'
 
 const RUNTIME_PLUGINS_MODULE_ID = 'virtual:kawapress-runtime-plugins'
 const RESOLVED_ID = `\0${RUNTIME_PLUGINS_MODULE_ID}`

@@ -2,8 +2,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { RunnableDevEnvironment, ViteDevServer } from 'vite'
 import { isCSSRequest } from 'vite'
 import { decodeUrlPathname, withoutBase } from '../core/base'
-import { entryClientPath, entryServerPath } from './entries'
-import { toFsModuleUrl } from './module-url'
+import { entryClientPath, entryServerPath } from '../generator/vite/entries'
+import { toFsModuleUrl } from '../generator/vite/module-url'
 import { renderHtmlTemplate } from './template'
 
 const entryServerUrl = toFsModuleUrl(entryServerPath)

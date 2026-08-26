@@ -1,10 +1,10 @@
 import type { InlineConfig } from 'vite'
 import { consola } from 'consola'
 import { createBuilder } from 'vite'
-import { entryClientPath, entryServerPath } from './entries'
-import { loadSiteConfig } from './load-config'
+import { loadSiteConfig } from '../generator/load-config'
+import { createBaseViteConfig } from '../generator/vite/config'
+import { entryClientPath, entryServerPath } from '../generator/vite/entries'
 import { prerenderPages } from './prerender'
-import { createBaseViteConfig } from './vite-config'
 
 export async function buildSite(root: string) {
   const siteConfig = await loadSiteConfig(root)

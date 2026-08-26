@@ -4,9 +4,9 @@ import type {
   RunnableDevEnvironment,
   ViteDevServer,
 } from 'vite'
-import type { ResolvedSiteConfig } from './config'
+import type { ResolvedSiteConfig } from '../config'
 import { createServer, isRunnableDevEnvironment } from 'vite'
-import { createBaseViteConfig } from './vite-config'
+import { createBaseViteConfig } from './config'
 
 export interface KawapressViteServer {
   vite: ViteDevServer

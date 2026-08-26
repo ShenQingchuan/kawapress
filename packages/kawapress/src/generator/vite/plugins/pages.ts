@@ -1,10 +1,10 @@
 import type { Dirent } from 'node:fs'
 import type { Plugin } from 'vite'
-import type { MarkdownPageLoader } from '../compiler/page-loader'
-import type { PageData } from '../core/site'
+import type { MarkdownPageLoader } from '../../../compiler/page-loader'
+import type { PageData } from '../../../core/site'
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, sep } from 'node:path'
-import { stringifyJsonForScript } from '../core/json'
+import { stringifyJsonForScript } from '../../../core/json'
 
 const MODULE_ID = 'virtual:kawapress-pages'
 const RESOLVED_ID = `\0${MODULE_ID}`

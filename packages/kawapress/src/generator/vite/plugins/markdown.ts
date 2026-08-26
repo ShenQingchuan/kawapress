@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite'
-import type { MarkdownPageLoader } from '../compiler/page-loader'
-import { assembleVueSfc } from '../compiler/markdown'
+import type { MarkdownPageLoader } from '../../../compiler/page-loader'
+import { assembleVueSfc } from '../../../compiler/markdown'
 
 export function markdownPlugin(pageLoader: MarkdownPageLoader): Plugin {
   return {
