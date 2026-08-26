@@ -347,7 +347,7 @@ Markdown 引擎使用 `markdown-exit`：
 - 原生支持异步渲染；
 - 具有完整 TypeScript 类型。
 
-每个 Markdown 文件编译成 Vue 组件。KawaPress 自己维护站点感知的编译层，负责：
+每个 Markdown 文件编译成 Vue 组件。生成侧的 Vite Plugin 在 `load()` 阶段读取物理 `.md` 文件并输出完整 Vue SFC，再由普通顺序的 Vue Plugin 在 `transform()` 阶段编译；两者之间不依赖 `enforce: 'pre'` 或插件数组的隐式先后关系。KawaPress 自己维护站点感知的编译层，负责：
 
 - frontmatter；
 - 标题与 headers；
