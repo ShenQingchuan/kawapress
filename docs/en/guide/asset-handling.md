@@ -123,7 +123,9 @@ public/handbook.pdf
 [Download the handbook](./handbook.pdf)
 ```
 
-`./handbook.pdf` only points beside the article. The file may not be included in the published site, and readers can land on a missing-file page after they click it.
+`./handbook.pdf` only tells the browser where to look after a click. It does not tell the build tool to include the file in the published site.
+
+During local development, the server can still read the file from your computer, so the link may appear to work. During a production build, only assets genuinely referenced by an image, CSS, or `import`, and files in the public assets directory, are guaranteed to be copied. If the file is not copied, readers reach a missing-file page after they click the link.
 :::
 
 ## Asset URLs Chosen at Runtime
