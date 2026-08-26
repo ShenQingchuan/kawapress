@@ -1,60 +1,36 @@
 ---
-description: Put images, fonts, and download files in the right place, then use public files and base paths with confidence.
+description: Reference assets from Markdown, Vue components, and CSS, then use the public assets directory for downloads and site-wide files.
 ---
 
 # Asset Handling
 
-Images, video, fonts, PDFs, and download files are static assets. They are published with your site, but they are not pages that readers open as articles.
+## Reference Static Assets
 
-You only need two rules to start:
-
-1. **Keep an asset next to the page or component that owns it, then use a relative path.**
-2. **Put files shared by the site in the public assets directory. It is named `public` by default, and you can configure it.**
-
-KawaPress passes both kinds of assets to Vite, the tool that builds the site. Vite copies files, prepares their URLs, and helps those URLs keep working when the site is deployed below a subpath.
-
-## Keep Page Assets Together
-
-Imagine that one guide page needs an architecture diagram. Keep the image with that page:
-
-```text
-docs/
-└─ guide/
-   ├─ asset-handling.md
-   └─ architecture.png
-```
-
-Then write this in `asset-handling.md`:
+Every Markdown page becomes a Vue component and is processed by Vite. Use relative paths for images owned by that page:
 
 ```md
 ![Architecture](./architecture.png)
 ```
 
-`./` means “the folder containing this Markdown file.” KawaPress therefore finds `architecture.png` in the same `guide` folder.
+Common image, media, and font files are detected as assets automatically. They can be referenced from Markdown, Vue components, and CSS. Static `src` values, CSS `url(...)` values, and direct imports can all use relative paths.
 
-When you build the production site, Vite copies only assets that a page actually uses. Most copied assets receive a filename with a content marker, such as `architecture-abc123.png`. You do not need to write that name yourself. It helps browsers fetch a fresh image after the image changes. Very small files may be included directly in page code instead, which also needs no extra work from you.
+During a production build, referenced assets are copied to the output with content-hashed filenames. Unused assets are not copied, and very small files may be inlined.
 
-In both cases, KawaPress applies the site `base` path. An image that works in local development will also work when the site lives below a path such as GitHub Pages.
+### A Linked File Is Not an Asset
 
-### Vue Components and CSS Follow the Same Rule
+A normal link only provides an address. It does not automatically add its target to the build output:
 
-Use paths relative to the current file for:
+```md
+[Download the handbook](./handbook.pdf)
+```
 
-- static `src` values in Vue components;
-- CSS `url(...)` values;
-- images or fonts imported directly in `<script setup>`.
+Put PDFs, archives, and other download files in the [public assets directory](#public-directory).
 
-Keeping an asset near the code that uses it makes folders easier to move without losing files.
+## The Public Assets Directory: `public` {#public-directory}
 
-::: tip A quick way to decide
-If removing a page or component would make an asset useless, keep that asset next to the page or component and reference it with `./` or `../`.
-:::
+The public assets directory holds site-wide files such as `robots.txt`, site icons, PWA icons, and downloads.
 
-## The Public Assets Directory: `public`
-
-Site icons, `robots.txt`, PWA icons, and PDFs, archives, or example files that readers download are **public assets**. They are not owned by one article or one component. Any part of the site may need them.
-
-The public assets directory is named `public` by default:
+Its default name is `public`, inside `srcDir`. When `srcDir` is not set, the directory is:
 
 ```text
 docs/
@@ -62,13 +38,7 @@ docs/
    └─ handbook.pdf
 ```
 
-During a build, KawaPress places files from this directory at the root of the published site. Their names stay the same, and Markdown files in the directory never become pages by mistake.
-
-### Change the Public Assets Directory
-
-`public` is the default name, not a fixed requirement. Use `publicDir` to choose any relative directory inside `srcDir`.
-
-For example, this site keeps its content in `content` and its public assets in `content/static`:
+Use `publicDir` to choose a different directory:
 
 ```ts
 import { nagi } from 'kawapress/nagi'
@@ -79,20 +49,11 @@ export default nagi({
 })
 ```
 
-Its folders look like this:
+This places `handbook.pdf` at `content/static/handbook.pdf`. `publicDir` can also be a nested path such as `assets/public`. Without this option, KawaPress always uses `public`.
 
-```text
-docs/
-└─ content/
-   └─ static/
-      └─ handbook.pdf
-```
+Files from this directory are copied directly to the output root. Their names do not change, and they never become pages.
 
-A nested path also works, such as `publicDir: 'assets/public'`. When you do not set `publicDir`, KawaPress continues to use `public`.
-
-### Reference a Public Asset
-
-No matter whether the folder on disk is named `public`, `static`, or something else, start the URL at the public root:
+Always reference a public asset from the site root:
 
 ```md
 [Download the handbook](/handbook.pdf)
@@ -100,73 +61,35 @@ No matter whether the folder on disk is named `public`, `static`, or something e
 ![Site icon](/icon.svg)
 ```
 
-The leading `/` means “the public root of this site.” It does not mean the root of your computer’s filesystem.
+The URL stays `/handbook.pdf` whether the directory on disk is named `public` or `static`.
 
-For example, a site deployed at `https://example.com/kawapress/` should still use `/handbook.pdf`, **not** `/kawapress/handbook.pdf`. KawaPress adds the `/kawapress/` `base` prefix for you. You can move the asset folder or change the deployment path without rewriting links in your content.
+## `base`
 
-::: warning Put a download in the public assets directory first
-To give readers a download, put the file in the public assets directory first, then give it a URL that starts with `/`.
+Set `base: '/kawapress/'` when the site is deployed below a subpath such as `https://example.com/kawapress/`. KawaPress adjusts static asset URLs automatically.
 
-**Do this:**
-
-```text
-public/handbook.pdf
-```
+A public asset therefore still uses this path:
 
 ```md
-[Download the handbook](/handbook.pdf)
+![Site icon](/icon.svg)
 ```
 
-**Do not do this:**
+Do not write `/kawapress/icon.svg` yourself.
 
-```md
-[Download the handbook](./handbook.pdf)
-```
-
-`./handbook.pdf` only tells the browser where to look after a click. It does not tell the build tool to include the file in the published site.
-
-During local development, the server can still read the file from your computer, so the link may appear to work. During a production build, only assets genuinely referenced by an image, CSS, or `import`, and files in the public assets directory, are guaranteed to be copied. If the file is not copied, readers reach a missing-file page after they click the link.
-:::
-
-## Asset URLs Chosen at Runtime
-
-Sometimes an image URL is not written directly in a template. It may come from theme configuration, API data, or a variable. For example, a theme may provide the logo path `/brand/logo.svg`.
-
-Vite cannot rewrite that URL automatically because the final value is chosen at runtime. Use this safe pattern instead:
-
-1. Place the file in the public assets directory. Its default location is `public/brand/logo.svg`.
-2. Store only `/brand/logo.svg` in configuration.
-3. Call `withBase()` in the component before using the URL.
+Dynamic URLs are not rewritten automatically. For example, use `withBase()` for a logo path from theme configuration:
 
 ```vue
 <script setup lang="ts">
 import { useSite, withBase } from 'kawapress/client'
 
 const site = useSite()
-
-// This value could also come from theme configuration.
 const logoPath = '/brand/logo.svg'
-const logoSrc = withBase(logoPath, site.value.base)
 </script>
 
 <template>
-  <img :src="logoSrc" alt="Brand logo">
+  <img :src="withBase(logoPath, site.base)" alt="Brand logo">
 </template>
 ```
 
-`withBase()` adds the deployment path when one is needed. The same component requests `/brand/logo.svg` locally and `/kawapress/brand/logo.svg` after deployment below `/kawapress/`.
+`withBase()` adds the deployment path when needed. To choose from a known set of local assets dynamically, use Vite’s `import` or `import.meta.glob()` patterns.
 
-When choosing from a known set of local build-time assets, prefer Vite’s `import` or `import.meta.glob()` patterns. They give the build tool an explicit list of possible files.
-
-A `new URL()` path must also be known during the build. KawaPress renders pages on the server first, so do not treat `new URL()` as a universal solution for code that runs during SSR.
-
-## Choose a Place Quickly
-
-| Your situation | Put it here | Write it like this |
-| --- | --- | --- |
-| An illustration for one article | Next to the Markdown file | `![Description](./image.png)` |
-| An image or font used by one Vue component | Next to the Vue component | Static `src`, CSS `url(...)`, or `import` |
-| A site-wide icon, PDF, or `robots.txt` | Public assets directory (default: `srcDir/public/`) | `/icon.svg` or `/handbook.pdf` |
-| A public asset URL from config or runtime data | Public assets directory (default: `srcDir/public/`) | `withBase('/logo.svg', site.base)` |
-
-Start with this table when you are unsure. For unusual formats, asset inline limits, or more advanced dynamic imports, read the [Vite static asset guide](https://vite.dev/guide/assets.html).
+For asset formats and dynamic import rules, see the [Vite static asset guide](https://vite.dev/guide/assets.html).
