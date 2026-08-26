@@ -362,6 +362,10 @@ markdown-it 生态插件的公开类型把第一个参数绑定为 `MarkdownIt`�
 
 代码高亮使用 Shiki，并作为原子 Plugin 接入 `markdown()`。Shiki transformer 保持可配置。Twoslash 不属于 0.1 范围，等待 Runtime Plugin 与浮层 UI 能力稳定后再实现。
 
+Markdown 页面链接属于 Core 的文件路由契约，不拆成可选 Plugin。相对链接根据当前 Markdown 源文件位置解析，避免目录 `index.md` 的公开无后缀路由丢失源目录语义；无后缀、`.md` 与 `.html` 三种页面链接写法均归一化为 KawaPress 的无后缀公开路由，根路径与相对路径统一应用站点 `base`。浏览器 hydration 后，同源页面链接由 Vue Router 接管。外部 Markdown 链接默认添加 `target="_blank"` 与 `rel="noreferrer"`；页面内 hash 链接保持原生锚点行为。
+
+GitHub 风格表格由 Markdown 引擎的默认规则直接提供，是 Core 基础 Markdown 语法，不拆成 Plugin。Core 使用回归测试固定表头、表体与左中右对齐输出；nagi 只负责表格的响应式滚动、边框和明暗模式视觉。
+
 ### 7.1 标题锚点与自定义锚点
 
 标题身份属于 Core 的 Markdown 编译契约。KawaPress 在 `markdown-it-anchor` 之前使用 `@mdit/plugin-attrs`，只启用 `heading` 规则并只允许 `id` 属性，从而支持 VitePress 风格的标题后缀 `## 标题 {#stable-id}`，但不顺带开放标题 `class`、`style` 或事件属性。后缀不进入可见标题；显式 ID 直接成为标题 DOM `id` 和 permalink `href`。自动锚点继续根据标题生成并对重复值追加数字后缀；重复的显式 ID 在构建时直接报错。
@@ -534,7 +538,7 @@ docs
 - 中文文档使用自然、亲和、温暖的高语境表达，循序渐进地帮助用户理解；英文文档使用直接、明确、低语境的表达，不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。
 - 官方文档以 KawaPress 0.1 的预期终态为准，按正式发布后用户真正使用产品的方式编写，不暴露 `workspace:*`、未发布版本号、仓库内部代理命令等开发期临时状态。文档可以先于对应实现成文，但不得超出本文确定的 0.1 交付范围；功能完成后必须通过 `docs` dogfooding 校验文档中的命令、配置与行为。
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
-- 官方文档通过 GitHub Actions 构建并部署到 GitHub Pages；`main` 每次推送触发部署，CI 使用 `KAWAPRESS_BASE=/kawapress/`，上传 `docs/dist`，本地开发未设置该变量时继续使用根路径 `/`。
+- 官方文档同时部署到 GitHub Pages 与 Cloudflare Pages；`main` 每次推送各自构建并发布 `docs/dist`。GitHub Actions 使用 `KAWAPRESS_BASE=/kawapress/` 部署到 GitHub Pages；Cloudflare Pages 直连 GitHub 仓库，不设置该变量，站点挂在自定义域名根路径。本地开发未设置该变量时继续使用根路径 `/`。Cloudflare Pages 构建在仓库根目录执行 `pnpm build`，构建环境使用 Node.js 22.12 及以上与 pnpm 11.22.0。
 - Node.js 正式支持版本与 Vite 8 对齐，为 22.12 及以上。
 - CLI 提供 `kawapress dev` 与 `kawapress build`。
 - 开源协议为 MIT。

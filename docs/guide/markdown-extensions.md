@@ -48,6 +48,65 @@ KawaPress 在标准 Markdown 之上提供了一些适合技术文档的语法扩
 
 页面上不会显示 `{#installation}`。本页目录和搜索结果也会使用这个 ID。**自定义 ID 在同一页中必须保持唯一。** 建议使用小写英文单词、数字和连字符，例如 `getting-started`。
 
+## 链接 {#links}
+
+KawaPress 会区分站内页面链接、页面内锚点和外部链接，并为它们保留各自合适的浏览器行为。
+
+### 内部链接 {#internal-links}
+
+链接到另一个 Markdown 页面时，可以使用无后缀、`.md` 或 `.html`。三种写法最终都会指向同一个无后缀公开路由：
+
+```md
+[路由](./routing)
+[路由](./routing.md)
+[路由](./routing.html)
+```
+
+相对链接以当前 Markdown **源文件**所在目录为起点。因此，在 `guide/index.md` 中写 `[路由](./routing.md)`，仍会正确指向 `/guide/routing`。链接到目录里的 `index.md` 时，末尾的 `/index` 也会被移除。
+
+从站点根路径开始的链接同样支持 `base`：
+
+```md
+[快速开始](/guide/getting-started)
+[首页](/index.md)
+```
+
+生成页面只保留规范的无后缀 URL。浏览器完成 hydration 后，普通站内页面链接会交给 Vue Router，不会整页刷新。页面内的 `#heading` 链接继续使用浏览器原生锚点行为。
+
+例如，你可以从这里前往[路由](./routing.md)或[部署](./deploy.html)。
+
+### 外部链接 {#external-links}
+
+完整 URL 会被视为外部链接，例如 [Vue 官方文档](https://cn.vuejs.org/guide/introduction.html)。KawaPress 会自动添加：
+
+```html
+<a href="https://cn.vuejs.org/" target="_blank" rel="noreferrer">
+  Vue 官方文档
+</a>
+```
+
+外部链接会在新标签页打开，并且不会把当前页面地址作为 referrer 发送给目标网站。
+
+## GitHub 风格的表格 {#github-style-tables}
+
+使用竖线分隔单元格，并在表头下方增加分隔行，就能创建表格。分隔行里的冒号分别表示左对齐、居中和右对齐：
+
+```md
+| 项目 | 运行位置 | 默认端口 |
+| :--- | :------: | -------: |
+| 开发服务器 | 本地 | 5173 |
+| 预览服务器 | 本地 | 4173 |
+```
+
+实际效果如下：
+
+| 项目 | 运行位置 | 默认端口 |
+| :--- | :------: | -------: |
+| 开发服务器 | 本地 | 5173 |
+| 预览服务器 | 本地 | 4173 |
+
+表格过宽时，nagi 会让表格区域横向滚动，不会撑破正文布局。
+
 ## 自定义容器 {#custom-containers}
 
 自定义容器可以把提示、风险和补充内容从普通段落中清楚地区分出来。容器以三个冒号开始和结束：

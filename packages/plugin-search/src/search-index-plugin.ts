@@ -9,7 +9,11 @@ import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
 import { alert as alertPlugin } from '@mdit/plugin-alert'
 import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { container as containerPlugin } from '@mdit/plugin-container'
-import { stringifyJson, useMarkdownItPlugin } from 'kawapress'
+import {
+  markdownPagePathToRoutePath,
+  stringifyJson,
+  useMarkdownItPlugin,
+} from 'kawapress'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { createSearchIndex } from './search'
@@ -218,7 +222,7 @@ export async function loadSearchIndexes(
 
   for (const file of files) {
     const source = await readFile(file, 'utf8')
-    const route = markdownFileToRoutePath(file, sourceRoot)
+    const route = markdownPagePathToRoutePath(relative(sourceRoot, file))
     const locale = getLocaleIndex(route, locales)
     const index = localeIndexes[locale]
     if (index) {
@@ -420,19 +424,6 @@ async function findMarkdownFiles(directory: string): Promise<string[]> {
       return entry.isFile() && entry.name.endsWith('.md') ? [path] : []
     }))
   return files.flat()
-}
-
-function markdownFileToRoutePath(file: string, sourceRoot: string): string {
-  const route = relative(sourceRoot, file)
-    .split(sep)
-    .join('/')
-    .replace(/\.md$/, '')
-  if (route === 'index') {
-    return '/'
-  }
-  return route.endsWith('/index')
-    ? `/${route.slice(0, -'/index'.length)}`
-    : `/${route}`
 }
 
 function getLocaleIndex(route: string, locales: string[]): string {

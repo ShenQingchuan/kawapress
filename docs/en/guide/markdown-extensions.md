@@ -48,6 +48,65 @@ Both pages now use `#installation`. Language switching still lands on the instal
 
 The page does not display `{#installation}`. Its outline and search results use the same ID. **Custom IDs must be unique within a page.** Prefer lowercase English words, numbers, and hyphens, such as `getting-started`.
 
+## Links {#links}
+
+KawaPress distinguishes internal page links, same-page anchors, and external links so each keeps the appropriate browser behavior.
+
+### Internal Links {#internal-links}
+
+Links to another Markdown page may be extensionless or end in `.md` or `.html`. All three forms resolve to the same extensionless public route:
+
+```md
+[Routing](./routing)
+[Routing](./routing.md)
+[Routing](./routing.html)
+```
+
+Relative links are resolved from the current Markdown **source file**. For example, `[Routing](./routing.md)` in `guide/index.md` still points to `/guide/routing`. A link to an `index.md` page also drops the final `/index` segment.
+
+Root-relative links follow the configured `base` as well:
+
+```md
+[Getting Started](/en/guide/getting-started)
+[Home](/en/index.md)
+```
+
+Generated pages use the canonical extensionless URL. After hydration, Vue Router handles normal internal page links without a full-page reload. A same-page `#heading` link keeps the browser's native anchor behavior.
+
+For example, continue to [Routing](./routing.md) or [Deployment](./deploy.html).
+
+### External Links {#external-links}
+
+A complete URL is treated as external, such as the [Vue documentation](https://vuejs.org/guide/introduction.html). KawaPress automatically adds:
+
+```html
+<a href="https://vuejs.org/" target="_blank" rel="noreferrer">
+  Vue documentation
+</a>
+```
+
+External links open in a new tab and do not send the current page URL to the destination as referrer data.
+
+## GitHub-Style Tables {#github-style-tables}
+
+Separate cells with pipes and add a delimiter row below the header. Colons in the delimiter row select left, center, or right alignment:
+
+```md
+| Service | Runs On | Default Port |
+| :------ | :-----: | -----------: |
+| Dev server | Local | 5173 |
+| Preview server | Local | 4173 |
+```
+
+The result is:
+
+| Service | Runs On | Default Port |
+| :------ | :-----: | -----------: |
+| Dev server | Local | 5173 |
+| Preview server | Local | 4173 |
+
+When a table is wider than the article, nagi makes the table region horizontally scrollable instead of overflowing the document layout.
+
 ## Custom Containers {#custom-containers}
 
 Custom containers separate tips, risks, and supporting information from ordinary paragraphs. Open and close a container with three colons:

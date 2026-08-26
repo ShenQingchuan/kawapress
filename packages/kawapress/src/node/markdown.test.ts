@@ -258,13 +258,134 @@ const focused = true
     expect('codeBlock' in config).toBe(false)
   })
 
-  it('prefixes rooted internal links with the site base', async () => {
+  it('normalizes internal links to canonical routes with the site base', async () => {
     const { code } = await compileMarkdownToVue(
       mdWithBase,
-      '[Guide](/guide)\n',
-      '/index',
+      `
+[Root](/guide)
+[Nested Base Route](/kawapress/api)
+[Relative](./routing)
+[Markdown](./getting-started.md?mode=quick#install)
+[HTML](./deploy.html#platform)
+[Index](./index.md)
+[Asset](./manual.pdf)
+[Heading](#section)
+`,
+      '/guide/current',
+      '/guide/current.md',
     )
-    expect(code).toContain('href="/kawapress/guide"')
+
+    expect(code.slice(0, code.indexOf('</template>') + '</template>'.length))
+      .toMatchInlineSnapshot(`
+        "<template><p><a href=\"/kawapress/guide\">Root</a>
+        <a href=\"/kawapress/kawapress/api\">Nested Base Route</a>
+        <a href=\"/kawapress/guide/routing\">Relative</a>
+        <a href=\"/kawapress/guide/getting-started?mode=quick#install\">Markdown</a>
+        <a href=\"/kawapress/guide/deploy#platform\">HTML</a>
+        <a href=\"/kawapress/guide\">Index</a>
+        <a href=\"/kawapress/guide/manual.pdf\">Asset</a>
+        <a href=\"#section\">Heading</a></p>
+        </template>"
+      `)
+  })
+
+  it('resolves encoded relative links from the Markdown source path', async () => {
+    const { code } = await compileMarkdownToVue(
+      mdWithBase,
+      '[下一页](./下一%20页.md)\n',
+      '/指南 空间/current',
+      '/指南 空间/current.md',
+    )
+
+    expect(code).toContain('href="/kawapress/指南 空间/下一 页"')
+  })
+
+  it('opens external Markdown links in a new tab without leaking referrer data', async () => {
+    const { code } = await compileMarkdownToVue(
+      md,
+      '[Vue](https://vuejs.org/) [CDN](//cdn.example.com/library.js) [Email](mailto:hello@example.com)\n',
+      '/links',
+    )
+
+    expect(code.slice(0, code.indexOf('</template>') + '</template>'.length))
+      .toMatchInlineSnapshot(`
+        "<template><p><a href=\"https://vuejs.org/\" target=\"_blank\" rel=\"noreferrer\">Vue</a> <a href=\"//cdn.example.com/library.js\" target=\"_blank\" rel=\"noreferrer\">CDN</a> <a href=\"mailto:hello@example.com\" target=\"_blank\" rel=\"noreferrer\">Email</a></p>
+        </template>"
+      `)
+  })
+
+  it('composes link attributes added by Markdown plugins', async () => {
+    const runner = await createGeneratorPluginRunner([definePlugin({
+      name: 'test:link-attributes',
+      setup(api) {
+        api.markdown((markdown) => {
+          const renderLink = markdown.renderer.rules.link_open
+          markdown.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
+            const token = tokens[index]
+            const href = token.attrGet('href') ?? ''
+            if (href.includes('composed')) {
+              token.attrSet('target', '_self')
+              token.attrSet('rel', 'nofollow')
+            }
+            if (href.includes('download') || href.includes('source.md')) {
+              token.attrSet('download', '')
+            }
+            return renderLink
+              ? renderLink(tokens, index, options, env, renderer)
+              : renderer.renderToken(tokens, index, options)
+          }
+        })
+      },
+    })])
+    const compiler = await createMarkdownCompiler({
+      base: '/kawapress/',
+      pluginRunner: runner,
+    })
+    const { code } = await compileMarkdownToVue(
+      compiler,
+      '[Composed](https://example.com/composed) [Download](https://example.com/download) [Source](./source.md)\n',
+      '/guide/current',
+      '/guide/current.md',
+    )
+
+    expect(code.slice(0, code.indexOf('</template>') + '</template>'.length))
+      .toMatchInlineSnapshot(`
+        "<template><p><a href=\"https://example.com/composed\" target=\"_self\" rel=\"nofollow noreferrer\">Composed</a> <a href=\"https://example.com/download\" download=\"\">Download</a> <a href=\"/kawapress/guide/source.md\" download=\"\">Source</a></p>
+        </template>"
+      `)
+  })
+
+  it('renders GitHub-style tables with column alignment', async () => {
+    const { code } = await compileMarkdownToVue(
+      md,
+      `
+| Left | Center | Right |
+| :--- | :----: | ----: |
+| A | B | C |
+`,
+      '/tables',
+    )
+
+    expect(code.slice(0, code.indexOf('</template>') + '</template>'.length))
+      .toMatchInlineSnapshot(`
+        "<template><table>
+        <thead>
+        <tr>
+        <th style=\"text-align:left\">Left</th>
+        <th style=\"text-align:center\">Center</th>
+        <th style=\"text-align:right\">Right</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td style=\"text-align:left\">A</td>
+        <td style=\"text-align:center\">B</td>
+        <td style=\"text-align:right\">C</td>
+        </tr>
+        </tbody>
+        </table>
+        </template>"
+      `)
   })
 
   it('gives empty pages a stable hydration root', async () => {

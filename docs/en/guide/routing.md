@@ -83,27 +83,23 @@ The value must be relative to the site root. Absolute `srcDir` paths are not sup
 
 ## Linking Between Pages
 
-Omit file extensions when linking to another KawaPress page. Both relative and site-root paths work:
+Links to another KawaPress page may be extensionless or end in `.md` or `.html`. Both relative and site-root paths work:
 
 ```md
 [Getting Started](./getting-started)
-[Getting Started](/en/guide/getting-started)
-[Home](/en)
-```
-
-Do not link to the source or output file name:
-
-```md
-<!-- Avoid -->
 [Getting Started](./getting-started.md)
 [Getting Started](./getting-started.html)
+[Getting Started](/en/guide/getting-started)
+[Home](/en/index.md)
 ```
+
+KawaPress resolves relative paths from the current Markdown source file, then normalizes all three page-link forms to an extensionless public route. Extensionless links mirror the URL readers see, while `.md` links help editors and GitHub open the source file directly. Choose one style and use it consistently within a site.
 
 Use a heading anchor to link within a page. For example, [go to the source directory section](#site-root-and-source-directory).
 
 KawaPress generates stable anchors for Markdown headings. The page outline in the default theme uses the same anchors.
 
-Use a complete URL for an external page, such as the [Vue website](https://vuejs.org/).
+Use a complete URL for an external page, such as the [Vue website](https://vuejs.org/). External Markdown links open in a new tab and automatically include `rel="noreferrer"`.
 
 ## Deploying Under a Base Path
 

@@ -4,6 +4,7 @@ export { assertJsonSerializable, parseJson, stringifyJson } from './json'
 export type { JsonOperationOptions } from './json'
 export { useMarkdownItPlugin } from './markdown-it-compat'
 export type { MarkdownItPluginHost } from './markdown-it-compat'
+export { markdownPagePathToRoutePath } from './markdown-route'
 export { definePlugin, defineRuntimePlugin } from './plugin-api'
 export type {
   GeneratorPluginAPI,

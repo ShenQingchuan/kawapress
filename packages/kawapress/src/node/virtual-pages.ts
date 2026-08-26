@@ -62,16 +62,15 @@ async function generatePagesModule(
   })
 
   return `
+import { markdownPagePathToRoutePath } from 'kawapress'
+
 const mdFiles = import.meta.glob(${JSON.stringify(globPatterns)})
 
-function fileToPath(file) {
-  const p = file.slice(${JSON.stringify(prefix)}.length).replace(/\\.md$/, '')
-  if (p === '/index') return '/'
-  return p.endsWith('/index') ? p.slice(0, -'/index'.length) : p
-}
-
 export const pages = Object.fromEntries(
-  Object.entries(mdFiles).map(([file, loader]) => [fileToPath(file), loader]),
+  Object.entries(mdFiles).map(([file, loader]) => [
+    markdownPagePathToRoutePath(file.slice(${JSON.stringify(prefix)}.length)),
+    loader,
+  ]),
 )
 
 export const pageData = ${serializedPageData}

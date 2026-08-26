@@ -83,27 +83,23 @@ docs/guide/getting-started.md → /guide/getting-started
 
 ## 在页面之间建立链接
 
-链接到另一个 KawaPress 页面时，请省略文件扩展名。你可以使用相对路径，也可以从站点根路径开始写：
+链接到另一个 KawaPress 页面时，可以使用无后缀、`.md` 或 `.html`。也可以选择相对路径，或从站点根路径开始写：
 
 ```md
 [快速开始](./getting-started)
-[快速开始](/guide/getting-started)
-[返回首页](/)
-```
-
-不要把源文件名或构建文件名写进链接：
-
-```md
-<!-- 不推荐 -->
 [快速开始](./getting-started.md)
 [快速开始](./getting-started.html)
+[快速开始](/guide/getting-started)
+[返回首页](/index.md)
 ```
+
+KawaPress 会根据当前 Markdown 源文件解析相对路径，再把三种页面链接统一成无后缀的公开路由。无后缀写法最接近访客看到的 URL；`.md` 写法则方便编辑器和 GitHub 直接定位源文件。站点可以选择一种风格并保持一致。
 
 链接到当前页面的标题时，使用标题锚点。例如：[前往源目录](#站点根目录与源目录)。
 
 KawaPress 会为 Markdown 标题生成稳定的锚点。默认主题里的本页目录也使用同一组锚点。
 
-外部页面继续使用完整 URL，例如：[访问 Vue 官网](https://vuejs.org/)。
+外部页面继续使用完整 URL，例如：[访问 Vue 官网](https://vuejs.org/)。外部 Markdown 链接会在新标签页打开，并自动带上 `rel="noreferrer"`。
 
 ## 部署到子路径
 

@@ -2,7 +2,7 @@ import type { Router, RouteRecordRaw } from 'vue-router'
 import { pageData, pages } from 'virtual:kawapress-pages'
 import { site } from 'virtual:kawapress-site'
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
-import { withoutBase } from '../base'
+import { decodeUrlPathname, withoutBase } from '../base'
 import NotFoundRoute from './NotFoundRoute.vue'
 import { wrapPageLoader } from './page-data'
 
@@ -25,12 +25,27 @@ export function createAppRouter(): Router {
     routes: createRoutes(),
   })
   if (!import.meta.env.SSR) {
+    installEncodedPagePathRedirect(router)
     installLinkInterceptor(router)
   }
   return router
 }
 
 const externalRE = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i
+
+function installEncodedPagePathRedirect(router: Router): void {
+  router.beforeEach((to) => {
+    const decodedPath = decodeUrlPathname(to.path)
+    if (decodedPath !== to.path && Object.hasOwn(pages, decodedPath)) {
+      return {
+        path: decodedPath,
+        query: to.query,
+        hash: to.hash,
+        replace: true,
+      }
+    }
+  })
+}
 
 function installLinkInterceptor(router: Router): void {
   window.addEventListener('click', (event) => {
@@ -50,12 +65,17 @@ function installLinkInterceptor(router: Router): void {
     if (url.origin !== window.location.origin) {
       return
     }
-    const routePath = withoutBase(url.pathname, site.base)
+    const routePath = withoutBase(decodeUrlPathname(url.pathname), site.base)
     if (!routePath) {
       return
     }
 
+    const target = `${routePath}${url.search}${url.hash}`
+    if (router.resolve(target).name === 'not-found') {
+      return
+    }
+
     event.preventDefault()
-    router.push(`${routePath}${url.search}${url.hash}`)
+    router.push(target)
   })
 }

@@ -1,6 +1,7 @@
 import type { ParsedMarkdown } from './markdown'
 import type { GeneratorPluginRunner } from './plugin-runner'
 import { relative, resolve, sep } from 'node:path'
+import { markdownPagePathToRoutePath } from '../markdown-route'
 import { assertPageDataSerializable } from '../site'
 import { createMarkdownCompiler, parseMarkdown } from './markdown'
 
@@ -40,10 +41,12 @@ export function createMarkdownPageLoader(
       }
 
       const parsed = mdPromise.then(async (md) => {
+        const sourcePath = markdownFileToSourcePath(file, sourceRoot)
         const result = await parseMarkdown(
           md,
           source,
-          markdownFileToRoutePath(file, sourceRoot),
+          markdownPagePathToRoutePath(sourcePath),
+          sourcePath,
         )
         assertPageDataSerializable(result.pageData)
         await options.pluginRunner.runPageData(result.pageData)
@@ -56,20 +59,6 @@ export function createMarkdownPageLoader(
   }
 }
 
-export function markdownFileToRoutePath(
-  file: string,
-  sourceRoot: string,
-): string {
-  const relativePath = relative(sourceRoot, file)
-    .split(sep)
-    .join('/')
-    .replace(/\.md$/, '')
-
-  if (relativePath === 'index') {
-    return '/'
-  }
-  if (relativePath.endsWith('/index')) {
-    return `/${relativePath.slice(0, -'/index'.length)}`
-  }
-  return `/${relativePath}`
+function markdownFileToSourcePath(file: string, sourceRoot: string): string {
+  return `/${relative(sourceRoot, file).split(sep).join('/')}`
 }

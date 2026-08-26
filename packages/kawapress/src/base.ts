@@ -22,12 +22,17 @@ export function withBase(path: string, base: string): string {
   }
 
   const baseWithoutSlash = normalizedBase.slice(0, -1)
-  if (path === baseWithoutSlash || path.startsWith(normalizedBase)) {
-    return path
-  }
-
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return `${baseWithoutSlash}${normalizedPath}`
+}
+
+export function decodeUrlPathname(pathname: string): string {
+  try {
+    return decodeURI(pathname)
+  }
+  catch {
+    return pathname
+  }
 }
 
 export function withoutBase(path: string, base: string): string | undefined {

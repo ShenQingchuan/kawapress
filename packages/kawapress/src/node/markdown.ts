@@ -12,9 +12,11 @@ import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../base'
 import { stringifyJsonForScript } from '../json'
 import { useMarkdownItPlugin } from '../markdown-it-compat'
+import { markdownPagePathToRoutePath } from '../markdown-route'
 
 interface MarkdownEnv {
   path: string
+  sourcePath?: string
   frontmatter?: Record<string, unknown>
   headers?: PageHeader[]
   sfcBlocks?: MarkdownSfcBlocks
@@ -51,7 +53,7 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   })
   // include h1: page title inference reads it; outline rendering filters to h2+ itself
   useMarkdownItPlugin(md, headersPlugin, { level: [1, 2, 3] })
-  installBaseLinkRenderer(md, options.base ?? '/')
+  installLinkRenderer(md, options.base ?? '/')
 
   await options.pluginRunner?.runMarkdown(md)
   return md
@@ -81,19 +83,64 @@ function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {
   }
 }
 
-function installBaseLinkRenderer(md: MarkdownExit, base: string): void {
+const EXTERNAL_LINK_RE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
+
+function installLinkRenderer(md: MarkdownExit, base: string): void {
   const defaultRender = md.renderer.rules.link_open
   md.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
+    const markdownEnv = env as MarkdownEnv
     const token = tokens[index]
     const href = token.attrGet('href')
-    if (href?.startsWith('/') && !href.startsWith('//')) {
-      token.attrSet('href', withBase(href, base))
+
+    if (href && EXTERNAL_LINK_RE.test(href)) {
+      if (token.attrIndex('download') < 0) {
+        if (token.attrIndex('target') < 0) {
+          token.attrSet('target', '_blank')
+        }
+        appendRel(token, 'noreferrer')
+      }
+    }
+    else if (href && !href.startsWith('#')) {
+      token.attrSet('href', normalizeInternalLink(
+        href,
+        markdownEnv,
+        base,
+        token.attrIndex('download') < 0,
+      ))
     }
 
     return defaultRender
       ? defaultRender(tokens, index, options, env, renderer)
       : renderer.renderToken(tokens, index, options)
   }
+}
+
+function appendRel(token: { attrGet: (name: string) => null | string, attrSet: (name: string, value: string) => void }, value: string): void {
+  const rel = new Set(token.attrGet('rel')?.split(/\s+/).filter(Boolean) ?? [])
+  rel.add(value)
+  token.attrSet('rel', [...rel].join(' '))
+}
+
+function normalizeInternalLink(
+  href: string,
+  env: MarkdownEnv,
+  base: string,
+  normalizePage: boolean,
+): string {
+  const sourcePath = env.sourcePath ?? inferMarkdownSourcePath(env.path)
+  const encodedSourcePath = sourcePath
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/')
+  const resolved = new URL(href, `https://kawapress.invalid${encodedSourcePath}`)
+  const pathname = decodeURI(normalizePage
+    ? markdownPagePathToRoutePath(resolved.pathname)
+    : resolved.pathname)
+  return withBase(`${pathname}${resolved.search}${resolved.hash}`, base)
+}
+
+function inferMarkdownSourcePath(routePath: string): string {
+  return routePath === '/' ? '/index.md' : `${routePath}.md`
 }
 
 export interface ParsedMarkdown {
@@ -106,8 +153,9 @@ export async function parseMarkdown(
   md: MarkdownExit,
   src: string,
   path: string,
+  sourcePath?: string,
 ): Promise<ParsedMarkdown> {
-  const env: MarkdownEnv = { path }
+  const env: MarkdownEnv = { path, sourcePath }
   const html = await md.renderAsync(src, env)
 
   const frontmatter = env.frontmatter ?? {}
@@ -125,8 +173,9 @@ export async function compileMarkdownToVue(
   md: MarkdownExit,
   src: string,
   path: string,
+  sourcePath?: string,
 ): Promise<CompiledPage> {
-  const { html, env, pageData } = await parseMarkdown(md, src, path)
+  const { html, env, pageData } = await parseMarkdown(md, src, path, sourcePath)
   return { code: assembleVueSfc(html, env, pageData), pageData }
 }
 
