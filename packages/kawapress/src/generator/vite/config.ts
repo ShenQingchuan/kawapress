@@ -1,7 +1,7 @@
 import type { InlineConfig, Plugin } from 'vite'
 import type { ResolvedSiteConfig } from '../config'
 import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import vue from '@vitejs/plugin-vue'
 import { createMarkdownPageLoader } from '../../compiler/page-loader'
 import { markdownPlugin } from './plugins/markdown'
@@ -19,6 +19,7 @@ export function createBaseViteConfig(
   return {
     root,
     base: siteConfig.base,
+    publicDir: resolve(root, siteConfig.srcDir, 'public'),
     appType: 'custom',
     resolve: {
       alias: resolveVueAliases(root),

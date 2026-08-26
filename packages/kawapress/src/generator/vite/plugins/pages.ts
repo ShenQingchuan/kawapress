@@ -12,6 +12,7 @@ const IGNORED_DIRECTORIES = new Set([
   'dist',
   'node_modules',
 ])
+const PUBLIC_DIRECTORY_NAME = 'public'
 
 export interface VirtualPagesOptions {
   srcDir: string
@@ -49,8 +50,10 @@ async function generatePagesModule(
   options: VirtualPagesOptions,
 ): Promise<string> {
   const prefix = options.srcDir === '.' ? '' : `/${options.srcDir}`
+  const publicPrefix = `${prefix}/${PUBLIC_DIRECTORY_NAME}`
   const globPatterns = [
     `${prefix}/**/*.md`,
+    `!${publicPrefix}/**`,
     '!**/node_modules/**',
     '!**/dist/**',
     '!**/.*/**',
@@ -90,15 +93,18 @@ async function loadPageData(
   return Object.fromEntries(entries)
 }
 
-async function findMarkdownFiles(directory: string): Promise<string[]> {
+async function findMarkdownFiles(
+  directory: string,
+  isSourceRoot = true,
+): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true })
   const files = await Promise.all(entries
     .sort(compareEntries)
-    .filter(entry => !shouldIgnore(entry))
+    .filter(entry => !shouldIgnore(entry, isSourceRoot))
     .map(async (entry) => {
       const path = join(directory, entry.name)
       if (entry.isDirectory()) {
-        return findMarkdownFiles(path)
+        return findMarkdownFiles(path, false)
       }
       return entry.isFile() && entry.name.endsWith('.md') ? [path] : []
     }))
@@ -118,7 +124,8 @@ function compareEntries(a: Dirent, b: Dirent): number {
   return a.name.localeCompare(b.name)
 }
 
-function shouldIgnore(entry: Dirent): boolean {
+function shouldIgnore(entry: Dirent, isSourceRoot: boolean): boolean {
   return entry.name.startsWith('.')
+    || (isSourceRoot && entry.name === PUBLIC_DIRECTORY_NAME)
     || (entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name))
 }

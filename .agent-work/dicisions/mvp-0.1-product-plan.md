@@ -364,6 +364,8 @@ markdown-it 生态插件的公开类型把第一个参数绑定为 `MarkdownIt`�
 
 Markdown 页面链接属于 Core 的文件路由契约，不拆成可选 Plugin。相对链接根据当前 Markdown 源文件位置解析，避免目录 `index.md` 的公开无后缀路由丢失源目录语义；无后缀、`.md` 与 `.html` 三种页面链接写法均归一化为 KawaPress 的无后缀公开路由，根路径与相对路径统一应用站点 `base`。浏览器 hydration 后，同源页面链接由 Vue Router 接管。外部 Markdown 链接默认添加 `target="_blank"` 与 `rel="noreferrer"`；页面内 hash 链接保持原生锚点行为。
 
+静态资源使用 Vite 原生资源管线：Markdown 编译为 Vue SFC 后，Markdown 图片、Vue 组件和 CSS 中的静态相对或根绝对引用由 Vite 发现、按需输出，并自动适配 `base`。站点公开目录固定为 `srcDir/public`（默认是站点根目录的 `public`）：其中的文件原样复制到构建产物根目录，保持文件名，不参与页面扫描或路由；Markdown 中的 PDF 等下载文件应放在这里并用根绝对路径引用。通过主题配置或其他运行时数据动态产生的公开资源 URL 不经过静态转换，主题或组件必须从 `kawapress/client` 使用 `withBase(path, site.base)`；调用方只写 `/logo.svg`，不手工拼接部署 `base`。动态资源选择继续遵循 Vite 的标准静态分析边界，不在 Core 增加私有资源加载 API。
+
 GitHub 风格表格由 Markdown 引擎的默认规则直接提供，是 Core 基础 Markdown 语法，不拆成 Plugin。Core 使用回归测试固定表头、表体与左中右对齐输出；nagi 只负责表格的响应式滚动、边框和明暗模式视觉。
 
 ### 7.1 标题锚点与自定义锚点
