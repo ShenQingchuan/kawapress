@@ -55,6 +55,28 @@ export const sidebars = defineLocalizedSidebars({
           },
           link: '/guide/markdown-extensions',
         },
+        {
+          text: {
+            zhCN: '在 Markdown 中使用 Vue',
+            en: 'Using Vue in Markdown',
+          },
+          link: '/guide/using-vue-in-markdown',
+        },
+      ],
+    },
+    {
+      text: {
+        zhCN: '自定义',
+        en: 'Customization',
+      },
+      items: [
+        {
+          text: {
+            zhCN: 'SSR 兼容性',
+            en: 'SSR Compatibility',
+          },
+          link: '/guide/ssr-compatibility',
+        },
       ],
     },
   ],

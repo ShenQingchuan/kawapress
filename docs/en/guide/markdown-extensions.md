@@ -241,7 +241,7 @@ throw new Error('Invalid configuration') // [!code error]
 
 Append a count, such as `[!code focus:2]`, to annotate consecutive lines starting with the current line.
 
-### Math Equations {#math-equations}
+## Math Equations {#math-equations}
 
 Math equations are provided by the optional `@kawapress/plugin-mathjax` package. It generates SVG during the build, so the reader's browser does not need to download or run MathJax.
 

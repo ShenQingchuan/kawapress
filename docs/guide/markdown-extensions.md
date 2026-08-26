@@ -241,7 +241,7 @@ throw new Error('配置无效') // [!code error]
 
 在标注后加上数字，例如 `[!code focus:2]`，可以从当前行开始连续标记两行。
 
-### 数学公式 {#math-equations}
+## 数学公式 {#math-equations}
 
 数学公式由可选的 `@kawapress/plugin-mathjax` 提供。它在构建时生成 SVG，不需要读者的浏览器再下载或运行 MathJax。
 

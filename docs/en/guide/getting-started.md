@@ -60,7 +60,7 @@ yarn add --dev kawapress
 
 <aside class="nagi-doc-note">
   <p class="nagi-doc-note__title">Vue as a peer dependency</p>
-  <p>If you plan to customize your site with Vue components or APIs, explicitly install <code>vue</code> as a project dependency.</p>
+  <p>If you plan to customize your site with Vue components or APIs, explicitly install <code>vue</code> as a development dependency.</p>
 </aside>
 
 KawaPress is only required while developing and building the site. The deployed output does not require a Node.js server.

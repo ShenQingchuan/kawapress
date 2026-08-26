@@ -21,7 +21,7 @@ KawaPress 期望成为一个更好的 VitePress，是由 Vue 社区成员自主�
 - 核心 npm 包：`kawapress`
 - 官方包：`@kawapress/*`
 - CLI：`kawapress`
-- 只写 Markdown 并使用默认 nagi 的文档站只安装 `kawapress`。该包把官方 nagi Preset 作为正式依赖，并通过 `kawapress/nagi` 重新导出它的工厂、helper 与类型；默认界面运行所需的 Vue、nagi、Shiki、Code Group 等依赖由框架自己的依赖图携带，用户不重复声明。KawaPress 的 Vite 配置为编译器生成的 `import "vue"` 提供精确的 `^vue$` alias：优先解析站点直接安装的 Vue，未安装时回退 KawaPress 自己携带的 Vue runtime，并保持 `dedupe`。这个内部构建解析不等于用户拥有 Vue 直接依赖；用户需要在 Markdown、配置扩展或自定义主题中直接 `import` Vue API、编写 Vue 组件时，必须把 `vue` 显式安装为站点自己的依赖，以获得正确的包边界、编辑器类型与版本声明。《快速开始》只用一个标题为“Vue 作为 peer dependency”的简短提示卡表达这条规则，不展开解释内部依赖图。独立 `@kawapress/*` 包继续存在，供高级用户单独组合或第三方 Preset 复用。
+- 只写 Markdown 并使用默认 nagi 的文档站只安装 `kawapress`。该包把官方 nagi Preset 作为正式依赖，并通过 `kawapress/nagi` 重新导出它的工厂、helper 与类型；默认界面运行所需的 Vue、nagi、Shiki、Code Group 等依赖由框架自己的依赖图携带，用户不重复声明。KawaPress 的 Vite 配置为编译器生成的 `import "vue"` 提供精确的 `^vue$` alias：优先解析站点直接安装的 Vue，未安装时回退 KawaPress 自己携带的 Vue runtime，并保持 `dedupe`。这个内部构建解析不等于用户拥有 Vue 直接依赖；用户需要在 Markdown、配置扩展或自定义主题中直接 `import` Vue API、编写 Vue 组件时，必须把 `vue` 显式安装为站点自己的开发依赖，以获得正确的包边界、编辑器类型与版本声明。《快速开始》只用一个标题为“Vue 作为 peer dependency”的简短提示卡表达这条规则，不展开解释内部依赖图。独立 `@kawapress/*` 包继续存在，供高级用户单独组合或第三方 Preset 复用。
 
 ## 二、渲染架构
 
@@ -530,7 +530,7 @@ docs
 - KawaPress 不在 TypeScript、Vitest 或 Vite 中启用自定义 `source` condition。Vite 的 SSR plugin pipeline 单独使用 `module` condition，确保进入 Module Runner 的 Vue 依赖选择 ESM 入口；否则 dev SSR 会把 `@vue/server-renderer` 的 CommonJS 入口与 top-level await 放入同一执行图并触发 `ERR_AMBIGUOUS_MODULE_SYNTAX`。这是 SSR 依赖解析约束，不是插件 package exports 约定。
 - Runtime Plugin 静态导入的 Vue SFC 与 CSS 由用户站点的 Vite 自动打包；用户不需要单独导入主题或插件 CSS。
 - KawaPress 使用 `docs` 工作区维护并构建自己的真实文档，不保留独立 playground；根目录的 `pnpm dev`、`pnpm build` 与 `pnpm preview` 分别代理文档站命令。新增功能直接进入真实文档，文档写作与构建过程作为持续 dogfooding。
-- 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。简介分组依次放置《KawaPress 是什么？》《快速开始》《路由》《部署》；《部署》只说明构建、生产预览、`base`、通用静态托管要求与缓存，不维护重复前文的发布检查清单，也不维护各托管平台的专属部署指南。简介之后建立“写作 / Writing”分组，第一篇为《Markdown 语法扩展 / Markdown Extensions》；自定义锚点章节只解释语法、slugify、稳定章节链接和跨语言共享英文语义 ID 的用途。
+- 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。简介分组依次放置《KawaPress 是什么？》《快速开始》《路由》《部署》；《部署》只说明构建、生产预览、`base`、通用静态托管要求与缓存，不维护重复前文的发布检查清单，也不维护各托管平台的专属部署指南。简介之后建立“写作 / Writing”分组，第一篇为《Markdown 语法扩展 / Markdown Extensions》；自定义锚点章节只解释语法、slugify、稳定章节链接和跨语言共享英文语义 ID 的用途。《在 Markdown 中使用 Vue / Using Vue in Markdown》专注模板语法、SFC 区块、组件和转义；SSR 环境、浏览器 API、动态导入、客户端组件边界与 hydration 稳定性使用“自定义 / Customization”分组下的独立《SSR 兼容性 / SSR Compatibility》，不混入 Vue 基础用法正文。
 - 中文文档使用自然、亲和、温暖的高语境表达，循序渐进地帮助用户理解；英文文档使用直接、明确、低语境的表达，不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。
 - 官方文档以 KawaPress 0.1 的预期终态为准，按正式发布后用户真正使用产品的方式编写，不暴露 `workspace:*`、未发布版本号、仓库内部代理命令等开发期临时状态。文档可以先于对应实现成文，但不得超出本文确定的 0.1 交付范围；功能完成后必须通过 `docs` dogfooding 校验文档中的命令、配置与行为。
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
