@@ -523,6 +523,8 @@ packages/preset-nagi
 docs
 ```
 
+`packages/kawapress/src` 按职责组织：根目录只保留 `index.ts`、`cli.ts` 与 `nagi.ts` 公共入口；`api/` 放公开配置与插件契约，`core/` 放跨端纯数据和路径能力，`plugin/` 放两侧插件执行器，`compiler/` 放 Markdown 编译管线，`client/` 放 Vue 运行时，`generator/` 放配置加载与 Vite 生成侧集成，`server/` 放 dev、build、preview 与 SSR HTTP 编排。Vite 虚拟模块集中在 `generator/vite/plugins/`，测试文件与源码同目录。不得重新建立混合所有 Node 侧职责的笼统 `node/` 目录。
+
 工程约定：
 
 - 全仓库使用 TypeScript 6。

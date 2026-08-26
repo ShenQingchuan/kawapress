@@ -5,7 +5,7 @@ import { version } from '../package.json'
 const dev = defineCommand({
   meta: { name: 'dev', description: 'Start the dev server' },
   async run() {
-    const { createDevServer } = await import('./node/dev')
+    const { createDevServer } = await import('./server/dev')
     await createDevServer(process.cwd())
   },
 })
@@ -13,7 +13,7 @@ const dev = defineCommand({
 const build = defineCommand({
   meta: { name: 'build', description: 'Build the static site' },
   async run() {
-    const { buildSite } = await import('./node/build')
+    const { buildSite } = await import('./server/build')
     await buildSite(process.cwd())
   },
 })
@@ -21,7 +21,7 @@ const build = defineCommand({
 const preview = defineCommand({
   meta: { name: 'preview', description: 'Preview the built site' },
   async run() {
-    const { previewSite } = await import('./node/preview')
+    const { previewSite } = await import('./server/preview')
     await previewSite(process.cwd())
   },
 })
