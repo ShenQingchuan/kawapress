@@ -5,7 +5,7 @@ description: Set a page title, description, layout, and other page data at the t
 
 # Frontmatter
 
-Frontmatter is a small block of page data at the very top of a Markdown file. It is not displayed in the document. Use it for a title, description, layout, or your own data.
+Frontmatter is a small set of settings at the very top of a Markdown file. It does not appear in the document. Use it for a title, description, layout, or your own data.
 
 ## Write Frontmatter
 
@@ -31,11 +31,11 @@ A JSON object works too:
 # Getting started
 ```
 
-Frontmatter travels with the page to the browser. Use only JSON values: strings, numbers, booleans, `null`, arrays, and plain objects.
+These values travel with the page, so keep them simple: text, numbers, `true` or `false`, `null`, lists, and plain objects.
 
 ## Use Your Own Data
 
-Alongside fields used by KawaPress and its theme, you can save any page data you need. Read the current page with `usePageData()`:
+Alongside the fields below, you can save any page data you need. Read the current page with `usePageData()`:
 
 ```md
 ---
@@ -51,17 +51,17 @@ const page = usePageData()
 Current status: {{ page?.frontmatter.status }}
 ```
 
-`usePageData()` updates during client-side navigation. It provides only the current page, not every page in the site.
+`usePageData()` updates during client-side navigation. It reads only the page that is open.
 
 ## Page Titles and Descriptions
 
-Core recognizes these three fields:
+Use these three fields to set a page title and summary:
 
 | Field | What it does |
 | --- | --- |
 | `title` | The page title. The first H1 is used when it is absent. |
-| `description` | Creates the page description meta tag for search results and link previews. |
-| `titleTemplate` | A browser-title template. `%s` becomes the page title; use `false` for the page title alone. |
+| `description` | A short page summary for search engines and link previews. |
+| `titleTemplate` | A browser-tab title template. `%s` becomes the page title; use `false` for the page title alone. |
 
 ```md
 ---
@@ -71,11 +71,11 @@ titleTemplate: '%s · KawaPress Guide'
 ---
 ```
 
-The browser title for this page is “Configure your site · KawaPress Guide”. The page title is also used by local search.
+The browser-tab title for this page is “Configure your site · KawaPress Guide”. The page title is also used by site search.
 
 ## Nagi Page Layout
 
-With the default nagi Preset, `layout` chooses the page shell:
+With the default nagi experience, `layout` chooses the page layout and navigation:
 
 ```md
 ---
@@ -108,7 +108,7 @@ pageClass: focused-page
 | `aside: false` | Hides the wide-screen page-outline rail. |
 | `outline: false` | Hides every page outline, including the small-screen outline button. |
 | `footer: false` | Hides the footer on a `home` or `page` layout. |
-| `pageClass` | Adds a CSS class to the nagi page shell. |
+| `pageClass` | Adds a CSS class to the page’s outer element for your own styles. |
 
 See [Getting Started](/en/guide/getting-started) for `hero` and `features`.
 
@@ -122,8 +122,4 @@ search: false
 ---
 ```
 
-Only the boolean value `false` excludes a page.
-
-## Fields Not Supported Yet
-
-KawaPress 0.1 does not give `head`, `editLink`, `lastUpdated`, `prev`, or `next` a built-in meaning. You can store them as your own data, but they do not change the default behavior.
+Only a literal `false` excludes a page.
