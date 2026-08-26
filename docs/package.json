@@ -8,6 +8,7 @@
     "preview": "kawapress preview"
   },
   "devDependencies": {
+    "@kawapress/plugin-mathjax": "workspace:*",
     "kawapress": "workspace:*"
   }
 }

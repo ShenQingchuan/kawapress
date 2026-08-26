@@ -240,3 +240,56 @@ throw new Error('配置无效') // [!code error]
 ```
 
 在标注后加上数字，例如 `[!code focus:2]`，可以从当前行开始连续标记两行。
+
+### 数学公式 {#math-equations}
+
+数学公式由可选的 `@kawapress/plugin-mathjax` 提供。它在构建时生成 SVG，不需要读者的浏览器再下载或运行 MathJax。
+
+::: code-group
+```sh [npm]
+npm install -D @kawapress/plugin-mathjax
+```
+
+```sh [pnpm]
+pnpm add -D @kawapress/plugin-mathjax
+```
+
+```sh [Yarn]
+yarn add -D @kawapress/plugin-mathjax
+```
+:::
+
+把插件加入站点配置：
+
+```ts
+import mathjaxPlugin from '@kawapress/plugin-mathjax'
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  plugins: [
+    mathjaxPlugin(),
+  ],
+})
+```
+
+使用一对 `$` 编写行内公式。例如，质能方程是 $E = mc^2$。
+
+```md
+质能方程是 $E = mc^2$。
+```
+
+使用一对 `$$` 单独包围块级公式：
+
+```md
+$$
+\int_0^1 x^2 \, dx = \frac{1}{3}
+$$
+```
+
+实际效果如下：
+
+$$
+\int_0^1 x^2 \, dx = \frac{1}{3}
+$$
+
+插件遵循 Pandoc 风格的定界规则，`$20` 和 `$30` 这样的价格仍是普通文字。需要明确显示普通美元符号时，也可以写成 `\$`。通过 `mathjaxPlugin({ tex: { ... }, svg: { ... } })` 可以继续配置 TeX 宏、公式编号和 SVG 输出。

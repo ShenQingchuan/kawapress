@@ -432,6 +432,12 @@ Alert 标题与 Custom Container 一样由生成期页面 `path` 和 locale `lan
 
 复制按钮在 SSR HTML 中包含当前 locale 的 `aria-label`、tooltip 和 `aria-live` 状态节点；复制时优先使用 Clipboard API，失败后使用隐藏 textarea 回退。成功状态持续两秒后恢复，不能改变 SSR/client 初始节点结构。复制内容来自 `<pre><code>`，排除 `.kawa-code-block__copy-ignore` 与 diff 删除行，不包含行号。语言 label、复制文案与 locale 覆盖属于插件配置，nagi 只提供默认视觉。
 
+### 7.8 MathJax
+
+数学公式由独立逻辑插件包 `@kawapress/plugin-mathjax` 提供，不写死在 Core、Shiki 或 nagi 的插件组合中。Generator Plugin 使用与 MarkdownIt 14 兼容的 `@mdit/plugin-mathjax` 1.1 和 MathJax 4，在 Markdown 编译期把 `$…$` 与 `$$…$$` 渲染为包含辅助 MathML 的 SVG。每个页面使用独立的同步 MathJax 实例，页面内公式编号与 `\\label`/`\\ref` 可以连续工作，页面之间不会因构建或访问顺序共享计数器和标签。站点按需安装并显式加入 `plugins`，因此默认 nagi 站点不承担 MathJax 的安装和启动成本；官方文档把本插件声明为构建期开发依赖并通过站点 Config dogfood，`kawapress` 仍是文档站唯一的框架运行依赖。
+
+插件公开 `tex` 配置与适合静态 SVG 的 `svg` 安全子集，并固定使用 SVG、辅助 MathML、无跨公式字体缓存与不拆分行内公式的安全默认值。依赖浏览器事件的 `action` TeX package 不进入默认包集合；用户显式启用时在构建开始阶段给出可执行错误，而不是在 Lite adaptor 中崩溃。生成 HTML 的根节点使用 `data-kawa-math="inline"` 或 `data-kawa-math="block"` 作为稳定边界，并增加 `v-pre` 防止 Vue 编译 MathJax 内部结构；块公式额外使用 `tabindex="0"`，让超宽公式的滚动区域可以通过键盘聚焦。`./runtime-plugin` 只静态导入通用 MathJax 结构和辅助 MathML CSS，不发送或执行浏览器 MathJax JavaScript；nagi 只负责最大宽度、横向滚动、SVG 对齐和焦点样式。货币等普通美元符号继续遵循 Pandoc 风格 delimiter 规则，并可使用反斜杠转义。
+
 ## 八、配置与数据
 
 核心配置至少包含：

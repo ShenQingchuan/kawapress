@@ -1,10 +1,14 @@
 import process from 'node:process'
+import mathjaxPlugin from '@kawapress/plugin-mathjax'
 import { nagi } from 'kawapress/nagi'
 import { sidebars } from './sidebar'
 
 export default nagi({
   title: 'KawaPress',
   base: process.env.KAWAPRESS_BASE,
+  plugins: [
+    mathjaxPlugin(),
+  ],
   themeConfig: {
     logo: {
       light: '/kawapress-logo.png',

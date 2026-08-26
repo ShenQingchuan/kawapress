@@ -1,0 +1,113 @@
+mjx-container[data-kawa-math] {
+  position: relative;
+  direction: ltr;
+  white-space: nowrap;
+}
+
+mjx-container[data-kawa-math='block'] {
+  display: block;
+  margin: 0.7em 0;
+  padding: 0.3em 2px;
+  text-align: center;
+}
+
+mjx-container[data-kawa-math] > svg {
+  min-width: 1px;
+  min-height: 1px;
+  overflow: visible;
+}
+
+mjx-container[data-kawa-math] > svg a {
+  color: LinkText;
+  fill: currentcolor;
+  stroke: currentcolor;
+}
+
+mjx-container[data-kawa-math] path[data-c],
+mjx-container[data-kawa-math] use[data-c] {
+  stroke-width: 3;
+}
+
+mjx-container[data-kawa-math] mjx-assistive-mml {
+  position: absolute !important;
+  inset: 0;
+  display: block !important;
+  width: auto !important;
+  padding: 1px 0 0 !important;
+  overflow: hidden !important;
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: polygon(0 0, 0 1px, 1px 1px, 1px 0);
+  text-indent: 0 !important;
+  white-space: normal;
+  border: 0 !important;
+  user-select: none;
+}
+
+mjx-container[data-kawa-math] mjx-assistive-mml[display='block'] {
+  width: 100% !important;
+}
+
+mjx-container[data-kawa-math] g[data-mml-node='merror'] > g {
+  fill: red;
+  stroke: red;
+}
+
+mjx-container[data-kawa-math] g[data-mml-node='merror'] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+mjx-container[data-kawa-math] g[data-mml-node='mtable'] > line[data-line],
+mjx-container[data-kawa-math] svg[data-table] > g > line[data-line],
+mjx-container[data-kawa-math] g[data-mml-node='mtable'] > rect[data-frame],
+mjx-container[data-kawa-math] svg[data-table] > g > rect[data-frame] {
+  fill: none;
+  stroke-width: 70px;
+}
+
+mjx-container[data-kawa-math] g[data-mml-node='mtable'] > .mjx-dashed,
+mjx-container[data-kawa-math] svg[data-table] > g > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+mjx-container[data-kawa-math] g[data-mml-node='mtable'] > .mjx-dotted,
+mjx-container[data-kawa-math] svg[data-table] > g > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0, 140;
+}
+
+mjx-container[data-kawa-math] g[data-mml-node='mtable'] > g > svg {
+  overflow: visible;
+}
+
+mjx-container[data-kawa-math] foreignObject[data-mjx-xml] {
+  overflow: visible;
+  font-family: initial;
+  line-height: normal;
+}
+
+mjx-container[data-kawa-math] foreignObject[data-mjx-html] {
+  overflow: visible;
+}
+
+mjx-container[data-kawa-math] mjx-measure-xml {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  line-height: normal;
+  white-space: normal;
+}
+
+mjx-container[data-kawa-math] mjx-html {
+  display: inline-block;
+  line-height: normal;
+  text-align: initial;
+  white-space: initial;
+}
+
+mjx-container[data-kawa-math] mjx-html-holder {
+  position: absolute;
+  inset: 0;
+  display: block;
+}

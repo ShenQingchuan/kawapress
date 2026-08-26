@@ -240,3 +240,56 @@ throw new Error('Invalid configuration') // [!code error]
 ```
 
 Append a count, such as `[!code focus:2]`, to annotate consecutive lines starting with the current line.
+
+### Math Equations {#math-equations}
+
+Math equations are provided by the optional `@kawapress/plugin-mathjax` package. It generates SVG during the build, so the reader's browser does not need to download or run MathJax.
+
+::: code-group
+```sh [npm]
+npm install -D @kawapress/plugin-mathjax
+```
+
+```sh [pnpm]
+pnpm add -D @kawapress/plugin-mathjax
+```
+
+```sh [Yarn]
+yarn add -D @kawapress/plugin-mathjax
+```
+:::
+
+Add the plugin to the site configuration:
+
+```ts
+import mathjaxPlugin from '@kawapress/plugin-mathjax'
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  plugins: [
+    mathjaxPlugin(),
+  ],
+})
+```
+
+Use one pair of `$` delimiters for inline math. For example, mass-energy equivalence is $E = mc^2$.
+
+```md
+Mass-energy equivalence is $E = mc^2$.
+```
+
+Use a pair of `$$` delimiters on separate lines for display math:
+
+```md
+$$
+\int_0^1 x^2 \, dx = \frac{1}{3}
+$$
+```
+
+The result is:
+
+$$
+\int_0^1 x^2 \, dx = \frac{1}{3}
+$$
+
+Pandoc-style delimiter rules keep prices such as `$20` and `$30` as ordinary text. Escape a literal dollar sign as `\$` when needed. Pass `mathjaxPlugin({ tex: { ... }, svg: { ... } })` to configure TeX macros, equation numbering, or SVG output.

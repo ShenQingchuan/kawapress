@@ -1,0 +1,30 @@
+{
+  "name": "@kawapress/plugin-mathjax",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Build-time MathJax rendering for KawaPress",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./runtime-plugin": {
+      "types": "./src/runtime-plugin.ts",
+      "import": "./src/runtime-plugin.ts",
+      "default": "./src/runtime-plugin.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "kawapress": "workspace:*"
+  },
+  "dependencies": {
+    "@mdit/plugin-mathjax": "catalog:markdown",
+    "markdown-exit": "catalog:markdown"
+  }
+}
