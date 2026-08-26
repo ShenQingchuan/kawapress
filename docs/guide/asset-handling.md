@@ -90,7 +90,7 @@ const logoSrc = computed(() => (
 
 这类文件应放在 `public/brand/logo.svg`。只写 `/brand/logo.svg`，再使用 `withBase()`；不要自己拼接部署路径。这样本地根路径开发和 GitHub Pages 等子路径部署都会正确。
 
-如果需要在一组构建期已知的本地资源之间动态选择，继续使用 Vite 的标准 `import`、`new URL()` 或 `import.meta.glob()` 方案。KawaPress 不额外包一层私有资源 API。
+如果需要在一组构建期已知的本地资源之间动态选择，优先使用 Vite 的标准 `import` 或 `import.meta.glob()`。`new URL()` 的路径同样必须能在构建时确定，并且不适合作为会在 KawaPress SSR 中执行的通用方案。KawaPress 不额外包一层私有资源 API。
 
 ## 快速选择
 

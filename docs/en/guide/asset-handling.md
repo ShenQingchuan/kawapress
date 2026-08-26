@@ -90,7 +90,7 @@ const logoSrc = computed(() => (
 
 Place this file at `public/brand/logo.svg`. Write `/brand/logo.svg` once, then pass it through `withBase()`; do not concatenate deployment paths yourself. The same code works in local development and under a subpath such as GitHub Pages.
 
-When you need to choose among a build-time-known set of local assets, use Vite's normal `import`, `new URL()`, or `import.meta.glob()` patterns. KawaPress does not add a private asset-loading API.
+When choosing among a build-time-known set of local assets, prefer Vite's normal `import` or `import.meta.glob()` patterns. A `new URL()` path must also be known at build time, and it is not a general solution for code that runs during KawaPress SSR. KawaPress does not add a private asset-loading API.
 
 ## Choose Quickly
 
