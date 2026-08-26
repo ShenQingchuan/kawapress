@@ -76,6 +76,13 @@ export const sidebars = defineLocalizedSidebars({
           },
           link: '/guide/using-vue-in-markdown',
         },
+        {
+          text: {
+            zhCN: '国际化',
+            en: 'Internationalization',
+          },
+          link: '/guide/internationalization',
+        },
       ],
     },
     {
