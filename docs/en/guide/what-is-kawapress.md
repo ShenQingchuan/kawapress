@@ -50,7 +50,7 @@ Development and build use the same Vue application and SSR rendering semantics. 
 
 ## Relationship to VitePress
 
-KawaPress aims to be a better VitePress. It is an independent alternative built by members of the Vue community for people who want to keep building documentation with Vue.
+KawaPress aims to be a better VitePress. It is an independent alternative built by members of the Vue community for Vue users who want a more capable documentation tool that is easier to extend.
 
 VitePress provides a simple and fast authoring experience. KawaPress keeps that strength while aiming for a more complete default experience, smoother multilingual sites, greater freedom for themes and plugins, and fewer surprises during daily development.
 
