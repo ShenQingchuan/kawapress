@@ -544,7 +544,7 @@ docs
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
 - 官方文档同时部署到 GitHub Pages 与 Cloudflare Pages；`main` 每次推送各自构建并发布 `docs/dist`。GitHub Actions 使用 `KAWAPRESS_BASE=/kawapress/` 部署到 GitHub Pages；Cloudflare Pages 直连 GitHub 仓库，不设置该变量，站点挂在自定义域名根路径。本地开发未设置该变量时继续使用根路径 `/`。Cloudflare Pages 构建在仓库根目录执行 `pnpm build`，构建环境使用 Node.js 22.12 及以上与 pnpm 11.22.0。
 - Node.js 正式支持版本与 Vite 8 对齐，为 22.12 及以上。
-- CLI 提供 `kawapress dev` 与 `kawapress build`。Dev 就绪信息使用 Vite Logger 的前置时间格式和 `[kawapress]` 前缀，与同屏 Vite 日志对齐；启动耗时使用单调高精度时钟，从 dev 命令开始执行计到 HTTP server 完成监听，不使用固定值或估算值。
+- CLI 提供 `kawapress dev` 与 `kawapress build`。KawaPress 的基础 Vite 配置默认使用 `clearScreen: false`，保留启动、依赖优化与 HMR 的连续日志；用户 Generator Plugin 仍可显式覆盖该 Vite 配置。Dev 就绪信息使用 Vite Logger 的前置时间格式和 `[kawapress]` 前缀，与同屏 Vite 日志对齐；启动耗时使用单调高精度时钟，从 dev 命令开始执行计到 HTTP server 完成监听，不使用固定值或估算值。
 - 开源协议为 MIT。
 - 质量检查以终端命令为准：`pnpm lint`、`pnpm typecheck`、`pnpm test`。
 

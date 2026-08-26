@@ -20,6 +20,7 @@ export function createBaseViteConfig(
     root,
     base: siteConfig.base,
     publicDir: resolve(root, siteConfig.srcDir, 'public'),
+    clearScreen: false,
     appType: 'custom',
     resolve: {
       alias: resolveVueAliases(root),
