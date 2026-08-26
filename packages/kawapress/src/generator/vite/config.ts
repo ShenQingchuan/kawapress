@@ -19,7 +19,7 @@ export function createBaseViteConfig(
   return {
     root,
     base: siteConfig.base,
-    publicDir: resolve(root, siteConfig.srcDir, 'public'),
+    publicDir: resolve(root, siteConfig.srcDir, siteConfig.publicDir),
     clearScreen: false,
     appType: 'custom',
     resolve: {
@@ -79,6 +79,7 @@ function createBasePlugins(
     }),
     virtualPagesPlugin({
       srcDir: siteConfig.srcDir,
+      publicDir: siteConfig.publicDir,
       pageLoader,
     }),
     virtualSitePlugin({

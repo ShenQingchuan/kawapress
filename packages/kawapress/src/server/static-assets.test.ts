@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest'
 import { buildSite } from './build'
 
 describe('static assets', () => {
-  it('uses srcDir/public, fingerprints referenced assets, and excludes public Markdown from routes', async () => {
+  it('uses the configured public directory, fingerprints referenced assets, and excludes its Markdown from routes', async () => {
     const root = await mkdtemp(join(process.cwd(), 'docs/.kawapress-assets-'))
     const image = Buffer.alloc(5000, 1)
     const icon = '<svg xmlns="http://www.w3.org/2000/svg"><title>Icon</title></svg>'
 
     try {
       await mkdir(join(root, 'content/guide'), { recursive: true })
-      await mkdir(join(root, 'content/public'), { recursive: true })
+      await mkdir(join(root, 'content/static'), { recursive: true })
       await Promise.all([
         writeFile(join(root, 'kawapress.config.ts'), `
 import { nagi } from 'kawapress/nagi'
@@ -20,6 +20,7 @@ import { nagi } from 'kawapress/nagi'
 export default nagi({
   base: '/guide-base/',
   srcDir: 'content',
+  publicDir: 'static',
 })
 `),
         writeFile(join(root, 'content/guide/assets.md'), `
@@ -30,8 +31,8 @@ export default nagi({
 ![Public asset](/icon.svg)
 `),
         writeFile(join(root, 'content/image.png'), image),
-        writeFile(join(root, 'content/public/icon.svg'), icon),
-        writeFile(join(root, 'content/public/inside-public.md'), '# Not a route\n'),
+        writeFile(join(root, 'content/static/icon.svg'), icon),
+        writeFile(join(root, 'content/static/inside-public.md'), '# Not a route\n'),
       ])
 
       await buildSite(root)

@@ -3,7 +3,7 @@ import type { Plugin } from 'vite'
 import type { MarkdownPageLoader } from '../../../compiler/page-loader'
 import type { PageData } from '../../../core/site'
 import { readdir, readFile } from 'node:fs/promises'
-import { isAbsolute, join, relative, sep } from 'node:path'
+import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { stringifyJsonForScript } from '../../../core/json'
 
 const MODULE_ID = 'virtual:kawapress-pages'
@@ -12,10 +12,9 @@ const IGNORED_DIRECTORIES = new Set([
   'dist',
   'node_modules',
 ])
-const PUBLIC_DIRECTORY_NAME = 'public'
-
 export interface VirtualPagesOptions {
   srcDir: string
+  publicDir: string
   pageLoader: MarkdownPageLoader
 }
 
@@ -33,7 +32,11 @@ export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
       }
     },
     handleHotUpdate(context) {
-      if (!isMarkdownFile(context.file, options.pageLoader.sourceRoot)) {
+      if (!isMarkdownFile(
+        context.file,
+        options.pageLoader.sourceRoot,
+        resolve(options.pageLoader.sourceRoot, options.publicDir),
+      )) {
         return
       }
 
@@ -50,7 +53,7 @@ async function generatePagesModule(
   options: VirtualPagesOptions,
 ): Promise<string> {
   const prefix = options.srcDir === '.' ? '' : `/${options.srcDir}`
-  const publicPrefix = `${prefix}/${PUBLIC_DIRECTORY_NAME}`
+  const publicPrefix = `${prefix}/${options.publicDir}`
   const globPatterns = [
     `${prefix}/**/*.md`,
     `!${publicPrefix}/**`,
@@ -58,7 +61,7 @@ async function generatePagesModule(
     '!**/dist/**',
     '!**/.*/**',
   ]
-  const pageData = await loadPageData(options.pageLoader)
+  const pageData = await loadPageData(options)
   const serializedPageData = stringifyJsonForScript(pageData, {
     label: 'the page data index',
     path: 'pages',
@@ -81,12 +84,15 @@ export const pageData = ${serializedPageData}
 }
 
 async function loadPageData(
-  pageLoader: MarkdownPageLoader,
+  options: VirtualPagesOptions,
 ): Promise<Record<string, PageData>> {
-  const files = await findMarkdownFiles(pageLoader.sourceRoot)
+  const files = await findMarkdownFiles(
+    options.pageLoader.sourceRoot,
+    resolve(options.pageLoader.sourceRoot, options.publicDir),
+  )
   const entries = await Promise.all(files.map(async (file) => {
     const source = await readFile(file, 'utf8')
-    const { pageData } = await pageLoader.load(source, file)
+    const { pageData } = await options.pageLoader.load(source, file)
     return [pageData.path, pageData] as const
   }))
 
@@ -95,16 +101,18 @@ async function loadPageData(
 
 async function findMarkdownFiles(
   directory: string,
-  isSourceRoot = true,
+  publicDirectory: string,
 ): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true })
   const files = await Promise.all(entries
     .sort(compareEntries)
-    .filter(entry => !shouldIgnore(entry, isSourceRoot))
     .map(async (entry) => {
       const path = join(directory, entry.name)
+      if (shouldIgnore(entry, path, publicDirectory)) {
+        return []
+      }
       if (entry.isDirectory()) {
-        return findMarkdownFiles(path, false)
+        return findMarkdownFiles(path, publicDirectory)
       }
       return entry.isFile() && entry.name.endsWith('.md') ? [path] : []
     }))
@@ -112,20 +120,37 @@ async function findMarkdownFiles(
   return files.flat()
 }
 
-function isMarkdownFile(file: string, sourceRoot: string): boolean {
+function isMarkdownFile(
+  file: string,
+  sourceRoot: string,
+  publicDirectory: string,
+): boolean {
   const relativePath = relative(sourceRoot, file)
   return file.endsWith('.md')
     && !isAbsolute(relativePath)
     && relativePath !== '..'
     && !relativePath.startsWith(`..${sep}`)
+    && !isInDirectory(file, publicDirectory)
 }
 
 function compareEntries(a: Dirent, b: Dirent): number {
   return a.name.localeCompare(b.name)
 }
 
-function shouldIgnore(entry: Dirent, isSourceRoot: boolean): boolean {
+function isInDirectory(file: string, directory: string): boolean {
+  const relativePath = relative(directory, file)
+  return relativePath === ''
+    || (!isAbsolute(relativePath)
+      && relativePath !== '..'
+      && !relativePath.startsWith(`..${sep}`))
+}
+
+function shouldIgnore(
+  entry: Dirent,
+  path: string,
+  publicDirectory: string,
+): boolean {
   return entry.name.startsWith('.')
-    || (isSourceRoot && entry.name === PUBLIC_DIRECTORY_NAME)
+    || path === publicDirectory
     || (entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name))
 }

@@ -5,6 +5,7 @@ export interface KawapressConfig<ThemeConfig extends object = object> {
   title?: string
   base?: string
   srcDir?: string
+  publicDir?: string
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>
   plugins?: KawaPressPlugin[]

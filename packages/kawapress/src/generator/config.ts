@@ -10,6 +10,7 @@ export interface ResolvedSiteConfig {
   title: string
   base: string
   srcDir: string
+  publicDir: string
   themeConfig?: object
   locales: Record<string, LocaleConfig>
   plugins: KawaPressPlugin[]
@@ -32,6 +33,7 @@ export async function resolveSiteConfig(
     title: userConfig.title,
     base: userConfig.base,
     srcDir: userConfig.srcDir,
+    publicDir: userConfig.publicDir,
     themeConfig: userConfig.themeConfig,
     locales: userConfig.locales,
   }
@@ -42,6 +44,7 @@ export async function resolveSiteConfig(
     throw new Error(`KawaPress: srcDir must be relative to the site root, got ${JSON.stringify(srcDir)}`)
   }
 
+  const publicDir = normalizePublicDir(site.publicDir ?? 'public')
   const locales = site.locales ?? DEFAULT_LOCALES
   validateLocales(locales)
 
@@ -49,11 +52,32 @@ export async function resolveSiteConfig(
     title: site.title ?? 'KawaPress',
     base: normalizeBase(site.base),
     srcDir,
+    publicDir,
     themeConfig: site.themeConfig,
     locales,
     plugins,
     pluginRunner,
   }
+}
+
+function normalizePublicDir(publicDir: string): string {
+  if (!publicDir.trim() || isAbsolute(publicDir)) {
+    throw new Error(
+      `KawaPress: publicDir must be a relative directory inside srcDir, got ${JSON.stringify(publicDir)}`,
+    )
+  }
+
+  const segments = publicDir
+    .replaceAll('\\', '/')
+    .split('/')
+    .filter(segment => Boolean(segment) && segment !== '.')
+  if (segments.length === 0 || segments.includes('..')) {
+    throw new Error(
+      `KawaPress: publicDir must be a relative directory inside srcDir, got ${JSON.stringify(publicDir)}`,
+    )
+  }
+
+  return segments.join('/')
 }
 
 function validateLocales(locales: Record<string, LocaleConfig>): void {
