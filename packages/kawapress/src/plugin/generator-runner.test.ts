@@ -1,7 +1,7 @@
 import type { MarkdownExit } from 'markdown-exit'
 import { describe, expect, it } from 'vitest'
 import { definePlugin } from '../api/plugin'
-import { createGeneratorPluginRunner } from './plugin-runner'
+import { createGeneratorPluginRunner } from './generator-runner'
 
 describe('createGeneratorPluginRunner', () => {
   it('runs setup and config handlers serially in plugin order', async () => {

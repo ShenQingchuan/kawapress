@@ -3,8 +3,8 @@ import { shikiPlugin } from '@kawapress/plugin-shiki'
 import { nagi } from '@kawapress/preset-nagi'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { definePlugin } from '../api/plugin'
+import { createGeneratorPluginRunner } from '../plugin/generator-runner'
 import { compileMarkdownToVue, createMarkdownCompiler } from './markdown'
-import { createGeneratorPluginRunner } from './plugin-runner'
 
 let md: MarkdownExit
 let mdWithBase: MarkdownExit

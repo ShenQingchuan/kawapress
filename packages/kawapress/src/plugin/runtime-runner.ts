@@ -7,7 +7,7 @@ import type {
 import {
   createPluginHandlerRegistry,
   runPluginSetup,
-} from '../plugin-execution'
+} from './execution'
 
 export interface RuntimePluginRunner {
   runVueApp: (app: App) => Promise<void>

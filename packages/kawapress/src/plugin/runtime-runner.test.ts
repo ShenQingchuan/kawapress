@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createSSRApp } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineRuntimePlugin } from '../api/plugin'
-import { createRuntimePluginRunner } from './runtime-plugin-runner'
+import { createRuntimePluginRunner } from './runtime-runner'
 
 describe('createRuntimePluginRunner', () => {
   it('runs setup and handlers serially against the same Vue app and router', async () => {

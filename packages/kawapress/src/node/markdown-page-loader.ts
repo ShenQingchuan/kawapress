@@ -1,5 +1,5 @@
+import type { GeneratorPluginRunner } from '../plugin/generator-runner'
 import type { ParsedMarkdown } from './markdown'
-import type { GeneratorPluginRunner } from './plugin-runner'
 import { relative, resolve, sep } from 'node:path'
 import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { assertPageDataSerializable } from '../core/site'

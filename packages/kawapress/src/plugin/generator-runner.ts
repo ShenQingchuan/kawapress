@@ -9,7 +9,7 @@ import { assertPageDataSerializable } from '../core/site'
 import {
   createPluginHandlerRegistry,
   runPluginSetup,
-} from '../plugin-execution'
+} from './execution'
 
 export interface GeneratorPluginRunner {
   runConfig: (config: SiteConfig) => Promise<void>

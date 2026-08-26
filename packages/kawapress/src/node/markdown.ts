@@ -1,7 +1,7 @@
 import type { MarkdownSfcBlocks } from '@mdit-vue/plugin-sfc'
 import type { MarkdownExit } from 'markdown-exit'
 import type { PageData, PageHeader } from '../core/site'
-import type { GeneratorPluginRunner } from './plugin-runner'
+import type { GeneratorPluginRunner } from '../plugin/generator-runner'
 import { componentPlugin } from '@mdit-vue/plugin-component'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
 import { headersPlugin } from '@mdit-vue/plugin-headers'
