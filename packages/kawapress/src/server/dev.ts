@@ -1,6 +1,5 @@
 import type { AddressInfo } from 'node:net'
 import { createServer as createHttpServer } from 'node:http'
-import { consola } from 'consola'
 import { createReloadableDevEnvironment } from './dev-environment'
 
 const DEFAULT_PORT = 5173
@@ -35,7 +34,6 @@ export async function createDevServer(
   })
 
   const port = (server.address() as AddressInfo).port
-  consola.ready(`KawaPress: dev server running at http://localhost:${port}`)
 
   return {
     port,

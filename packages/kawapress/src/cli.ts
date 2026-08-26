@@ -1,3 +1,4 @@
+import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { defineCommand, runMain } from 'citty'
 import { version } from '../package.json'
@@ -5,8 +6,16 @@ import { version } from '../package.json'
 const dev = defineCommand({
   meta: { name: 'dev', description: 'Start the dev server' },
   async run() {
-    const { createDevServer } = await import('./server/dev')
-    await createDevServer(process.cwd())
+    const startedAt = performance.now()
+    const [{ logDevServerReady }, { createDevServer }] = await Promise.all([
+      import('./cli/dev-output'),
+      import('./server/dev'),
+    ])
+    const server = await createDevServer(process.cwd())
+    logDevServerReady({
+      durationMs: performance.now() - startedAt,
+      port: server.port,
+    })
   },
 })
 
