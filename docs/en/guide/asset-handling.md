@@ -9,7 +9,7 @@ Images, video, fonts, PDFs, and download files are static assets. They are publi
 You only need two rules to start:
 
 1. **Keep an asset next to the page or component that owns it, then use a relative path.**
-2. **Put a file that must keep its name or be available everywhere in `public`.**
+2. **Put files shared by the site in the public assets directory. It is named `public` by default, and you can configure it.**
 
 KawaPress passes both kinds of assets to Vite, the tool that builds the site. Vite copies files, prepares their URLs, and helps those URLs keep working when the site is deployed below a subpath.
 
@@ -50,18 +50,11 @@ Keeping an asset near the code that uses it makes folders easier to move without
 If removing a page or component would make an asset useless, keep that asset next to the page or component and reference it with `./` or `../`.
 :::
 
-## `public` Is for Files Published As-Is
+## The Public Assets Directory: `public`
 
-Some files do not belong to one page, or their filenames must not change. Common examples are:
+Site icons, `robots.txt`, PWA icons, and PDFs, archives, or example files that readers download are **public assets**. They are not owned by one article or one component. Any part of the site may need them.
 
-- `robots.txt`;
-- site icons;
-- PWA icons;
-- PDFs, archives, and example files that readers download.
-
-Put these files in `public`.
-
-`public` always lives inside the content source directory. Most sites leave `srcDir` unset, so the site root is the source directory:
+The public assets directory is named `public` by default:
 
 ```text
 docs/
@@ -69,26 +62,37 @@ docs/
    └─ handbook.pdf
 ```
 
-When the configuration uses `srcDir: 'content'`, the source directory is `content`, so `public` moves with it:
+During a build, KawaPress places files from this directory at the root of the published site. Their names stay the same, and Markdown files in the directory never become pages by mistake.
+
+### Change the Public Assets Directory
+
+`public` is the default name, not a fixed requirement. Use `publicDir` to choose any relative directory inside `srcDir`.
+
+For example, this site keeps its content in `content` and its public assets in `content/static`:
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  srcDir: 'content',
+  publicDir: 'static',
+})
+```
+
+Its folders look like this:
 
 ```text
 docs/
 └─ content/
-   └─ public/
+   └─ static/
       └─ handbook.pdf
 ```
 
-During a build, KawaPress copies public files unchanged to the root of the published site:
+A nested path also works, such as `publicDir: 'assets/public'`. When you do not set `publicDir`, KawaPress continues to use `public`.
 
-```text
-public/handbook.pdf  →  dist/handbook.pdf
-```
+### Reference a Public Asset
 
-Their names do not change, and they do not become Markdown pages. Even a `.md` file inside `public` stays an ordinary file; it never creates a site route.
-
-### Reference a Public File
-
-Start its URL at the public root in Markdown:
+No matter whether the folder on disk is named `public`, `static`, or something else, start the URL at the public root:
 
 ```md
 [Download the handbook](/handbook.pdf)
@@ -98,10 +102,10 @@ Start its URL at the public root in Markdown:
 
 The leading `/` means “the public root of this site.” It does not mean the root of your computer’s filesystem.
 
-For example, a site deployed at `https://example.com/kawapress/` should still use `/handbook.pdf`, **not** `/kawapress/handbook.pdf`. KawaPress adds the `/kawapress/` `base` prefix for you, so you keep one simple path in your content.
+For example, a site deployed at `https://example.com/kawapress/` should still use `/handbook.pdf`, **not** `/kawapress/handbook.pdf`. KawaPress adds the `/kawapress/` `base` prefix for you. You can move the asset folder or change the deployment path without rewriting links in your content.
 
-::: warning Put downloadable files in `public`
-A link such as `[PDF](./handbook.pdf)` looks reasonable, but an ordinary Markdown link does not ask Vite to copy that file. Put PDFs, archives, and other reader downloads in `public`, then link to `/handbook.pdf`.
+::: warning Put downloads in the public assets directory
+A link such as `[PDF](./handbook.pdf)` looks reasonable, but an ordinary Markdown link does not ask Vite to copy that file. Put PDFs, archives, and other reader downloads in the public assets directory, then link to `/handbook.pdf`.
 :::
 
 ## Asset URLs Chosen at Runtime
@@ -110,7 +114,7 @@ Sometimes an image URL is not written directly in a template. It may come from t
 
 Vite cannot rewrite that URL automatically because the final value is chosen at runtime. Use this safe pattern instead:
 
-1. Place the file at `public/brand/logo.svg`.
+1. Place the file in the public assets directory. Its default location is `public/brand/logo.svg`.
 2. Store only `/brand/logo.svg` in configuration.
 3. Call `withBase()` in the component before using the URL.
 
@@ -142,7 +146,7 @@ A `new URL()` path must also be known during the build. KawaPress renders pages 
 | --- | --- | --- |
 | An illustration for one article | Next to the Markdown file | `![Description](./image.png)` |
 | An image or font used by one Vue component | Next to the Vue component | Static `src`, CSS `url(...)`, or `import` |
-| A fixed-name icon, PDF, or `robots.txt` | `srcDir/public/` | `/icon.svg` or `/handbook.pdf` |
-| A public asset URL from config or runtime data | `srcDir/public/` | `withBase('/logo.svg', site.base)` |
+| A site-wide icon, PDF, or `robots.txt` | Public assets directory (default: `srcDir/public/`) | `/icon.svg` or `/handbook.pdf` |
+| A public asset URL from config or runtime data | Public assets directory (default: `srcDir/public/`) | `withBase('/logo.svg', site.base)` |
 
 Start with this table when you are unsure. For unusual formats, asset inline limits, or more advanced dynamic imports, read the [Vite static asset guide](https://vite.dev/guide/assets.html).

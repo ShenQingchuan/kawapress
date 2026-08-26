@@ -9,7 +9,7 @@ description: 用简单、可靠的方式放好图片、字体、下载文件等�
 你不用先记住很多规则。先记住下面两句话就够了：
 
 1. **一篇文章或一个组件自己要用的图片，放在它旁边，用相对路径引用。**
-2. **需要保留原文件名、让任何页面都能访问的文件，放进 `public`。**
+2. **网站各处都会用到的文件，放进公共资源目录；它默认叫 `public`，也可以配置。**
 
 KawaPress 会把这两种资源交给 Vite 处理。Vite 是负责打包网站的工具，它会帮你复制文件、整理地址，也会在网站部署到子路径时补上正确的前缀。
 
@@ -50,18 +50,11 @@ docs/
 如果删掉这篇文章或这个组件，图片也没有用了，就把图片放在旁边，用 `./` 或 `../` 引用。
 :::
 
-## `public`：放需要原样发布的文件
+## 公共资源目录：`public`
 
-有些文件不是某一页专用的，或者它的文件名不能变。常见例子有：
+网站图标、`robots.txt`、PWA 图标，以及读者要下载的 PDF、压缩包和示例文件，都是**公共资源**。它们不是某一篇文章或某一个组件专用，而是网站任何地方都可能要用到的文件。
 
-- `robots.txt`；
-- 网站图标；
-- PWA 图标；
-- 让读者下载的 PDF、压缩包或示例文件。
-
-这些文件放在 `public` 目录里。
-
-`public` 总是在内容源目录里面。大多数站点没有设置 `srcDir`，内容源目录就是站点根目录：
+这类文件默认就应该放在公共资源目录 `public` 里：
 
 ```text
 docs/
@@ -69,26 +62,37 @@ docs/
    └─ handbook.pdf
 ```
 
-如果配置里写了 `srcDir: 'content'`，内容源目录就变成 `content`，相应位置也跟着移动：
+构建时，KawaPress 会把这个目录里的文件放到最终网站的根目录。文件名保持不变，而且目录里的 Markdown 文件也不会被误当成页面。
+
+### 改公共资源目录的位置
+
+`public` 是默认名字，不是不能改的名字。使用 `publicDir` 可以把公共资源目录换成任何位于 `srcDir` 里的相对目录。
+
+例如，内容目录是 `content`，你想把公共资源放进 `content/static`：
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  srcDir: 'content',
+  publicDir: 'static',
+})
+```
+
+目录结构就是：
 
 ```text
 docs/
 └─ content/
-   └─ public/
+   └─ static/
       └─ handbook.pdf
 ```
 
-构建时，KawaPress 会把 `public` 里的文件原样放到最终网站的根目录：
+也可以写子目录，例如 `publicDir: 'assets/public'`。不写 `publicDir` 时，KawaPress 一直使用默认的 `public`。
 
-```text
-public/handbook.pdf  →  dist/handbook.pdf
-```
+### 怎么引用公共资源
 
-它们不会被改名，也不会被当成 Markdown 页面。即使 `public` 里恰好有一个 `.md` 文件，它也只是普通文件，不会变成一个网站路由。
-
-### 怎么引用 `public` 里的文件
-
-在 Markdown 中，从站点公开根路径开始写：
+不管目录在磁盘上叫 `public`、`static` 还是别的名字，页面里都从网站公开根路径开始写：
 
 ```md
 [下载使用手册](/handbook.pdf)
@@ -96,12 +100,12 @@ public/handbook.pdf  →  dist/handbook.pdf
 ![站点图标](/icon.svg)
 ```
 
-开头的 `/` 表示“网站公开根目录”。它不是电脑磁盘的根目录。
+开头的 `/` 表示“网站公开根目录”，不是电脑磁盘的根目录。
 
-假设你把网站部署到 `https://example.com/kawapress/`，也仍然只写 `/handbook.pdf`，**不要**写 `/kawapress/handbook.pdf`。KawaPress 会自动补上 `/kawapress/` 这个 `base` 前缀。你只需要维护一份简单的路径。
+假设网站部署到 `https://example.com/kawapress/`，仍然只写 `/handbook.pdf`，**不要**写 `/kawapress/handbook.pdf`。KawaPress 会自动补上 `/kawapress/` 这个 `base` 前缀。这样，文件夹可以调整，部署位置可以改变，内容里的链接却不用跟着改。
 
-::: warning 下载文件请放进 `public`
-写 `[PDF](./handbook.pdf)` 看起来很自然，但普通 Markdown 链接不会要求 Vite 收集并复制这个文件。读者需要下载的 PDF、压缩包和其他文件，都应该先放进 `public`，再用 `/handbook.pdf` 这样的地址链接。
+::: warning 下载文件请用公共资源目录
+写 `[PDF](./handbook.pdf)` 看起来很自然，但普通 Markdown 链接不会要求 Vite 收集并复制这个文件。读者需要下载的 PDF、压缩包和其他文件，应该先放进公共资源目录，再用 `/handbook.pdf` 这样的地址链接。
 :::
 
 ## 运行时才知道的资源地址
@@ -110,7 +114,7 @@ public/handbook.pdf  →  dist/handbook.pdf
 
 这时 Vite 在构建时看不到最终的完整使用位置，不能替你自动改写地址。最稳妥的做法是：
 
-1. 把文件放进 `public/brand/logo.svg`；
+1. 把文件放进公共资源目录；默认位置是 `public/brand/logo.svg`；
 2. 配置里只保存 `/brand/logo.svg`；
 3. 在组件里用 `withBase()` 得到真正可访问的地址。
 
@@ -142,7 +146,7 @@ const logoSrc = withBase(logoPath, site.value.base)
 | --- | --- | --- |
 | 只给一篇文章看的插图 | Markdown 文件旁边 | `![说明](./image.png)` |
 | 只给一个 Vue 组件用的图片或字体 | Vue 组件旁边 | 静态 `src`、CSS `url(...)` 或 `import` |
-| 文件名不能变的图标、PDF、`robots.txt` | `srcDir/public/` | `/icon.svg`、`/handbook.pdf` |
-| 路径来自配置或运行时数据的公开资源 | `srcDir/public/` | `withBase('/logo.svg', site.base)` |
+| 网站共用的图标、PDF、`robots.txt` | 公共资源目录（默认 `srcDir/public/`） | `/icon.svg`、`/handbook.pdf` |
+| 路径来自配置或运行时数据的公共资源 | 公共资源目录（默认 `srcDir/public/`） | `withBase('/logo.svg', site.base)` |
 
 先按这张表选择，通常就不会错。遇到少见的文件格式、资源内联大小或更复杂的动态导入，再阅读 [Vite 静态资源处理文档](https://cn.vite.dev/guide/assets.html)。
