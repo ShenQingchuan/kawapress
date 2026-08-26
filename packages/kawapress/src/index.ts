@@ -11,6 +11,8 @@ export type {
   RuntimePluginHandler,
   RuntimePluginSetup,
 } from './api/plugin'
+export { useMarkdownItPlugin } from './compiler/markdown-it-compat'
+export type { MarkdownItPluginHost } from './compiler/markdown-it-compat'
 export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
 export type { JsonOperationOptions } from './core/json'
 export { markdownPagePathToRoutePath } from './core/markdown-route'
@@ -24,5 +26,3 @@ export type {
   SiteConfig,
   SiteData,
 } from './core/site'
-export { useMarkdownItPlugin } from './markdown-it-compat'
-export type { MarkdownItPluginHost } from './markdown-it-compat'

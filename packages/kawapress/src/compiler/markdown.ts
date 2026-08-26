@@ -12,7 +12,7 @@ import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../core/base'
 import { stringifyJsonForScript } from '../core/json'
 import { markdownPagePathToRoutePath } from '../core/markdown-route'
-import { useMarkdownItPlugin } from '../markdown-it-compat'
+import { useMarkdownItPlugin } from './markdown-it-compat'
 
 interface MarkdownEnv {
   path: string
