@@ -2,7 +2,7 @@ import type { Plugin } from 'vue'
 import { runtimePlugins } from 'virtual:kawapress-runtime-plugins'
 import { createSSRApp } from 'vue'
 import { createRuntimePluginRunner } from '../plugin/runtime-runner'
-import Root from './Root.vue'
+import Root from './components/Root.vue'
 import { createAppRouter } from './router'
 
 export interface CreateKawapressAppOptions {

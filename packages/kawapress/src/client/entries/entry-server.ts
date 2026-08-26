@@ -1,7 +1,7 @@
 import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import consola from 'consola'
-import { createKawapressApp } from './app'
+import { createKawapressApp } from '../app'
 
 export { pages } from 'virtual:kawapress-pages'
 export { site } from 'virtual:kawapress-site'
