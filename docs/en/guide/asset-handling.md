@@ -104,8 +104,26 @@ The leading `/` means “the public root of this site.” It does not mean the r
 
 For example, a site deployed at `https://example.com/kawapress/` should still use `/handbook.pdf`, **not** `/kawapress/handbook.pdf`. KawaPress adds the `/kawapress/` `base` prefix for you. You can move the asset folder or change the deployment path without rewriting links in your content.
 
-::: warning Put downloads in the public assets directory
-A link such as `[PDF](./handbook.pdf)` looks reasonable, but an ordinary Markdown link does not ask Vite to copy that file. Put PDFs, archives, and other reader downloads in the public assets directory, then link to `/handbook.pdf`.
+::: warning Put a download in the public assets directory first
+To give readers a download, put the file in the public assets directory first, then give it a URL that starts with `/`.
+
+**Do this:**
+
+```text
+public/handbook.pdf
+```
+
+```md
+[Download the handbook](/handbook.pdf)
+```
+
+**Do not do this:**
+
+```md
+[Download the handbook](./handbook.pdf)
+```
+
+`./handbook.pdf` only points beside the article. The file may not be included in the published site, and readers can land on a missing-file page after they click it.
 :::
 
 ## Asset URLs Chosen at Runtime

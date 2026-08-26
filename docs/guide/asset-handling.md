@@ -104,8 +104,26 @@ docs/
 
 假设网站部署到 `https://example.com/kawapress/`，仍然只写 `/handbook.pdf`，**不要**写 `/kawapress/handbook.pdf`。KawaPress 会自动补上 `/kawapress/` 这个 `base` 前缀。这样，文件夹可以调整，部署位置可以改变，内容里的链接却不用跟着改。
 
-::: warning 下载文件请用公共资源目录
-写 `[PDF](./handbook.pdf)` 看起来很自然，但普通 Markdown 链接不会要求 Vite 收集并复制这个文件。读者需要下载的 PDF、压缩包和其他文件，应该先放进公共资源目录，再用 `/handbook.pdf` 这样的地址链接。
+::: warning 下载文件要先放进公共资源目录
+想让读者下载文件时，先把文件放进公共资源目录，再给它一个从 `/` 开始的地址。
+
+**正确写法：**
+
+```text
+public/handbook.pdf
+```
+
+```md
+[下载使用手册](/handbook.pdf)
+```
+
+**不要这样写：**
+
+```md
+[下载使用手册](./handbook.pdf)
+```
+
+`./handbook.pdf` 只是指向文章旁边的文件。构建网站时，这个文件不一定会被带到最终网站里；读者点击链接后，就可能看到找不到文件的页面。
 :::
 
 ## 运行时才知道的资源地址
