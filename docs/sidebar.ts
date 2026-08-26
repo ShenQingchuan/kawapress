@@ -64,6 +64,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: 'Frontmatter',
+            en: 'Frontmatter',
+          },
+          link: '/guide/frontmatter',
+        },
+        {
+          text: {
             zhCN: '在 Markdown 中使用 Vue',
             en: 'Using Vue in Markdown',
           },
