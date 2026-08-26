@@ -522,7 +522,7 @@
 .nagi-doc .kawa-code-block__language {
   position: absolute;
   z-index: 1;
-  top: 0.75rem;
+  top: 0.625rem;
   left: 1.5rem;
   max-width: calc(100% - 5rem);
   overflow: hidden;
