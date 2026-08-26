@@ -57,6 +57,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '静态资源处理',
+            en: 'Asset Handling',
+          },
+          link: '/guide/asset-handling',
+        },
+        {
+          text: {
             zhCN: '在 Markdown 中使用 Vue',
             en: 'Using Vue in Markdown',
           },
