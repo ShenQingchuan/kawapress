@@ -34,7 +34,7 @@ title: 入门
     expect(documents).toEqual([
       {
         id: '/guide/getting-started',
-        title: '快速 开始',
+        title: '入门',
         titles: [],
         text: '先创建一个项目。',
       },
@@ -51,6 +51,22 @@ title: 入门
         text: '也可以使用 pnpm。',
       },
     ])
+  })
+
+  it('uses the same JSON frontmatter title as the page metadata', () => {
+    const documents = createSearchDocuments(`{
+  "title": "Page metadata"
+}
+
+# Visible heading
+
+Content.
+`, '/guide/page')
+
+    expect(documents[0]).toMatchObject({
+      id: '/guide/page',
+      title: 'Page metadata',
+    })
   })
 
   it('indexes a localized GitHub alert title and body without its marker', () => {

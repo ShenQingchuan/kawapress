@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SearchTranslations } from '../translations'
-import { useHead, useSite } from 'kawapress/client'
+import { useHead } from '@unhead/vue'
+import { useSite } from 'kawapress/client'
 import { computed, nextTick, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from 'vue'
 import platformDetectionScript from '../platform-detection.js?raw'
 import { resolveSearchTranslations } from '../translations'

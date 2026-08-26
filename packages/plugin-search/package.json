@@ -34,6 +34,7 @@
     "@mdit/plugin-alert": "catalog:markdown",
     "@mdit/plugin-attrs": "catalog:markdown",
     "@mdit/plugin-container": "catalog:markdown",
+    "@unhead/vue": "catalog:frontend",
     "markdown-exit": "catalog:markdown",
     "markdown-it-anchor": "catalog:markdown",
     "minisearch": "catalog:frontend"

@@ -13,9 +13,12 @@ export type {
 } from './api/plugin'
 export { useMarkdownItPlugin } from './compiler/markdown-it-compat'
 export type { MarkdownItPluginHost } from './compiler/markdown-it-compat'
+export { normalizeFrontmatterSource } from './core/frontmatter'
 export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
 export type { JsonOperationOptions } from './core/json'
 export { markdownPagePathToRoutePath } from './core/markdown-route'
+export { resolveDocumentTitle, resolvePageMetadata } from './core/page-metadata'
+export type { PageMetadata } from './core/page-metadata'
 export type {
   LocaleConfig,
   LocaleDirection,

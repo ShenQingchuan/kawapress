@@ -476,10 +476,14 @@ pageData 至少包含：
 interface PageData {
   path: string
   title: string
+  description?: string
+  titleTemplate?: string | false
   frontmatter: Record<string, unknown>
   headers: PageHeader[]
 }
 ```
+
+Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAML 或花括号包围的 JSON 对象。它是开放的、严格 JSON 可序列化的数据对象：Core 保留所有键值，不建立通用 schema；字段 schema 与构建校验仍留到 0.3。Core 只赋予 `title`、`description` 与 `titleTemplate` 页面元数据语义：字符串 `title` 优先于第一个 h1，否则回退 h1；字符串 `description` 生成唯一的 description meta；`titleTemplate` 可以是字符串模板，其中的 `%s` 替换为页面标题，或为 `false` 以只使用页面标题。其他值保持原样供主题、插件或用户代码读取。Core 在 SSR 与浏览器导航中统一生成 title 与 description；页面级 `head`、`dir` 和 VitePress 的 `$frontmatter` 模板全局不进入 0.1，用户使用 `usePageData()` 读取当前页面数据。
 
 `PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与路由元数据，保证 Generator Plugin 的 `pageData()` 修改只执行一次且两份数据不漂移。`kawapress/client` 只公开当前页面数据：
 
@@ -491,13 +495,13 @@ declare function usePageData(): ComputedRef<PageData | undefined>
 
 nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。
 
-本地全文搜索由独立逻辑插件包 `@kawapress/plugin-search` 提供，不写死在 Core 或 nagi 内部。Generator Plugin 独立扫描 `srcDir` 下的 Markdown，按标题层级切成搜索段落，以公开路由作为结果地址；frontmatter 中显式设置 `search: false` 的页面不进入索引。Search 不擅自把可选语法当成已安装能力：只有 `searchPlugin()` 显式启用 `containers` 或 `githubAlerts` 时才按对应 parser 语义移除控制标记，nagi 因为默认组合这两个插件而同步启用；自定义 Preset 覆盖 Alert 标题时把同一组全局与 locale labels 同时传给 Search，保证索引标题与可见标题一致。索引使用 MiniSearch 在生成侧预构建，并按 Core locale 路径拆成独立虚拟模块；浏览器首屏只得到很小的 locale loader 映射，用户首次打开搜索时才加载 MiniSearch 运行时和当前语言索引，不能把索引或全站正文打进主入口。中英文共用大小写归一化与 CJK 感知分词，搜索只返回当前 URL locale 的结果。插件不向 Core 增加 `usePages()`、全量 pageData 或搜索专用运行时 API。
+本地全文搜索由独立逻辑插件包 `@kawapress/plugin-search` 提供，不写死在 Core 或 nagi 内部。Generator Plugin 独立扫描 `srcDir` 下的 Markdown，按标题层级切成搜索段落，以公开路由作为结果地址；frontmatter 中显式设置 `search: false` 的页面不进入索引。Search 使用与 Core 相同的 Frontmatter 标题解析规则，但它按源文件独立建索引，Generator Plugin 的 `pageData()` 修改不会回写搜索索引。Search 不擅自把可选语法当成已安装能力：只有 `searchPlugin()` 显式启用 `containers` 或 `githubAlerts` 时才按对应 parser 语义移除控制标记，nagi 因为默认组合这两个插件而同步启用；自定义 Preset 覆盖 Alert 标题时把同一组全局与 locale labels 同时传给 Search，保证索引标题与可见标题一致。索引使用 MiniSearch 在生成侧预构建，并按 Core locale 路径拆成独立虚拟模块；浏览器首屏只得到很小的 locale loader 映射，用户首次打开搜索时才加载 MiniSearch 运行时和当前语言索引，不能把索引或全站正文打进主入口。中英文共用大小写归一化与 CJK 感知分词，搜索只返回当前 URL locale 的结果。插件不向 Core 增加 `usePages()`、全量 pageData 或搜索专用运行时 API。
 
 `@kawapress/plugin-search/runtime-plugin` 注册可复用的真实 Vue 搜索组件并自动导入基础样式，稳定结构 class 使用 `.kawa-search*` 命名空间；其他 Preset 可以组合同一插件并把组件放进自己的界面。nagi Preset 默认组合 `searchPlugin()`，NavBar 只引入公开搜索组件并通过 CSS 变量适配主题视觉，不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。静态 SSR 无法从构建环境预知访客平台；Search Runtime Plugin 在 SSR `<head>` 注入一段内容固定的同步平台检测脚本，在浏览器绘制正文前为 `<html>` 写入平台属性。搜索按钮始终输出同时包含 `⌘` 与 `Ctrl` 的稳定 DOM，由 CSS 根据该属性从首帧开始只显示正确标记；Vue hydration 不再替换文字，避免首屏文案与宽度跳变。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
 
 pageData 必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含页面路由、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
 
-nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。只有 `doc` 页面显示并进入自动侧边栏。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层；右侧图片是与左侧标题相当的主视觉，不能缩成辅助性图标。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。nagi 默认复用当前 `themeConfig.logo` 作为 favicon：单图生成一个 SSR `<link rel="icon">`，明暗图片生成带 `prefers-color-scheme` media 的两条 link，并统一应用站点 `base`，不要求官方文档再维护第三份 Logo 资源。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
+nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。任何其他值回退 `doc`。只有 `doc` 页面显示并进入自动侧边栏。页面可以用字面量 `false` 关闭 `navbar`、`sidebar`、`aside`、`outline` 或 `footer`，并可用字符串 `pageClass` 为 nagi 页面外壳附加 CSS class：`sidebar: false` 只隐藏当前页的侧栏与菜单，不移出自动侧边栏索引；`aside: false` 只隐藏宽屏目录栏；`outline: false` 关闭所有目录 UI；`footer: false` 只影响 `home` 和 `page` 布局。`editLink`、`lastUpdated`、`prev`、`next`、自定义或 `false` layout、outline 级别范围和页面级 `head` 不属于 nagi 0.1。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层；右侧图片是与左侧标题相当的主视觉，不能缩成辅助性图标。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。nagi 默认复用当前 `themeConfig.logo` 作为 favicon：单图生成一个 SSR `<link rel="icon">`，明暗图片生成带 `prefers-color-scheme` media 的两条 link，并统一应用站点 `base`，不要求官方文档再维护第三份 Logo 资源。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
 
 nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文滚动容器占满剩余高度，页面外壳和 `body` 不滚动，长正文只在右侧内容区域滚动；Sidebar 菜单过长时在自己的区域内滚动。`doc` 不渲染 Footer。正文末尾根据当前已解析 Sidebar 的叶子链接顺序显示上一篇与下一篇，跨顶层分组时仍连续翻页；不显示 Edit this page on GitHub 或更新时间区域。`home` 与 `page` 在 nagi 自己的页面滚动容器内滚动并渲染 Footer；未命中页面按 `page` 布局处理。Footer 默认显示本地化的 MIT 许可与 KawaPress 驱动信息，年份由运行时当前年份生成：中文为“基于 MIT 许可发布”和“© {year} KawaPress 强力驱动”，英文为“Released under the MIT License”和“© {year} Powered by KawaPress”。
 

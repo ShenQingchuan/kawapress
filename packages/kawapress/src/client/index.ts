@@ -1,6 +1,4 @@
 export { withBase } from '../core/base'
 export { useLocale, usePageData, useSite, useThemeConfig } from './composables'
 export type { LocaleContext } from './composables'
-export { useHead } from '@unhead/vue'
-export type { Link as HeadLink } from '@unhead/vue'
 export { RouterLink, RouterView, useRouter } from 'vue-router'

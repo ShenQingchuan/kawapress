@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import type { HeadLink } from 'kawapress/client'
+import type { Link } from '@unhead/vue'
 import type { NagiHomeImage, NagiImageSource, NagiThemeableImage } from '../home'
-import { RouterView, useHead, usePageData, useSite, withBase } from 'kawapress/client'
+import { useHead } from '@unhead/vue'
+import { RouterView, usePageData, useSite, withBase } from 'kawapress/client'
 import { computed, nextTick, provide, shallowRef, useTemplateRef, watch } from 'vue'
 import { nagiDocScrollKey } from '../composables/docScroll'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
+import { resolveNagiPageOptions } from '../frontmatter'
 import { getOutlineHeaders } from '../outline'
 import DocNavigation from './DocNavigation.vue'
 import DocToolbar from './DocToolbar.vue'
@@ -15,17 +17,22 @@ import OutlineAside from './OutlineAside.vue'
 const site = useSite()
 const page = usePageData()
 const theme = useNagiThemeConfig()
-const layout = computed(() => {
-  if (!page.value) {
-    return 'page'
-  }
-  const value = page.value.frontmatter.layout
-  return value === 'home' || value === 'page' ? value : 'doc'
-})
-const showSidebar = computed(() => Boolean(page.value) && layout.value === 'doc')
-const hasPageOutline = computed(
-  () => getOutlineHeaders(page.value?.headers ?? []).length > 0,
-)
+const pageOptions = computed(() => resolveNagiPageOptions(
+  page.value?.frontmatter ?? {},
+))
+const layout = computed(() => page.value ? pageOptions.value.layout : 'page')
+const showSidebar = computed(() => (
+  Boolean(page.value)
+  && layout.value === 'doc'
+  && pageOptions.value.sidebar
+))
+const hasPageOutline = computed(() => (
+  pageOptions.value.outline
+  && getOutlineHeaders(page.value?.headers ?? []).length > 0
+))
+const showOutlineAside = computed(() => (
+  hasPageOutline.value && pageOptions.value.aside
+))
 const sidebarOpen = shallowRef(false)
 const outlineOpen = shallowRef(false)
 const outlineAsideCollapsed = shallowRef(false)
@@ -44,19 +51,14 @@ function returnToTop(): void {
   docScroll.value?.getScrollElement()?.scrollTo({ top: 0 })
 }
 
-useHead(() => {
-  const title = page.value?.title
-  const siteTitle = site.value.title
-  return {
-    title: !title || title === siteTitle ? siteTitle : `${title} | ${siteTitle}`,
-    link: resolveFaviconLinks(theme.value.logo, site.value.base),
-  }
-})
+useHead(() => ({
+  link: resolveFaviconLinks(theme.value.logo, site.value.base),
+}))
 
 function resolveFaviconLinks(
   image: NagiHomeImage | undefined,
   base: string,
-): HeadLink[] {
+): Link[] {
   if (!image) {
     return []
   }
@@ -90,21 +92,24 @@ function resolveImageSrc(image: string | NagiImageSource): string {
 </script>
 
 <template>
-  <div class="nagi" :class="`nagi--${layout}`">
-    <NavBar />
+  <div
+    class="nagi"
+    :class="[`nagi--${layout}`, pageOptions.pageClass]"
+  >
+    <NavBar v-if="pageOptions.navbar" />
 
     <div
       v-if="layout === 'doc'"
       class="nagi-content"
       :class="{
-        'nagi-content--wide-doc': !hasPageOutline || outlineAsideCollapsed,
+        'nagi-content--wide-doc': !showOutlineAside || outlineAsideCollapsed,
       }"
     >
       <Sidebar v-if="showSidebar" mode="desktop" />
 
       <Transition name="nagi-backdrop">
         <div
-          v-if="sidebarOpen"
+          v-if="showSidebar && sidebarOpen"
           class="nagi-backdrop"
           aria-hidden="true"
           @click="sidebarOpen = false"
@@ -112,7 +117,7 @@ function resolveImageSrc(image: string | NagiImageSource): string {
       </Transition>
       <Transition name="nagi-sidebar-drawer">
         <Sidebar
-          v-if="sidebarOpen"
+          v-if="showSidebar && sidebarOpen"
           mode="drawer"
           @close="sidebarOpen = false"
         />
@@ -120,7 +125,10 @@ function resolveImageSrc(image: string | NagiImageSource): string {
 
       <main class="nagi-main nagi-main--doc">
         <DocToolbar
+          v-if="showSidebar || hasPageOutline"
+          :outline-enabled="hasPageOutline"
           :outline-open="outlineOpen"
+          :sidebar-enabled="showSidebar"
           @close-outline="outlineOpen = false"
           @return-to-top="returnToTop"
           @toggle-outline="outlineOpen = !outlineOpen"
@@ -137,7 +145,7 @@ function resolveImageSrc(image: string | NagiImageSource): string {
       </main>
 
       <OutlineAside
-        v-if="hasPageOutline"
+        v-if="showOutlineAside"
         :collapsed="outlineAsideCollapsed"
         @toggle="outlineAsideCollapsed = !outlineAsideCollapsed"
       />
@@ -152,7 +160,7 @@ function resolveImageSrc(image: string | NagiImageSource): string {
           <RouterView />
         </div>
       </main>
-      <Footer />
+      <Footer v-if="pageOptions.footer" />
     </OsScroll>
   </div>
 </template>

@@ -7,7 +7,9 @@ import OsScroll from './OsScroll.vue'
 import Outline from './Outline.vue'
 
 const props = defineProps<{
+  outlineEnabled: boolean
   outlineOpen: boolean
+  sidebarEnabled: boolean
 }>()
 
 const emit = defineEmits<{
@@ -19,9 +21,10 @@ const emit = defineEmits<{
 
 const page = usePageData()
 const theme = useNagiThemeConfig()
-const hasOutline = computed(
-  () => getOutlineHeaders(page.value?.headers ?? []).length > 0,
-)
+const hasOutline = computed(() => (
+  props.outlineEnabled
+  && getOutlineHeaders(page.value?.headers ?? []).length > 0
+))
 
 function returnToTop(): void {
   emit('returnToTop')
@@ -35,6 +38,7 @@ function returnToTop(): void {
     :class="{ 'nagi-doc-toolbar--has-outline': hasOutline }"
   >
     <button
+      v-if="props.sidebarEnabled"
       class="nagi-doc-toolbar__menu"
       type="button"
       aria-controls="nagi-sidebar-drawer"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useHead, usePageData } from 'kawapress/client'
+import { useHead } from '@unhead/vue'
+import { usePageData } from 'kawapress/client'
 import { computed } from 'vue'
 import { useActiveOutline } from '../composables/useActiveOutline'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'

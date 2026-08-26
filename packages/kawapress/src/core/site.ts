@@ -59,6 +59,8 @@ export interface PageHeader {
 export interface PageData {
   path: string
   title: string
+  description?: string
+  titleTemplate?: string | false
   frontmatter: Record<string, unknown>
   headers: PageHeader[]
 }

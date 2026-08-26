@@ -51,6 +51,45 @@ describe('compileMarkdownToVue', () => {
     expect(pageData.title).toBe('Custom Title')
   })
 
+  it('keeps frontmatter description and title template in page data', async () => {
+    const { pageData } = await compileMarkdownToVue(
+      md,
+      `---
+title: Page title
+description: A short summary.
+titleTemplate: '%s · KawaPress'
+---
+`,
+      '/metadata',
+    )
+
+    expect(pageData).toMatchObject({
+      title: 'Page title',
+      description: 'A short summary.',
+      titleTemplate: '%s · KawaPress',
+    })
+  })
+
+  it('parses a JSON frontmatter object at the start of a page', async () => {
+    const { code, pageData } = await compileMarkdownToVue(
+      md,
+      `{
+  "title": "JSON title",
+  "description": "Written as JSON"
+}
+
+# Hidden title
+`,
+      '/json-frontmatter',
+    )
+
+    expect(pageData).toMatchObject({
+      title: 'JSON title',
+      description: 'Written as JSON',
+    })
+    expect(code.slice(0, code.indexOf('</template>'))).not.toContain('JSON title')
+  })
+
   it('falls back to first h1 when frontmatter has no title', async () => {
     const { code, pageData } = await compileMarkdownToVue(
       md,

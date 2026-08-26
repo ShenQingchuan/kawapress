@@ -32,6 +32,7 @@
     "@kawapress/plugin-search": "workspace:*",
     "@kawapress/plugin-shiki": "workspace:*",
     "@kawapress/plugin-unocss": "workspace:*",
+    "@unhead/vue": "catalog:frontend",
     "overlayscrollbars": "catalog:frontend",
     "overlayscrollbars-vue": "catalog:frontend"
   },

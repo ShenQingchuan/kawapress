@@ -11,6 +11,8 @@ import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { container as containerPlugin } from '@mdit/plugin-container'
 import {
   markdownPagePathToRoutePath,
+  normalizeFrontmatterSource,
+  resolvePageMetadata,
   stringifyJson,
   useMarkdownItPlugin,
 } from 'kawapress'
@@ -106,6 +108,11 @@ function getSearchMarkdown(callouts: SearchCalloutOptions = {}): MarkdownExit {
 
   const markdown = createMarkdownExit({ html: true })
   useMarkdownItPlugin(markdown, frontmatterPlugin)
+  const parse = markdown.parse.bind(markdown)
+  markdown.parse = (source, env = {}) => parse(
+    normalizeFrontmatterSource(source),
+    env,
+  )
   useMarkdownItPlugin(markdown, attrsPlugin, {
     allowed: ['id'],
     rule: ['heading'],
@@ -260,9 +267,10 @@ export function createSearchDocuments(
     return []
   }
 
-  const pageTitle = typeof env.frontmatter?.title === 'string'
-    ? env.frontmatter.title
-    : undefined
+  const pageTitle = resolvePageMetadata(
+    env.frontmatter ?? {},
+    getSearchPageHeaders(tokens),
+  ).title
   const documents: SearchDocument[] = []
   const headingTitles: string[] = []
   let section: MutableSearchSection | undefined
@@ -318,7 +326,9 @@ export function createSearchDocuments(
           && !documents.some(document => document.id === route)
           ? route
           : slug ? `${route}#${slug}` : route,
-        title,
+        title: headingCount === 1 && level === 1 && pageTitle
+          ? pageTitle
+          : title,
         titles: parentTitles,
         text: [],
       }
@@ -334,6 +344,25 @@ export function createSearchDocuments(
 
   finishSection()
   return documents
+}
+
+function getSearchPageHeaders(tokens: Token[]): Array<{
+  level: number
+  title: string
+}> {
+  const headers: Array<{ level: number, title: string }> = []
+  for (let index = 0; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token?.type !== 'heading_open') {
+      continue
+    }
+    const level = Number.parseInt(token.tag.slice(1), 10)
+    const title = tokens[index + 1] ? getInlineText(tokens[index + 1]) : ''
+    if (title && Number.isInteger(level)) {
+      headers.push({ level, title })
+    }
+  }
+  return headers
 }
 
 function getInlineText(token: Token): string {

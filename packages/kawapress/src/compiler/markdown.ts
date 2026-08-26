@@ -10,8 +10,10 @@ import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../core/base'
+import { normalizeFrontmatterSource } from '../core/frontmatter'
 import { stringifyJsonForScript } from '../core/json'
 import { markdownPagePathToRoutePath } from '../core/markdown-route'
+import { resolvePageMetadata } from '../core/page-metadata'
 import { useMarkdownItPlugin } from './markdown-it-compat'
 
 interface MarkdownEnv {
@@ -35,6 +37,7 @@ export interface MarkdownCompilerOptions {
 export async function createMarkdownCompiler(options: MarkdownCompilerOptions = {}): Promise<MarkdownExit> {
   const md = createMarkdownExit({ html: true })
   useMarkdownItPlugin(md, frontmatterPlugin)
+  installJsonFrontmatterCompatibility(md)
   useMarkdownItPlugin(md, sfcPlugin)
   installAsyncSfcRenderCompatibility(md)
   useMarkdownItPlugin(md, componentPlugin)
@@ -57,6 +60,11 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
 
   await options.pluginRunner?.runMarkdown(md)
   return md
+}
+
+function installJsonFrontmatterCompatibility(md: MarkdownExit): void {
+  const parse = md.parse.bind(md)
+  md.parse = (source, env = {}) => parse(normalizeFrontmatterSource(source), env)
 }
 
 function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {
@@ -160,9 +168,10 @@ export async function parseMarkdown(
 
   const frontmatter = env.frontmatter ?? {}
   const headers = env.headers ?? []
+  const metadata = resolvePageMetadata(frontmatter, headers)
   const pageData: PageData = {
     path,
-    title: (frontmatter.title as string | undefined) ?? headers.find(h => h.level === 1)?.title ?? '',
+    ...metadata,
     frontmatter,
     headers,
   }
