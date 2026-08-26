@@ -617,7 +617,7 @@
 }
 
 .nagi-home-features {
-  width: 100%;
+  width: calc(100% - 3rem);
   max-width: 72rem;
   margin: 0 auto;
 }
@@ -746,6 +746,10 @@
 }
 
 @media (min-width: 48rem) {
+  .nagi-home-features {
+    width: calc(100% - 6rem);
+  }
+
   .nagi-main__content {
     padding: 3rem 2rem 8rem;
   }
@@ -767,6 +771,10 @@
 }
 
 @media (min-width: 60rem) {
+  .nagi-home-features {
+    width: calc(100% - 8rem);
+  }
+
   .nagi-home-hero,
   .nagi-home__content {
     padding-right: 4rem;
