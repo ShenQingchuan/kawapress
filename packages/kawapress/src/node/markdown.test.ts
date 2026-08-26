@@ -2,7 +2,7 @@ import type { MarkdownExit } from 'markdown-exit'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
 import { nagi } from '@kawapress/preset-nagi'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { definePlugin } from '../plugin-api'
+import { definePlugin } from '../api/plugin'
 import { compileMarkdownToVue, createMarkdownCompiler } from './markdown'
 import { createGeneratorPluginRunner } from './plugin-runner'
 

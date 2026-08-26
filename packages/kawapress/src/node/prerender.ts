@@ -1,10 +1,10 @@
-import type { SiteData } from '../site'
+import type { SiteData } from '../core/site'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { consola } from 'consola'
-import { withBase } from '../base'
-import { parseJson } from '../json'
+import { withBase } from '../core/base'
+import { parseJson } from '../core/json'
 import { renderHtmlTemplate } from './template'
 
 interface ClientManifestEntry {

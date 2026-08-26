@@ -3,7 +3,7 @@ import type { Router } from 'vue-router'
 import type {
   RuntimePlugin,
   RuntimePluginAPI,
-} from '../plugin-api'
+} from '../api/plugin'
 import {
   createPluginHandlerRegistry,
   runPluginSetup,

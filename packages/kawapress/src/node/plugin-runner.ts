@@ -3,13 +3,13 @@ import type { UserConfig } from 'vite'
 import type {
   GeneratorPluginAPI,
   KawaPressPlugin,
-} from '../plugin-api'
-import type { PageData, SiteConfig } from '../site'
+} from '../api/plugin'
+import type { PageData, SiteConfig } from '../core/site'
+import { assertPageDataSerializable } from '../core/site'
 import {
   createPluginHandlerRegistry,
   runPluginSetup,
 } from '../plugin-execution'
-import { assertPageDataSerializable } from '../site'
 
 export interface GeneratorPluginRunner {
   runConfig: (config: SiteConfig) => Promise<void>

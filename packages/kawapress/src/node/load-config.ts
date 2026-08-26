@@ -1,4 +1,4 @@
-import type { KawapressConfig } from '../config'
+import type { KawapressConfig } from '../api/config'
 import type { ResolvedSiteConfig } from './config'
 import { existsSync } from 'node:fs'
 import { realpath } from 'node:fs/promises'

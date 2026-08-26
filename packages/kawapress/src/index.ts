@@ -1,11 +1,6 @@
-export { defineConfig, definePreset } from './config'
-export type { KawapressConfig, KawapressPreset, PresetConfig } from './config'
-export { assertJsonSerializable, parseJson, stringifyJson } from './json'
-export type { JsonOperationOptions } from './json'
-export { useMarkdownItPlugin } from './markdown-it-compat'
-export type { MarkdownItPluginHost } from './markdown-it-compat'
-export { markdownPagePathToRoutePath } from './markdown-route'
-export { definePlugin, defineRuntimePlugin } from './plugin-api'
+export { defineConfig, definePreset } from './api/config'
+export type { KawapressConfig, KawapressPreset, PresetConfig } from './api/config'
+export { definePlugin, defineRuntimePlugin } from './api/plugin'
 export type {
   GeneratorPluginAPI,
   GeneratorPluginHandler,
@@ -15,7 +10,10 @@ export type {
   RuntimePluginAPI,
   RuntimePluginHandler,
   RuntimePluginSetup,
-} from './plugin-api'
+} from './api/plugin'
+export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
+export type { JsonOperationOptions } from './core/json'
+export { markdownPagePathToRoutePath } from './core/markdown-route'
 export type {
   LocaleConfig,
   LocaleDirection,
@@ -25,4 +23,6 @@ export type {
   ResolvedSiteData,
   SiteConfig,
   SiteData,
-} from './site'
+} from './core/site'
+export { useMarkdownItPlugin } from './markdown-it-compat'
+export type { MarkdownItPluginHost } from './markdown-it-compat'

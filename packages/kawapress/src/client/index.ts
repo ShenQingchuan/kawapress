@@ -1,4 +1,4 @@
-export { withBase } from '../base'
+export { withBase } from '../core/base'
 export { useLocale, usePageData, useSite, useThemeConfig } from './composables'
 export type { LocaleContext } from './composables'
 export { useHead } from '@unhead/vue'

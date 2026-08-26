@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite'
-import type { SiteData } from '../site'
-import { stringifyJsonForScript } from '../json'
+import type { SiteData } from '../core/site'
+import { stringifyJsonForScript } from '../core/json'
 
 const MODULE_ID = 'virtual:kawapress-site'
 const RESOLVED_ID = `\0${MODULE_ID}`

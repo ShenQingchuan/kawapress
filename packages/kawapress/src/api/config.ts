@@ -1,5 +1,5 @@
-import type { KawaPressPlugin } from './plugin-api'
-import type { LocaleConfig } from './site'
+import type { LocaleConfig } from '../core/site'
+import type { KawaPressPlugin } from './plugin'
 
 export interface KawapressConfig<ThemeConfig extends object = object> {
   title?: string

@@ -1,9 +1,9 @@
 import type { ComputedRef } from 'vue'
-import type { LocaleLink, PageData, ResolvedSiteData, SiteData } from '../site'
+import type { LocaleLink, PageData, ResolvedSiteData, SiteData } from '../core/site'
 import { site } from 'virtual:kawapress-site'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { getLocaleIndex, resolveLocaleLinks, resolveSiteDataByPath } from '../locale'
+import { getLocaleIndex, resolveLocaleLinks, resolveSiteDataByPath } from '../core/locale'
 import { getPageData } from './page-data'
 
 export interface LocaleContext {

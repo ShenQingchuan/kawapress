@@ -2,7 +2,7 @@ import type { Router, RouteRecordRaw } from 'vue-router'
 import { pageData, pages } from 'virtual:kawapress-pages'
 import { site } from 'virtual:kawapress-site'
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
-import { decodeUrlPathname, withoutBase } from '../base'
+import { decodeUrlPathname, withoutBase } from '../core/base'
 import NotFoundRoute from './NotFoundRoute.vue'
 import { wrapPageLoader } from './page-data'
 

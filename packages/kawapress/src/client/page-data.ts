@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import type { PageData } from '../site'
+import type { PageData } from '../core/site'
 
 interface PageModule {
   default: Component

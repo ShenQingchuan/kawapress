@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createSSRApp } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { defineRuntimePlugin } from '../plugin-api'
+import { defineRuntimePlugin } from '../api/plugin'
 import { createRuntimePluginRunner } from './runtime-plugin-runner'
 
 describe('createRuntimePluginRunner', () => {

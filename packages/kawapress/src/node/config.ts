@@ -1,9 +1,9 @@
-import type { KawapressConfig } from '../config'
-import type { KawaPressPlugin } from '../plugin-api'
-import type { LocaleConfig, SiteConfig } from '../site'
+import type { KawapressConfig } from '../api/config'
+import type { KawaPressPlugin } from '../api/plugin'
+import type { LocaleConfig, SiteConfig } from '../core/site'
 import type { GeneratorPluginRunner } from './plugin-runner'
 import { isAbsolute } from 'node:path'
-import { normalizeBase } from '../base'
+import { normalizeBase } from '../core/base'
 import { createGeneratorPluginRunner } from './plugin-runner'
 
 export interface ResolvedSiteConfig {

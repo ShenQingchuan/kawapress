@@ -1,6 +1,6 @@
 import type { MarkdownSfcBlocks } from '@mdit-vue/plugin-sfc'
 import type { MarkdownExit } from 'markdown-exit'
-import type { PageData, PageHeader } from '../site'
+import type { PageData, PageHeader } from '../core/site'
 import type { GeneratorPluginRunner } from './plugin-runner'
 import { componentPlugin } from '@mdit-vue/plugin-component'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
@@ -9,10 +9,10 @@ import { sfcPlugin } from '@mdit-vue/plugin-sfc'
 import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
-import { withBase } from '../base'
-import { stringifyJsonForScript } from '../json'
+import { withBase } from '../core/base'
+import { stringifyJsonForScript } from '../core/json'
+import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { useMarkdownItPlugin } from '../markdown-it-compat'
-import { markdownPagePathToRoutePath } from '../markdown-route'
 
 interface MarkdownEnv {
   path: string

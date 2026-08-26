@@ -2,7 +2,7 @@ import type { MarkdownExit } from 'markdown-exit'
 import type { UserConfig } from 'vite'
 import type { App } from 'vue'
 import type { Router } from 'vue-router'
-import type { PageData, SiteConfig } from './site'
+import type { PageData, SiteConfig } from '../core/site'
 
 export type MaybePromise<T> = T | Promise<T>
 

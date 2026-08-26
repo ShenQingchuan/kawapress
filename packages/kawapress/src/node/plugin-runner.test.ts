@@ -1,6 +1,6 @@
 import type { MarkdownExit } from 'markdown-exit'
 import { describe, expect, it } from 'vitest'
-import { definePlugin } from '../plugin-api'
+import { definePlugin } from '../api/plugin'
 import { createGeneratorPluginRunner } from './plugin-runner'
 
 describe('createGeneratorPluginRunner', () => {

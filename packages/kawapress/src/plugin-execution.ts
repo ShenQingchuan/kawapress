@@ -1,4 +1,4 @@
-import type { MaybePromise } from './plugin-api'
+import type { MaybePromise } from './api/plugin'
 
 type PluginSurface = 'generator' | 'runtime'
 type PluginHandler<T> = (value: T) => MaybePromise<void>
