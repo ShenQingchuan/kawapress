@@ -93,6 +93,13 @@ export const sidebars = defineLocalizedSidebars({
       items: [
         {
           text: {
+            zhCN: '插件体系',
+            en: 'Plugin System',
+          },
+          link: '/guide/plugin-system',
+        },
+        {
+          text: {
             zhCN: 'SSR 兼容性',
             en: 'SSR Compatibility',
           },
