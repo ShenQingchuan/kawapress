@@ -100,6 +100,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '主题定制',
+            en: 'Theme Customization',
+          },
+          link: '/guide/theme-customization',
+        },
+        {
+          text: {
             zhCN: 'SSR 兼容性',
             en: 'SSR Compatibility',
           },

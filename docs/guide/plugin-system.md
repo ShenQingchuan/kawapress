@@ -61,7 +61,37 @@ Runtime Plugin 在 KawaPress 创建 Vue App 和 Vue Router 时工作。它可以
 
 服务端渲染和浏览器都会加载 Runtime Plugin。搜索界面、代码复制和主题布局，都需要这一部分。使用浏览器 API 前，请先阅读 [SSR 兼容性](/guide/ssr-compatibility)。
 
-Generator Plugin 与 Runtime Plugin 会在不同的时间运行，但它们仍然属于同一个 Plugin。站点只导入和配置一次，KawaPress 会自动找到同一个包提供的 Runtime Plugin：
+### 插件包的 exports 约定 {#plugin-package-exports}
+
+一个发布到 npm 的 Plugin 使用默认入口公开 Generator Plugin，并可以公开一个 `./runtime-plugin` 入口：
+
+```json
+{
+  "name": "@kawapress/plugin-search",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./runtime-plugin": {
+      "types": "./src/runtime-plugin.ts",
+      "import": "./src/runtime-plugin.ts",
+      "default": "./src/runtime-plugin.ts"
+    }
+  },
+  "files": [
+    "src"
+  ]
+}
+```
+
+`package.json` 的 `name`、Generator Plugin 的 `name` 和 Runtime Plugin 的 `name` 应该保持一致。KawaPress 从站点配置中的 Generator Plugin 取得这个名字，再检查同名包是否公开了 `./runtime-plugin`。如果存在，运行入口会被自动加载。
+
+只参与构建的 Plugin 不需要公开 `./runtime-plugin`。只参与页面运行环境的 Plugin 仍然需要默认入口，用 Generator Plugin 声明自己的稳定身份；它的 `setup()` 可以不注册任何 Hook。
+
+站点始终只导入默认入口：
 
 ```ts
 import searchPlugin from '@kawapress/plugin-search'
@@ -71,7 +101,17 @@ const plugins = [
 ]
 ```
 
-使用者不需要再去主题入口注册第二遍搜索，也不用知道这个功能内部跨越了几个阶段。对外，它仍然只是“安装搜索”。
+不要让使用者再导入 `@kawapress/plugin-search/runtime-plugin`。生成与运行虽然发生在不同阶段，对外仍然是一次安装和一次配置。
+
+### 推荐直接发布 TypeScript 源码
+
+KawaPress Plugin 推荐使用 TypeScript 开发，并直接发布 `.ts`、`.vue` 和 CSS 源码，不需要先运行一次打包工具。
+
+上面的 `exports` 已经是可以直接发布源码的写法。Generator Plugin 由 KawaPress 的 Vite Module Runner 加载；Runtime Plugin 及其导入的 Vue SFC 和 CSS 会进入站点的 Vite 模块图。最终的语法转换、依赖解析和浏览器构建都由 KawaPress 使用的 Vite 完成。
+
+源码包使用标准的 `types`、`import` 和 `default` 条件即可，不需要额外声明 `source` condition。记得通过 `files` 把源码目录包含进 npm 包。
+
+直接发布源码是推荐方式，不是硬性限制。已经编译为 ESM 的插件也可以使用，只需让 `types` 指向声明文件，让 `import` 和 `default` 指向 JavaScript 产物。
 
 ## 默认配置应当是一个足够好的产品
 

@@ -61,7 +61,37 @@ A Runtime Plugin works when KawaPress creates the Vue App and Vue Router. It can
 
 Server rendering and the browser both load Runtime Plugins. Search interfaces, copy buttons, and theme layouts all need this part. Read [SSR Compatibility](/en/guide/ssr-compatibility) before using browser APIs.
 
-The Generator Plugin and Runtime Plugin run at different times, but they still belong to one Plugin. A site imports and configures the feature once. KawaPress automatically finds the Runtime Plugin supplied by the same package:
+### Plugin Package Export Conventions {#plugin-package-exports}
+
+A Plugin published to npm exposes its Generator Plugin from the default entry and may expose a `./runtime-plugin` entry:
+
+```json
+{
+  "name": "@kawapress/plugin-search",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./runtime-plugin": {
+      "types": "./src/runtime-plugin.ts",
+      "import": "./src/runtime-plugin.ts",
+      "default": "./src/runtime-plugin.ts"
+    }
+  },
+  "files": [
+    "src"
+  ]
+}
+```
+
+The `package.json` name, Generator Plugin name, and Runtime Plugin name should match. KawaPress reads this name from the configured Generator Plugin, then checks whether the package with that name exposes `./runtime-plugin`. When it does, the runtime entry is loaded automatically.
+
+A build-only Plugin does not expose `./runtime-plugin`. A Plugin used only in the page runtime still needs a default entry whose Generator Plugin declares its stable identity; its `setup()` does not need to register any Hooks.
+
+The site always imports the default entry only:
 
 ```ts
 import searchPlugin from '@kawapress/plugin-search'
@@ -71,7 +101,17 @@ const plugins = [
 ]
 ```
 
-The site author does not register search again in a theme entry or learn how many stages the feature crosses internally. From the outside, the task is still “install search.”
+Do not ask site authors to import `@kawapress/plugin-search/runtime-plugin`. Generation and runtime happen at different stages, but the feature still has one installation and one configuration.
+
+### Publish TypeScript Source Directly
+
+KawaPress Plugins are best written in TypeScript and can publish `.ts`, `.vue`, and CSS source files directly. A separate bundling step is not required.
+
+The `exports` example above already uses the recommended source-package form. KawaPress loads the Generator Plugin through Vite Module Runner. The Runtime Plugin, its Vue SFCs, and its CSS enter the site's Vite module graph. Vite performs the final syntax transforms, dependency resolution, and browser build.
+
+Use the standard `types`, `import`, and `default` conditions for a source package. A custom `source` condition is not needed. Include the source directory in the published npm package through `files`.
+
+Publishing source is recommended, not required. A precompiled ESM Plugin also works when `types` points to its declarations and `import` and `default` point to its JavaScript output.
 
 ## Good Defaults Should Form a Complete Product
 
