@@ -1,5 +1,17 @@
 export { defineConfig, definePreset } from './api/config'
 export type { KawapressConfig, KawapressPreset, PresetConfig } from './api/config'
+export { createContentLoader, defineLoader } from './api/data'
+export type {
+  ContentData,
+  ContentExcerpt,
+  ContentExcerptFile,
+  ContentLoader,
+  ContentLoaderOptions,
+  DataLoader,
+  DataLoaderConfig,
+  DataLoaderGlobOptions,
+  DataLoaderOptions,
+} from './api/data'
 export { definePlugin, defineRuntimePlugin } from './api/plugin'
 export type {
   GeneratorPluginAPI,

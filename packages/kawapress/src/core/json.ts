@@ -207,7 +207,7 @@ function serializationError(
       `KawaPress: ${label} is not JSON-serializable.`,
       `Found ${reason} at ${path}.`,
       'Use only null, booleans, finite numbers, strings, arrays, and plain objects.',
-      'Convert BigInt, Date, Map, Set, functions, class instances, Vue refs, and other runtime objects before assigning them to frontmatter or pageData.',
+      'Convert BigInt, Date, Map, Set, functions, class instances, Vue refs, and other runtime objects before exposing the value as KawaPress data.',
     ].join('\n'),
   )
 }

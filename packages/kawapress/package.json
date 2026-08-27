@@ -46,10 +46,12 @@
     "@vue/server-renderer": "catalog:frontend",
     "citty": "catalog:node",
     "consola": "catalog:node",
+    "gray-matter": "catalog:markdown",
     "jiti": "catalog:node",
     "markdown-exit": "catalog:markdown",
     "markdown-it-anchor": "catalog:markdown",
     "sirv": "catalog:node",
+    "tinyglobby": "catalog:node",
     "vite": "catalog:node",
     "vue": "catalog:frontend",
     "vue-router": "catalog:frontend"

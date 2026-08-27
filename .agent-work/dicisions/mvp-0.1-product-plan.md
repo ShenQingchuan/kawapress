@@ -491,6 +491,25 @@ Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAM
 declare function usePageData(): ComputedRef<PageData | undefined>
 ```
 
+KawaPress Core 提供构建时数据加载。站点中的 `.data.ts` 或 `.data.js` 模块默认导出 `DataLoader`，KawaPress 只在 Node.js 生成侧执行它的 `load()`，再把结果变成可由 Markdown 或 Vue 组件导入的隐式 `data` 具名导出；Loader 源码、Node.js API 与生成侧依赖不得进入 SSR 或浏览器 bundle。`load()` 可以异步执行和主动请求远程 API，但最终结果必须通过 KawaPress 的严格 JSON 可序列化检查。SSR 与 client 对同一个 Loader 修订共享一次执行结果，不能重复触发远程请求或其他生成侧副作用。
+
+```ts
+type Awaitable<T> = T | Promise<T>
+
+interface DataLoader<T> {
+  watch?: string | string[]
+  load: (watchedFiles: string[]) => Awaitable<T>
+}
+
+declare function defineLoader<T>(loader: DataLoader<T>): DataLoader<T>
+```
+
+`watch` 使用相对当前 Loader 文件的 glob，`load()` 得到按路径稳定排序的绝对文件路径。开发模式同时追踪 Loader 自身、它的本地传递依赖与 glob 匹配文件；变化时失效同一数据结果，并让 SSR module graph 与浏览器 HMR 使用重新生成后的同一份数据。Loader 执行期间通过类型化的 `globalThis.KAWAPRESS_CONFIG` 提供当前站点绝对根目录、绝对 `srcDir`、绝对 `publicDir` 与可序列化 `site` 数据，不暴露 `pluginRunner` 等内部对象。
+
+Core 同时公开 `createContentLoader()`。它接收相对 `srcDir` 的一个或多个 Markdown glob，只处理 `.md` 文件，默认返回不含部署 `base` 的无后缀公开 `url` 与 `frontmatter`；`includeSrc`、`render`、`excerpt` 分别按需增加原始 Markdown、使用当前 KawaPress Markdown 管线生成的 HTML 与已渲染摘要，未启用或不存在的字段直接省略，不能以 `undefined` 穿过数据边界。它按文件修改信息缓存单页解析结果，并允许用同步或异步 `transform()` 对最终数组进行筛选、排序与缩减。Markdown 渲染执行已安装的 `markdown()` 扩展，但不执行 `pageData()` handler，也不因此新增页面或静态路由。
+
+构建时 Data Loader 是显式导入的数据模块，不是全站 Content Layer。远程数据只能由站点 Loader 主动读取；0.1 不提供远程内容源适配、内容查询、动态路由、增量构建或 CMS 协议。
+
 核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据生成自动侧边栏，并读取各内容目录旁的 `_meta.json` 管理目录与页面的显示顺序和本地化名称，不使用 frontmatter `order`。`_meta.json` 使用按展示顺序排列的数组，字符串条目只声明文件或目录名，对象条目可以通过 `type`、`name` 与 `label` 区分文件、目录并覆盖显示名称；未列出的现有页面或目录继续按路径顺序追加。每个 locale 可以拥有自己目录下的 `_meta.json`，因此 Sidebar 结构与标签自然随路径语言切换。nagi 的 Generator Plugin 通过 JSON 虚拟模块把这些结构化内容元数据交给运行侧；该模块只传标准 JSON，不承载主题配置或生成侧对象。
 
 nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。
@@ -499,7 +518,7 @@ nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可�
 
 `@kawapress/plugin-search/runtime-plugin` 注册可复用的真实 Vue 搜索组件并自动导入基础样式，稳定结构 class 使用 `.kawa-search*` 命名空间；其他 Preset 可以组合同一插件并把组件放进自己的界面。nagi Preset 默认组合 `searchPlugin()`，NavBar 只引入公开搜索组件并通过 CSS 变量适配主题视觉，不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。静态 SSR 无法从构建环境预知访客平台；Search Runtime Plugin 在 SSR `<head>` 注入一段内容固定的同步平台检测脚本，在浏览器绘制正文前为 `<html>` 写入平台属性。搜索按钮始终输出同时包含 `⌘` 与 `Ctrl` 的稳定 DOM，由 CSS 根据该属性从首帧开始只显示正确标记；Vue hydration 不再替换文字，避免首屏文案与宽度跳变。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
 
-pageData 必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含页面路由、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
+pageData 与 Data Loader 结果必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含对应页面路由或 Loader 路径、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
 
 nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。任何其他值回退 `doc`。只有 `doc` 页面显示并进入自动侧边栏。页面可以用字面量 `false` 关闭 `navbar`、`sidebar`、`aside`、`outline` 或 `footer`，并可用字符串 `pageClass` 为 nagi 页面外壳附加 CSS class：`sidebar: false` 只隐藏当前页的侧栏与菜单，不移出自动侧边栏索引；`aside: false` 只隐藏宽屏目录栏；`outline: false` 关闭所有目录 UI；`footer: false` 只影响 `home` 和 `page` 布局。`editLink`、`lastUpdated`、`prev`、`next`、自定义或 `false` layout、outline 级别范围和页面级 `head` 不属于 nagi 0.1。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层；右侧图片是与左侧标题相当的主视觉，不能缩成辅助性图标。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。nagi 默认复用当前 `themeConfig.logo` 作为 favicon：单图生成一个 SSR `<link rel="icon">`，明暗图片生成带 `prefers-color-scheme` media 的两条 link，并统一应用站点 `base`，不要求官方文档再维护第三份 Logo 资源。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
 
@@ -543,7 +562,7 @@ docs
 - Runtime Plugin 静态导入的 Vue SFC 与 CSS 由用户站点的 Vite 自动打包；用户不需要单独导入主题或插件 CSS。
 - KawaPress 使用 `docs` 工作区维护并构建自己的真实文档，不保留独立 playground；根目录的 `pnpm dev`、`pnpm build` 与 `pnpm preview` 分别代理文档站命令。新增功能直接进入真实文档，文档写作与构建过程作为持续 dogfooding。
 - 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。简介分组依次放置《KawaPress 是什么？》《快速开始》《路由》《部署》；《部署》只说明构建、生产预览、`base`、通用静态托管要求与缓存，不维护重复前文的发布检查清单，也不维护各托管平台的专属部署指南。简介之后建立“写作 / Writing”分组，第一篇为《Markdown 语法扩展 / Markdown Extensions》；自定义锚点章节只解释语法、slugify、稳定章节链接和跨语言共享英文语义 ID 的用途。《在 Markdown 中使用 Vue / Using Vue in Markdown》专注模板语法、SFC 区块、组件和转义；SSR 环境、浏览器 API、动态导入、客户端组件边界与 hydration 稳定性使用“自定义 / Customization”分组下的独立《SSR 兼容性 / SSR Compatibility》，不混入 Vue 基础用法正文。
-- 文档面向没有技术背景的初学者，使用朴实、温暖、亲和的语言，先解释日常含义，再引入术语；不为追求短句而省略读者必须知道的前提、边界或下一步。表达节奏以 VitePress 指南为参考：先给可执行的结论和最小示例，再只在容易误用的边界补充原因；不重复铺垫、不用故事化叙述填充简单事实。中文使用自然的高语境表达；英文同样友好、具体、直接，采用低语境组织而不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。“自定义 / Customization”分组以《插件体系 / Plugin System》开篇，使用一个真实能力从简单需求逐渐跨越生成与运行阶段的连贯叙事，先让读者自然看到 VitePress 各类扩展入口没有收束为统一插件身份的问题，再建立 KawaPress Plugin、Generator Plugin、Runtime Plugin 与 Preset 的整体心智模型，说明生成与运行边界、单次安装、显式顺序、nagi 组合方式和官方无私有通道等独有取舍；本篇面向插件开发者，不另写面向普通文档作者的价值总结，Runtime Plugin 的 SSR 提醒就近放在其概念说明中；比较保持克制，不使用攻击性结论或机械对照表；总览直接说明默认入口与 `./runtime-plugin` 的 package exports 约定，以及 TypeScript、Vue SFC 和 CSS 源码可由 KawaPress 的 Vite 直接加载、无需预打包的推荐发布方式，具体 API 与其余发布细节留给后续开发文档。《主题定制 / Theme Customization》紧随其后，面向主题开发者说明主题作为普通 Plugin 的架构位置、Generator/Runtime 两侧分工、`Layout` 与 `NotFound` 必需组件约定、`RouterView` 放置、`themeConfig` 类型与 locale 浅合并、主题 Frontmatter 语义、公开 client API、CSS 入口与 SSR 边界；Preset 的组合关系只在《插件体系》中说明，本篇不是只介绍修改 nagi 颜色变量的样式教程。
+- 文档面向没有技术背景的初学者，使用朴实、温暖、亲和的语言，先解释日常含义，再引入术语；不为追求短句而省略读者必须知道的前提、边界或下一步。表达节奏以 VitePress 指南为参考：先给可执行的结论和最小示例，再只在容易误用的边界补充原因；不重复铺垫、不用故事化叙述填充简单事实。中文使用自然的高语境表达；英文同样友好、具体、直接，采用低语境组织而不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。“自定义 / Customization”分组以《插件体系 / Plugin System》开篇，使用一个真实能力从简单需求逐渐跨越生成与运行阶段的连贯叙事，先让读者自然看到 VitePress 各类扩展入口没有收束为统一插件身份的问题，再建立 KawaPress Plugin、Generator Plugin、Runtime Plugin 与 Preset 的整体心智模型，说明生成与运行边界、单次安装、显式顺序、nagi 组合方式和官方无私有通道等独有取舍；本篇面向插件开发者，不另写面向普通文档作者的价值总结，Runtime Plugin 的 SSR 提醒就近放在其概念说明中；比较保持克制，不使用攻击性结论或机械对照表；总览直接说明默认入口与 `./runtime-plugin` 的 package exports 约定，以及 TypeScript、Vue SFC 和 CSS 源码可由 KawaPress 的 Vite 直接加载、无需预打包的推荐发布方式，具体 API 与其余发布细节留给后续开发文档。《构建时数据加载 / Build-Time Data Loading》归入“自定义 / Customization”并紧随《插件体系》，说明 Data Loader、文件监听、Markdown 内容汇总、类型、站点配置与 JSON 边界。《主题定制 / Theme Customization》排在数据加载之后，面向主题开发者说明主题作为普通 Plugin 的架构位置、Generator/Runtime 两侧分工、`Layout` 与 `NotFound` 必需组件约定、`RouterView` 放置、`themeConfig` 类型与 locale 浅合并、主题 Frontmatter 语义、公开 client API、CSS 入口与 SSR 边界；Preset 的组合关系只在《插件体系》中说明，本篇不是只介绍修改 nagi 颜色变量的样式教程。
 - 官方文档以 KawaPress 0.1 的预期终态为准，按正式发布后用户真正使用产品的方式编写，不暴露 `workspace:*`、未发布版本号、仓库内部代理命令等开发期临时状态。文档可以先于对应实现成文，但不得超出本文确定的 0.1 交付范围；功能完成后必须通过 `docs` dogfooding 校验文档中的命令、配置与行为。
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
 - 官方文档同时部署到 GitHub Pages 与 Cloudflare Pages；`main` 每次推送各自构建并发布 `docs/dist`。GitHub Actions 使用 `KAWAPRESS_BASE=/kawapress/` 部署到 GitHub Pages；Cloudflare Pages 直连 GitHub 仓库，不设置该变量，站点挂在自定义域名根路径。本地开发未设置该变量时继续使用根路径 `/`。Cloudflare Pages 构建在仓库根目录执行 `pnpm build`，构建环境使用 Node.js 22.12 及以上与 pnpm 11.22.0。
@@ -566,6 +585,7 @@ docs
 - 默认 `@kawapress/preset-nagi`。
 - Markdown 编译成 Vue 组件。
 - frontmatter 与 pageData。
+- `.data.ts` / `.data.js` 构建时 Data Loader、文件监听 HMR、`defineLoader()` 与 `createContentLoader()`。
 - Shiki 双主题高亮、Twoslash 与 Floating Vue 浮层。
 - 独立 Code Group Plugin、可访问代码 Tab 与 nagi 默认样式。
 - 文件路径路由、SSR 首屏和浏览器内导航。
@@ -577,7 +597,7 @@ docs
 0.1 明确不包含：
 
 - `addPage()` 或插件虚拟页面。
-- Content Layer、远程内容源和 CMS。
+- Content Layer、远程内容源适配和 CMS；站点自己的 Data Loader 仍可在构建时主动读取远程数据。
 - 版本化文档和博客能力。
 - 默认 Plugin 热重载。
 - 生成侧与浏览器之间的 RPC。

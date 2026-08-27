@@ -4,6 +4,8 @@ import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import vue from '@vitejs/plugin-vue'
 import { createMarkdownPageLoader } from '../../compiler/page-loader'
+import { createDataLoaderContext } from '../data/context'
+import { dataLoaderPlugin } from './plugins/data'
 import { markdownPlugin } from './plugins/markdown'
 import { virtualPagesPlugin } from './plugins/pages'
 import { virtualRuntimePluginsPlugin } from './plugins/runtime-plugins'
@@ -65,8 +67,10 @@ function createBasePlugins(
     srcDir: siteConfig.srcDir,
     pluginRunner: siteConfig.pluginRunner,
   })
+  const dataLoaderContext = createDataLoaderContext(root, siteConfig)
 
   return [
+    dataLoaderPlugin(dataLoaderContext),
     markdownPlugin(pageLoader),
     vue({
       include: [

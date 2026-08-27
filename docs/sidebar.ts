@@ -100,6 +100,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '构建时数据加载',
+            en: 'Build-Time Data Loading',
+          },
+          link: '/guide/data-loading',
+        },
+        {
+          text: {
             zhCN: '主题定制',
             en: 'Theme Customization',
           },
