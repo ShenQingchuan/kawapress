@@ -109,9 +109,11 @@ KawaPress Plugins are best written in TypeScript and can publish `.ts`, `.vue`, 
 
 The `exports` example above already uses the recommended source-package form. KawaPress loads the Generator Plugin through Vite Module Runner. The Runtime Plugin, its Vue SFCs, and its CSS enter the site's Vite module graph. Vite performs the final syntax transforms, dependency resolution, and browser build.
 
-Use the standard `types`, `import`, and `default` conditions for a source package. A custom `source` condition is not needed. Include the source directory in the published npm package through `files`.
+Include the source directory in the published npm package through `files`.
 
+::: info Precompiled output is also supported
 Publishing source is recommended, not required. A precompiled ESM Plugin also works when `types` points to its declarations and `import` and `default` point to its JavaScript output.
+:::
 
 ## Good Defaults Should Form a Complete Product
 

@@ -109,9 +109,11 @@ KawaPress Plugin 推荐使用 TypeScript 开发，并直接发布 `.ts`、`.vue`
 
 上面的 `exports` 已经是可以直接发布源码的写法。Generator Plugin 由 KawaPress 的 Vite Module Runner 加载；Runtime Plugin 及其导入的 Vue SFC 和 CSS 会进入站点的 Vite 模块图。最终的语法转换、依赖解析和浏览器构建都由 KawaPress 使用的 Vite 完成。
 
-源码包使用标准的 `types`、`import` 和 `default` 条件即可，不需要额外声明 `source` condition。记得通过 `files` 把源码目录包含进 npm 包。
+记得通过 `files` 把源码目录包含进 npm 包。
 
+::: info 也可以发布编译产物
 直接发布源码是推荐方式，不是硬性限制。已经编译为 ESM 的插件也可以使用，只需让 `types` 指向声明文件，让 `import` 和 `default` 指向 JavaScript 产物。
+:::
 
 ## 默认配置应当是一个足够好的产品
 
