@@ -4,6 +4,7 @@ import type { NagiHomeImage, NagiImageSource, NagiThemeableImage } from '../home
 import { useHead } from '@unhead/vue'
 import { RouterView, usePageData, useSite, withBase } from 'kawapress/client'
 import { computed, nextTick, provide, shallowRef, useTemplateRef, watch } from 'vue'
+import appearanceInitializerScript from '../appearance-initializer.js?raw'
 import { nagiDocScrollKey } from '../composables/docScroll'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import { resolveNagiPageOptions } from '../frontmatter'
@@ -53,6 +54,10 @@ function returnToTop(): void {
 
 useHead(() => ({
   link: resolveFaviconLinks(theme.value.logo, site.value.base),
+  script: [{
+    id: 'nagi-initial-appearance',
+    textContent: appearanceInitializerScript,
+  }],
 }))
 
 function resolveFaviconLinks(

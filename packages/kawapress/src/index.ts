@@ -14,10 +14,13 @@ export type {
 } from './api/data'
 export { definePlugin, defineRuntimePlugin } from './api/plugin'
 export type {
+  BuildArtifactsContext,
   GeneratorPluginAPI,
   GeneratorPluginHandler,
   GeneratorPluginSetup,
   KawaPressPlugin,
+  MaybePromise,
+  PageBuildArtifact,
   RuntimePlugin,
   RuntimePluginAPI,
   RuntimePluginHandler,

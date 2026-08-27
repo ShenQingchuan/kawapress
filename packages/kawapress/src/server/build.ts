@@ -4,6 +4,10 @@ import { createBuilder } from 'vite'
 import { loadSiteConfig } from '../generator/load-config'
 import { createBaseViteConfig } from '../generator/vite/config'
 import { entryClientPath, entryServerPath } from '../generator/vite/entries'
+import {
+  createBuildArtifactEmitter,
+  createBuildArtifactImporter,
+} from './build-artifacts'
 import { prerenderPages } from './prerender'
 
 export async function buildSite(root: string) {
@@ -31,6 +35,10 @@ export async function buildSite(root: string) {
 
   const builder = await createBuilder(viteConfig)
   await builder.buildApp()
+  await siteConfig.pluginRunner.runBuildArtifacts({
+    emitFile: createBuildArtifactEmitter(root),
+    importModule: createBuildArtifactImporter(root),
+  })
   await prerenderPages(root)
 
   consola.success('KawaPress: build complete')

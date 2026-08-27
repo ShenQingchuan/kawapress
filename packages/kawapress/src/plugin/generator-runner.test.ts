@@ -73,6 +73,59 @@ describe('createGeneratorPluginRunner', () => {
     )
   })
 
+  it('exposes page artifacts by revision and builds with stable source order', async () => {
+    const observed: string[] = []
+    const built: string[][] = []
+    const runner = await createGeneratorPluginRunner([
+      definePlugin({
+        name: 'artifacts',
+        setup(api) {
+          api.pageArtifact((page) => {
+            observed.push(`${page.sourcePath}:${page.source}`)
+          })
+          api.buildArtifacts(({ pages }) => {
+            built.push(pages.map(page => `${page.sourcePath}:${page.source}`))
+          })
+        },
+      }),
+    ])
+    const pageData = {
+      path: '/guide',
+      title: 'Guide',
+      frontmatter: {},
+      headers: [],
+    }
+
+    await runner.runPageArtifact({
+      source: 'B1',
+      file: '/site/b.md',
+      sourcePath: '/b.md',
+      routePath: '/b',
+      pageData,
+    })
+    await runner.runPageArtifact({
+      source: 'A',
+      file: '/site/a.md',
+      sourcePath: '/a.md',
+      routePath: '/a',
+      pageData,
+    })
+    await runner.runPageArtifact({
+      source: 'B2',
+      file: '/site/b.md',
+      sourcePath: '/b.md',
+      routePath: '/b',
+      pageData,
+    })
+    await runner.runBuildArtifacts({
+      emitFile: async () => {},
+      importModule: async <T>() => ({} as T),
+    })
+
+    expect(observed).toEqual(['/b.md:B1', '/a.md:A', '/b.md:B2'])
+    expect(built).toEqual([['/a.md:A', '/b.md:B2']])
+  })
+
   it('reports the plugin and capability when a handler fails', async () => {
     const cause = new Error('broken markdown')
     const runner = await createGeneratorPluginRunner([

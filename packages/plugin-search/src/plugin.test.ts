@@ -75,16 +75,16 @@ async function registerPlugin(setup: Setup): Promise<{
   let configHandler: ((config: SiteConfig) => void | Promise<void>) | undefined
   let viteHandler: ((config: UserConfig) => void | Promise<void>) | undefined
 
-  await setup({
+  const api = {
     config(handler) {
       configHandler = handler
     },
-    markdown() {},
-    pageData() {},
     vite(handler) {
       viteHandler = handler
     },
-  })
+  } satisfies Pick<GeneratorPluginAPI, 'config' | 'vite'>
+
+  await setup(api as GeneratorPluginAPI)
 
   if (!configHandler || !viteHandler) {
     throw new Error('Expected search plugin to register config and Vite handlers.')

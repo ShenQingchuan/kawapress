@@ -177,7 +177,9 @@ async function registerPlugin(setup: Setup): Promise<{
       markdownHandler = handler
     },
     pageData() {},
+    pageArtifact() {},
     vite() {},
+    buildArtifacts() {},
   })
 
   if (!configHandler || !markdownHandler) {

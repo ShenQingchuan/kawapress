@@ -42,15 +42,23 @@ export function createMarkdownPageLoader(
 
       const parsed = mdPromise.then(async (md) => {
         const sourcePath = markdownFileToSourcePath(file, sourceRoot)
+        const routePath = markdownPagePathToRoutePath(sourcePath)
         const result = await parseMarkdown(
           md,
           source,
-          markdownPagePathToRoutePath(sourcePath),
+          routePath,
           sourcePath,
         )
         assertPageDataSerializable(result.pageData)
         await options.pluginRunner.runPageData(result.pageData)
         assertPageDataSerializable(result.pageData)
+        await options.pluginRunner.runPageArtifact({
+          source,
+          file,
+          sourcePath,
+          routePath,
+          pageData: result.pageData,
+        })
         return result
       })
       cache.set(file, { source, parsed })

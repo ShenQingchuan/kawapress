@@ -93,7 +93,9 @@ async function createMarkdown(
       markdownHandler = handler
     },
     pageData() {},
+    pageArtifact() {},
     vite() {},
+    buildArtifacts() {},
   })
   if (!markdownHandler) {
     throw new Error('Expected MathJax to register a Markdown handler.')

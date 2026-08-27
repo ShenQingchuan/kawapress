@@ -168,43 +168,52 @@ import { definePlugin } from 'kawapress'
 export default definePlugin({
   name: 'my-plugin',
   setup(api) {
-    api.config((config) => {
-      config.title = 'Docs'
-    })
-
     api.markdown((markdown) => {
       markdown.use(...plugins)
-    })
-
-    api.pageData((pageData) => {
-      pageData.title += '!'
-    })
-
-    api.vite((viteConfig) => {
-      viteConfig.plugins ??= []
-      viteConfig.plugins.push(myVitePlugin)
     })
   },
 })
 ```
 
-MVP 只公开四个生成侧注册方法：
+MVP 公开六个生成侧注册方法：
 
 | 方法 | 调用时机 | 得到的对象 |
 |---|---|---|
 | `config(handler)` | 站点配置归一化时 | 可修改的 KawaPress Config |
 | `markdown(handler)` | Markdown 编译器创建时 | 真实 `MarkdownExit` 实例 |
 | `pageData(handler)` | 每个页面的 pageData 生成后 | 当前页面的可修改 pageData |
+| `pageArtifact(handler)` | 当前页面完成 Markdown 编译与全部 `pageData()` handler 后 | 当前源修订的只读页面构建材料 |
 | `vite(handler)` | Vite 配置完成基础组装后 | 完整、可修改的 Vite `UserConfig` |
+| `buildArtifacts(handler)` | 全部 Vite build environment 完成后、HTML 预渲染前 | 全部页面材料与受控文件发射器 |
+
+页面构建材料与发射上下文使用宿主无关的数据契约：
+
+```ts
+interface PageBuildArtifact {
+  source: string
+  file: string
+  sourcePath: string
+  routePath: string
+  pageData: Readonly<PageData>
+}
+
+interface BuildArtifactsContext {
+  pages: readonly PageBuildArtifact[]
+  emitFile: (path: string, content: string | Uint8Array) => Promise<void>
+  importModule: <T = unknown>(path: string) => Promise<T>
+}
+```
 
 规则：
 
-- handler 可以同步或异步。
-- 同类 handler 按插件顺序串行执行。
-- handler 直接修改真实对象，不使用“返回局部对象再合并”的双重语义。
+- 六个方法都是按需使用的注册器。Plugin 只调用自己需要的方法，不需要为未使用的能力写空 handler。
+- handler 可以同步或异步；同类 handler 按插件顺序串行执行。
+- `config()`、`markdown()`、`pageData()` 与 `vite()` 直接修改真实对象，不使用“返回局部对象再合并”的双重语义。
+- `pageArtifact()` 只观察结果，不回写 source、pageData 或路由；同一源文件修订只产生一次材料，开发期文件变化以新材料替换旧材料。
+- `buildArtifacts()` 只在 `kawapress build` 执行。`pages` 按 `sourcePath` 稳定排序，`emitFile()` 与 `importModule()` 只接受构建输出目录内的相对路径；绝对路径、`..` 越界和与 public 或其他插件产物冲突都直接报错。`importModule()` 由 Core 在正常 Node 构建上下文执行，插件不得用 `eval`、`new Function` 或私有 Vite runner 绕过模块边界。
 - `vite()` 允许修改完整 Vite 配置；KawaPress 只保留维持渲染闭环所需的最小不变量并在最终创建 Vite 前校验。
+- `pageArtifact()` 与 `buildArtifacts()` 是生成静态产物的只读边界，不增加页面、路由或 Runtime render hook；0.1 仍不提供 `addPage()`。
 - `GeneratorPluginAPI` 不提供组件、CSS、Vue plugin 或 client/SSR 分支能力。
-- 0.1 不提供 `addPage()`。
 
 ### 4.4 Runtime Plugin API
 
@@ -222,12 +231,6 @@ export default defineRuntimePlugin({
     api.vueApp((app) => {
       app.use(FloatingVue)
       app.component('Layout', Layout)
-    })
-
-    api.router((router) => {
-      router.beforeEach(() => {
-        // navigation behavior
-      })
     })
   },
 })
@@ -252,6 +255,7 @@ MVP 只公开两个 Runtime 注册方法：
 
 规则：
 
+- `vueApp()` 与 `router()` 都按需使用；Runtime Plugin 不需要为未使用的能力注册空 handler。
 - handler 可以同步或异步。
 - Runtime Plugin 在每个 Vue App 实例上执行：SSR 每次渲染创建新 App，浏览器启动时创建一次。
 - Runtime Plugin 代码已经位于 Vite module graph，可以静态导入 `.vue`、CSS 和普通 Vue plugin，并直接传真实对象。
@@ -444,6 +448,49 @@ Alert 标题与 Custom Container 一样由生成期页面 `path` 和 locale `lan
 
 插件公开 `tex` 配置与适合静态 SVG 的 `svg` 安全子集，并固定使用 SVG、辅助 MathML、无跨公式字体缓存与不拆分行内公式的安全默认值。依赖浏览器事件的 `action` TeX package 不进入默认包集合；用户显式启用时在构建开始阶段给出可执行错误，而不是在 Lite adaptor 中崩溃。生成 HTML 的根节点使用 `data-kawa-math="inline"` 或 `data-kawa-math="block"` 作为稳定边界，并增加 `v-pre` 防止 Vue 编译 MathJax 内部结构；块公式额外使用 `tabindex="0"`，让超宽公式的滚动区域可以通过键盘聚焦。`./runtime-plugin` 只静态导入通用 MathJax 结构和辅助 MathML CSS，不发送或执行浏览器 MathJax JavaScript；nagi 只负责最大宽度、横向滚动、SVG 对齐和焦点样式。货币等普通美元符号继续遵循 Pandoc 风格 delimiter 规则，并可使用反斜杠转义。
 
+### 7.9 SSG-MD、llms.txt 与页面复制
+
+面向大语言模型的 Markdown 产物由独立逻辑插件包 `@kawapress/plugin-llms` 提供，不写死在 Core 或 nagi 中。nagi Preset 默认组合 `llmsPlugin()`；其他 Preset 与自定义主题使用同一个公开插件。插件默认同时提供三类产物：每个 Markdown 路由对应的 `.md`、每个 locale 的 `llms.txt` 索引，以及同一 locale 的 `llms-full.txt` 全文合集。
+
+```text
+dist
+├─ index.md
+├─ llms.txt
+├─ llms-full.txt
+├─ guide
+│  └─ getting-started.md
+└─ en
+   ├─ llms.txt
+   ├─ llms-full.txt
+   └─ guide
+      └─ getting-started.md
+```
+
+页面产物沿用公开路由身份：`/` 输出 `index.md`，`/guide/getting-started` 输出 `guide/getting-started.md`；部署 URL 统一应用站点 `base`。非默认 locale 在自己的路径下生成 `llms.txt` 与 `llms-full.txt`。`llms.txt` 默认按稳定的页面路径顺序列出标题、Markdown URL 与 description，locale 首页不重复列入目录；`llms-full.txt` 使用同一顺序拼接正文，并在每页前记录最终 Markdown URL。页面可用 frontmatter 的字面量 `llms: false` 同时关闭页面 `.md`、索引条目、全文条目和标题下 UI；它与 `search: false` 互不推导。插件允许用同步或异步 `llmsTxt(context)` 回调接管每个 locale 的完整 `llms.txt` 内容，回调得到站点标题、locale、lang、base 和最终页面列表。
+
+SSG-MD 不复制源文件，也不把整页最终 HTML 反转成 Markdown。KawaPress 使用双通道：
+
+```text
+Markdown source
+  ├─ 普通 Markdown 片段 ──────────────────────┐
+  └─ Vue 表达式与组件 → Vue 官方 SSR → 局部 HTML→Markdown
+                                               └─ 按原顺序合并为页面 .md
+```
+
+插件通过 `pageArtifact()` 取得 Core 同一次页面加载产生的 source、sourcePath、routePath 与最终 pageData，再通过 `vite()` 增加独立的 `ssgMarkdown` server environment。该环境复用普通 SSR 的 Vue alias、Router、site/pageData 虚拟模块与同一批 Runtime Plugins，并只额外定义 `import.meta.env.SSG_MD = true`；普通 SSR 与 client 中该值为 `false`。页面 source 在进入 HTML renderer 之前按 source range 分成有序片段：普通 Markdown 变成稳定的 raw placeholder，Vue 插值、组件、指令和动态属性继续编译成 Vue SFC。根级 `<script>`、`<script setup>`、`<style>` 与数据导入继续参与专用 SSR，但不进入 Markdown 正文。
+
+专用 SSR 使用 Vue 官方 server renderer，因此 Composition API、provide/inject、slot、异步 `setup()`、`onServerPrefetch` 与 Suspense 继续遵循普通 KawaPress SSR 语义；`onMounted` 不执行。渲染完成后，raw placeholder 直接恢复 Markdown，只有两个 placeholder 之间的动态 HTML 使用受控 serializer 转成 Markdown。非 disabled Teleport 的目标内容、弹窗、tooltip 和其他页面 UI 默认不进入正文；client-only 组件应提供明确 fallback。模块求值或 setup 顶层访问浏览器 API 仍按普通 SSR 规则报错，错误必须带页面 route，不能静默退回源文件或整页 HTML 转换。
+
+静态通道保留标题、强调、列表、表格、引用、代码 fence、fence meta、自定义容器、Alert 与 TeX 源语义，只统一换行和最终空行；它对链接、图片与 include 结果做定向改写：内部页面链接指向最终 `.md`，相对资源使用 Vite 最终可访问 URL，不能因目录 `index.md` 折叠路由而改变资源位置。Code Group 输出全部 panel，不把选中的单个 Tab 当成完整内容；Shiki 的高亮 span、代码复制 UI 与行号不进入 Markdown。
+
+插件 Runtime Plugin 注册公开的 `KawaSsgMarkdown` 组件。自定义 Vue 组件可以检查 `import.meta.env.SSG_MD`，在专用分支用该组件直接交付 Markdown 字符串；这条显式适配优先于通用动态 HTML serializer。nagi、Code Group、Container、GitHub Alerts、Code Block 与 MathJax 等官方内容组件或语法必须提供稳定的 Markdown 语义，不能从 nagi 的视觉 DOM 和 CSS class 猜回内容。
+
+`kawapress build` 在全部 Vite environment 完成后通过 `buildArtifacts()` 导入临时 SSG-MD server bundle、逐 route 渲染，再用受控 `emitFile()` 写出页面与聚合文件；临时 bundle 不进入最终部署目录。开发服务器运行同一个 `ssgMarkdown` environment，并按请求即时返回 `.md`、`llms.txt` 与 `llms-full.txt`，因此开发与构建不能使用两套质量不同的内容。每页 `.md` 默认在正文前加入简短的 AI 提示，指向当前 locale 的 `llms.txt` 与 `llms-full.txt`；全文合集只保留一次站点级提示，不在每页重复。
+
+页面操作 UI 由同一个逻辑插件实现：Generator Plugin 在首个文档 H1 后注入稳定的 `KawaLlmsActions` 组件，Runtime Plugin 注册真实 Vue 组件并导入基础样式，nagi 只使用 `.kawa-llms*` 稳定 class 适配主题视觉。主按钮按需 fetch 当前页面 `.md` 并复制完整正文，相邻菜单复制基于当前 origin、`base` 与 route 计算出的绝对 Markdown URL；正文不进入 client bundle。0.1 不内置 ChatGPT、Claude 等供应商跳转。按钮和菜单内置中英文、其他语言回退英文，具备键盘焦点、Escape 与点击外部关闭、`aria-expanded`、`aria-live`、复制失败状态和 Clipboard API 的 textarea 回退；SSR 与 hydration 初始时菜单都保持关闭。
+
+KawaPress 0.1 不维护独立 Vue-to-Markdown renderer。Vue 的公开 `createRenderer()` 使用客户端式 mount 生命周期，而官方 server renderer 的优化 SFC 路径直接写 HTML，没有可替换的 Markdown host；fork Vue 私有 SSR 组件实例、buffer、shape flag 与 compiler helper 会把一个内容插件绑定到 Vue 内部实现。完整源码复制会丢失动态 Vue 内容，整页 HTML 转换会丢失 Markdown 语义并混入主题 UI，这两条路线同样不采用。
+
 ## 八、配置与数据
 
 核心配置至少包含：
@@ -526,7 +573,7 @@ nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文�
 
 nagi 的主要滚动区域统一使用基于 `overlayscrollbars-vue` 的 `OsScroll`，配置 `os-theme-nagi`、离开时自动隐藏、轨道点击滚动和 6px 圆角滑块。正文、Sidebar、Home/Page 页面不得暴露操作系统原生滚动条外观。代码块、浮层等无法包裹组件的嵌套原生滚动区使用同一套 CSS scrollbar fallback，颜色与深浅色主题变量保持一致。
 
-nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。代码块与 Code Group 在所有断点都保持与正文相同的左右内边距和圆角，不向视口左右边缘拉满；独立代码块与 Code Group 外壳使用 1px 主题分隔色边框，让浅色模式的代码区域能从页面背景中轻微分离，Code Group 内部代码块不重复套框。NavBar 在桌面端提供语言菜单、明暗模式切换按钮，以及可选的 GitHub 图标链接。语言菜单默认只显示图标，点击后弹出浮层列出全部语言，当前语言高亮。明暗模式未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。小于 60rem 时，NavBar 右侧只保留菜单按钮；点击后从 Header 下方向下渐变展开导航区，展示语言列表、明暗切换与 GitHub 链接，展开区域不得盖住顶部 Header。Runtime Plugin 在客户端模块求值、Vue hydration 之前恢复保存的根元素 class；图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
+nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。代码块与 Code Group 在所有断点都保持与正文相同的左右内边距和圆角，不向视口左右边缘拉满；独立代码块与 Code Group 外壳使用 1px 主题分隔色边框，让浅色模式的代码区域能从页面背景中轻微分离，Code Group 内部代码块不重复套框。NavBar 在桌面端提供语言菜单、明暗模式切换按钮，以及可选的 GitHub 图标链接。语言菜单默认只显示图标，点击后弹出浮层列出全部语言，当前语言高亮。明暗模式未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。小于 60rem 时，NavBar 右侧只保留菜单按钮；点击后从 Header 下方向下渐变展开导航区，展示语言列表、明暗切换与 GitHub 链接，展开区域不得盖住顶部 Header。nagi 在 SSR `<head>` 注入内容固定的同步初始化脚本，在首次绘制前恢复保存的根元素 class；Runtime Plugin 在客户端模块求值、Vue hydration 之前再次同步同一状态。图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
 
 nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。文档正文默认最大宽度为 54rem；右侧目录退出布局时，正文可以使用释放后的目录宽度，最大扩展到 70rem。宽屏右侧目录默认展开，目录右上角提供无边框的面板收起图标；收起后目录完全退出布局，正文最大宽度同步使用释放出的全部空间，并在导航栏下方、距视口右上边缘留有安全间距的位置固定显示另一个无边框面板展开图标；没有可显示标题的页面直接回收目录空间。收起状态在当前 Vue App 的站内跳转期间保留，重新加载页面后恢复默认展开。Menu 抽屉、NavBar 导航展开区、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`navMenuLabel`、`outlineLabel`、`returnToTopLabel`、`langMenuLabel`、`previousPageLabel`、`nextPageLabel`、`notFoundMessage` 和 `notFoundHomeLabel`；其他语言回退英文。404 页的返回链接指向当前语言首页，并带上站点 `base`。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
 
@@ -545,6 +592,7 @@ KawaPress Core 内置基于路径的国际化模型，与文件路由直接对�
 ```text
 packages/kawapress
 packages/preset-nagi
+packages/plugin-llms
 docs
 ```
 
@@ -578,7 +626,7 @@ docs
 - `kawapress dev` 与 `kawapress build`。
 - 开发和构建共用 Vite Environment SSR 渲染管线。
 - 默认 Plugin 与 Runtime Plugin 的加载、顺序、错误和 dev/build 闭环。
-- 对象形式的 `definePlugin({ name, setup })` 与四个生成侧注册方法。
+- 对象形式的 `definePlugin({ name, setup })` 与六个生成侧注册方法，包括只读的 `pageArtifact()` 和受控的 `buildArtifacts()` 静态产物边界。
 - 对象形式的 `defineRuntimePlugin({ name, setup })` 与 `vueApp()`、`router()`。
 - 插件默认工厂只安装一次，自动关联可选的 `./runtime-plugin` 运行侧。
 - `defineConfig()` 与 `definePreset()`。
@@ -588,6 +636,7 @@ docs
 - `.data.ts` / `.data.js` 构建时 Data Loader、文件监听 HMR、`defineLoader()` 与 `createContentLoader()`。
 - Shiki 双主题高亮、Twoslash 与 Floating Vue 浮层。
 - 独立 Code Group Plugin、可访问代码 Tab 与 nagi 默认样式。
+- 独立 LLMS Plugin、双通道 SSG-MD、每页 `.md`、每 locale 的 `llms.txt` / `llms-full.txt`、开发期同源 Markdown 响应，以及 nagi 标题下复制正文与链接 UI。
 - 文件路径路由、SSR 首屏和浏览器内导航。
 - 页面路由元数据、nagi 自动侧边栏与独立的本地全文搜索索引。
 - nagi 的 `doc`、`home` 与 `page` 布局语义、上一篇/下一篇导航及系统深浅色模式。

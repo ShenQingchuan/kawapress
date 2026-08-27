@@ -211,6 +211,8 @@ titleTemplate: '%s · KawaPress'
           },
         ],
         "template": "<template><h1 id="%E9%A1%B5%E9%9D%A2" tabindex="-1">页面 <a class="header-anchor" href="#%E9%A1%B5%E9%9D%A2">#</a></h1>
+
+      <KawaLlmsActions />
       <h2 id="%E5%BC%80%E5%A7%8B" tabindex="-1">开始 <a class="header-anchor" href="#%E5%BC%80%E5%A7%8B">#</a></h2>
       <div class="kawa-container kawa-container--tip"><p class="kawa-container__title"><em data-page-path="/guide/callouts"><a href="/guide">文档</a></em></p>
       <p>容器正文。</p>

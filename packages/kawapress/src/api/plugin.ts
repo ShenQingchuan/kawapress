@@ -8,11 +8,34 @@ export type MaybePromise<T> = T | Promise<T>
 
 export type GeneratorPluginHandler<T> = (value: T) => MaybePromise<void>
 
+export interface PageBuildArtifact {
+  source: string
+  file: string
+  sourcePath: string
+  routePath: string
+  pageData: Readonly<PageData>
+}
+
+export interface BuildArtifactsContext {
+  pages: readonly PageBuildArtifact[]
+  emitFile: (
+    path: string,
+    content: string | Uint8Array,
+  ) => Promise<void>
+  importModule: <T = unknown>(path: string) => Promise<T>
+}
+
 export interface GeneratorPluginAPI {
   config: (handler: GeneratorPluginHandler<SiteConfig>) => void
   markdown: (handler: GeneratorPluginHandler<MarkdownExit>) => void
   pageData: (handler: GeneratorPluginHandler<PageData>) => void
+  pageArtifact: (
+    handler: GeneratorPluginHandler<Readonly<PageBuildArtifact>>,
+  ) => void
   vite: (handler: GeneratorPluginHandler<UserConfig>) => void
+  buildArtifacts: (
+    handler: GeneratorPluginHandler<BuildArtifactsContext>,
+  ) => void
 }
 
 export type GeneratorPluginSetup

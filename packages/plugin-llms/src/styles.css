@@ -1,0 +1,142 @@
+.kawa-llms-actions {
+  position: relative;
+  display: inline-flex;
+  margin: 1rem 0 2rem;
+  color: var(--nagi-c-text-2, currentcolor);
+  font-family: var(--nagi-font-family-base, inherit);
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.kawa-llms-actions__group {
+  display: inline-flex;
+}
+
+.kawa-llms-actions__button {
+  display: inline-flex;
+  gap: 0.55rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.625rem;
+  color: var(--nagi-c-text-2, currentcolor);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--nagi-c-divider, currentcolor);
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.kawa-llms-actions__button--primary {
+  justify-content: flex-start;
+  min-width: 11.25rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.625rem 0 0 0.625rem;
+}
+
+.kawa-llms-actions__button--toggle {
+  width: 2.625rem;
+  padding: 0;
+  border-left: 0;
+  border-radius: 0 0.625rem 0.625rem 0;
+}
+
+.kawa-llms-actions__button svg,
+.kawa-llms-actions__menu-item svg {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
+}
+
+.kawa-llms-actions__button:hover,
+.kawa-llms-actions__button[aria-expanded="true"] {
+  color: var(--nagi-c-text-1, currentcolor);
+  background: var(--nagi-c-bg-soft, transparent);
+  border-color: var(--nagi-c-border, currentcolor);
+}
+
+.kawa-llms-actions__button--primary:hover + .kawa-llms-actions__button--toggle,
+.kawa-llms-actions__button--toggle:hover {
+  border-left-color: var(--nagi-c-border, currentcolor);
+}
+
+.kawa-llms-actions__button:focus-visible,
+.kawa-llms-actions__menu-item:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--nagi-c-brand-1, currentcolor);
+  outline-offset: 2px;
+}
+
+.kawa-llms-actions__button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.kawa-llms-actions__chevron {
+  transition: transform 140ms ease;
+}
+
+.kawa-llms-actions__button[aria-expanded="true"] .kawa-llms-actions__chevron {
+  transform: rotate(180deg);
+}
+
+.kawa-llms-actions__menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 40;
+  min-width: 14rem;
+  padding: 0.35rem;
+  background: var(--nagi-c-bg-elv, Canvas);
+  border: 1px solid var(--nagi-c-border, currentcolor);
+  border-radius: 0.75rem;
+  box-shadow: var(--nagi-shadow-3, 0 12px 30px rgb(0 0 0 / 18%));
+}
+
+.kawa-llms-actions__menu-item {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--nagi-c-text-2, currentcolor);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+.kawa-llms-actions__menu-item:hover {
+  color: var(--nagi-c-text-1, currentcolor);
+  background: var(--nagi-c-bg-soft, transparent);
+}
+
+@media (max-width: 30rem) {
+  .kawa-llms-actions {
+    margin-bottom: 1.75rem;
+  }
+
+  .kawa-llms-actions__button--primary {
+    min-width: 10.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kawa-llms-actions__button,
+  .kawa-llms-actions__chevron {
+    transition: none;
+  }
+}

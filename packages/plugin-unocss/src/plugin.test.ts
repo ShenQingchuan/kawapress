@@ -53,9 +53,11 @@ describe('unocssPlugin', () => {
       config() {},
       markdown() {},
       pageData() {},
+      pageArtifact() {},
       vite(handler) {
         viteHandler = handler
       },
+      buildArtifacts() {},
     }
 
     await unocssPlugin().setup(api)

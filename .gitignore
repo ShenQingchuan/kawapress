@@ -4,3 +4,4 @@ dist
 .eslintcache
 *.log
 .DS_Store
+docs/.kawapress-*
