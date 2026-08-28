@@ -28,6 +28,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '面向 AI 的文档',
+            en: 'AI-Ready Documentation',
+          },
+          link: '/guide/ai-ready-documentation',
+        },
+        {
+          text: {
             zhCN: '路由',
             en: 'Routing',
           },

@@ -4,6 +4,8 @@ description: Reference assets from Markdown, Vue components, and CSS, then use t
 
 # Asset Handling
 
+Images, fonts, and downloads in your documentation need to be deployed with the site. KawaPress offers two ways to handle them: let Vite manage assets referenced by a page, or copy files unchanged from the public assets directory.
+
 ## Reference Static Assets
 
 Every Markdown page becomes a Vue component and is processed by Vite. Use relative paths for images owned by that page:

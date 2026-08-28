@@ -18,6 +18,7 @@
     "@antfu/eslint-config": "catalog:dev",
     "@kawapress/plugin-shiki": "workspace:*",
     "@types/node": "catalog:dev",
+    "@vitejs/plugin-vue": "catalog:node",
     "eslint": "catalog:dev",
     "jiti": "catalog:node",
     "typescript": "catalog:dev",

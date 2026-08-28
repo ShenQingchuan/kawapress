@@ -43,6 +43,8 @@ const primaryStatus = shallowRef('')
 const linkStatus = shallowRef('')
 let primaryTimer: ReturnType<typeof setTimeout> | undefined
 let linkTimer: ReturnType<typeof setTimeout> | undefined
+let primaryAbortController: AbortController | undefined
+let routeRevision = 0
 
 const labels = computed(() => (
   /^zh(?:-|$)/i.test(site.value.lang ?? '')
@@ -63,32 +65,59 @@ async function copyMarkdown(): Promise<void> {
   if (loading.value) {
     return
   }
+
+  const revision = routeRevision
+  const abortController = new AbortController()
+  primaryAbortController = abortController
   loading.value = true
   primaryStatus.value = ''
+
   try {
-    const response = await fetch(markdownPath.value)
+    const response = await fetch(markdownPath.value, {
+      signal: abortController.signal,
+    })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
-    await copyText(await response.text())
-    showPrimaryStatus(labels.value.copiedMarkdown)
+
+    const content = await response.text()
+    if (revision !== routeRevision) {
+      return
+    }
+
+    await copyText(content)
+    if (revision === routeRevision) {
+      showPrimaryStatus(labels.value.copiedMarkdown)
+    }
   }
   catch {
-    showPrimaryStatus(labels.value.failed)
+    if (revision === routeRevision) {
+      showPrimaryStatus(labels.value.failed)
+    }
   }
   finally {
-    loading.value = false
+    if (primaryAbortController === abortController) {
+      primaryAbortController = undefined
+    }
+    if (revision === routeRevision) {
+      loading.value = false
+    }
   }
 }
 
 async function copyLink(): Promise<void> {
+  const revision = routeRevision
   try {
     const link = new URL(markdownPath.value, window.location.origin).href
     await copyText(link)
-    showLinkStatus(labels.value.copiedLink)
+    if (revision === routeRevision) {
+      showLinkStatus(labels.value.copiedLink)
+    }
   }
   catch {
-    showLinkStatus(labels.value.failed)
+    if (revision === routeRevision) {
+      showLinkStatus(labels.value.failed)
+    }
   }
 }
 
@@ -150,6 +179,7 @@ function showPrimaryStatus(message: string): void {
   primaryStatus.value = message
   primaryTimer = setTimeout(() => {
     primaryStatus.value = ''
+    primaryTimer = undefined
   }, 2000)
 }
 
@@ -158,7 +188,21 @@ function showLinkStatus(message: string): void {
   linkStatus.value = message
   linkTimer = setTimeout(() => {
     linkStatus.value = ''
+    linkTimer = undefined
   }, 2000)
+}
+
+function clearTransientState(): void {
+  routeRevision += 1
+  primaryAbortController?.abort()
+  primaryAbortController = undefined
+  clearTimeout(primaryTimer)
+  clearTimeout(linkTimer)
+  primaryTimer = undefined
+  linkTimer = undefined
+  primaryStatus.value = ''
+  linkStatus.value = ''
+  loading.value = false
 }
 
 onMounted(() => {
@@ -167,13 +211,15 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  clearTimeout(primaryTimer)
-  clearTimeout(linkTimer)
+  clearTransientState()
   document.removeEventListener('click', handleDocumentClick)
   document.removeEventListener('keydown', handleDocumentKeydown)
 })
 
-watch(() => router.currentRoute.value.path, () => closeMenu())
+watch(() => router.currentRoute.value.path, () => {
+  clearTransientState()
+  closeMenu()
+}, { flush: 'sync' })
 
 function markdownUrl(routePath: string, locale: string, base: string): string {
   let path: string

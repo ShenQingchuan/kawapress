@@ -24,6 +24,9 @@ const KAWAPRESS_ENTRY_SERVER_PATH = normalizePath(join(
   dirname(require.resolve('kawapress/package.json')),
   'src/client/entries/entry-server.ts',
 ))
+const KAWAPRESS_ENTRY_SERVER_URL = KAWAPRESS_ENTRY_SERVER_PATH.startsWith('/')
+  ? `/@fs${KAWAPRESS_ENTRY_SERVER_PATH}`
+  : `/@fs/${KAWAPRESS_ENTRY_SERVER_PATH}`
 const SSG_MD_RAW_COMPONENT_PATH = normalizePath(fileURLToPath(
   new URL('./components/SsgMarkdown.vue', import.meta.url),
 ))
@@ -126,13 +129,16 @@ async function serveDevArtifact(
     throw new Error('KawaPress LLMS: ssgMarkdown environment is not runnable.')
   }
 
-  const bundle = await environment.runner.import(SSG_MD_ENTRY_ID) as {
+  const bundle = await environment.runner.import(KAWAPRESS_ENTRY_SERVER_URL) as {
     render: Parameters<typeof renderMarkdownPages>[0]['render']
     pages: Record<string, unknown>
   }
   const activeRoutes = new Set(Object.keys(bundle.pages))
-  const pages = options.getPages().filter(page => activeRoutes.has(page.routePath))
-  const rendered = await renderMarkdownPages(bundle, pages)
+  const pages = options.getPages()
+  const rendered = await renderMarkdownPages(
+    bundle,
+    pages.filter(page => activeRoutes.has(page.routePath)),
+  )
   const artifacts = await createLlmsArtifacts(
     rendered,
     options.site,
