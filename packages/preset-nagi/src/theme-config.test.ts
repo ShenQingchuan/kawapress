@@ -5,6 +5,7 @@ describe('nagi theme translations', () => {
   it('provides built-in Chinese labels', () => {
     expect(resolveNagiThemeConfig({}, 'zh-CN')).toEqual({
       sidebarMenuLabel: '菜单',
+      sidebarResizeLabel: '调整侧边栏宽度',
       navMenuLabel: '打开导航菜单',
       outlineLabel: '本页目录',
       outlineCollapseLabel: '收起本页目录',
@@ -28,6 +29,7 @@ describe('nagi theme translations', () => {
     }, 'fr'))
       .toEqual({
         sidebarMenuLabel: 'Menu',
+        sidebarResizeLabel: 'Resize sidebar',
         navMenuLabel: 'Open navigation menu',
         outlineLabel: 'Page contents',
         outlineCollapseLabel: 'Collapse page outline',

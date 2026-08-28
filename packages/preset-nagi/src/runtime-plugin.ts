@@ -5,11 +5,13 @@ import Layout from './components/Layout.vue'
 import NavBar from './components/NavBar.vue'
 import NotFound from './components/NotFound.vue'
 import Sidebar from './components/Sidebar.vue'
+import { applyStoredSidebarWidth } from './sidebar-width'
 import 'overlayscrollbars/styles/overlayscrollbars.css'
 import './theme.css'
 
 if (!import.meta.env.SSR) {
   applyStoredAppearance()
+  applyStoredSidebarWidth()
 }
 
 export default defineRuntimePlugin({

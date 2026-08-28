@@ -473,6 +473,9 @@ importers:
         specifier: catalog:frontend
         version: 0.5.10(overlayscrollbars@2.16.0)(vue@3.5.41(typescript@6.0.3))
     devDependencies:
+      happy-dom:
+        specifier: catalog:dev
+        version: 20.11.6
       kawapress:
         specifier: workspace:*
         version: link:../kawapress

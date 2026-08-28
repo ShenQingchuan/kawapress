@@ -38,6 +38,7 @@
     "overlayscrollbars-vue": "catalog:frontend"
   },
   "devDependencies": {
+    "happy-dom": "catalog:dev",
     "kawapress": "workspace:*",
     "typescript": "catalog:dev",
     "vite": "catalog:node",

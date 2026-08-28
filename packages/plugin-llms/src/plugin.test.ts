@@ -138,6 +138,7 @@ llms: false
     expect(guideHtml).toContain('aria-expanded="false"')
     expect(guideHtml).toContain('复制页面 Markdown')
     expect(guideHtml).toContain('id="nagi-initial-appearance"')
+    expect(guideHtml).toContain('id="nagi-initial-sidebar-width"')
     await expect(access(join(root, 'dist/.kawapress'))).rejects.toThrow()
   })
 

@@ -9,6 +9,7 @@ import { nagiDocScrollKey } from '../composables/docScroll'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import { resolveNagiPageOptions } from '../frontmatter'
 import { getOutlineHeaders } from '../outline'
+import { sidebarWidthInitializerScript } from '../sidebar-width'
 import DocNavigation from './DocNavigation.vue'
 import DocToolbar from './DocToolbar.vue'
 import Home from './Home.vue'
@@ -57,7 +58,12 @@ useHead(() => ({
   script: [{
     id: 'nagi-initial-appearance',
     textContent: appearanceInitializerScript,
-  }],
+  }, ...(showSidebar.value
+    ? [{
+        id: 'nagi-initial-sidebar-width',
+        textContent: sidebarWidthInitializerScript,
+      }]
+    : [])],
 }))
 
 function resolveFaviconLinks(

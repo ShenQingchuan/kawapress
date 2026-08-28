@@ -355,9 +355,43 @@
 }
 
 .nagi-sidebar--desktop {
-  flex: 0 0 var(--nagi-sidebar-width);
-  width: var(--nagi-sidebar-width);
+  position: relative;
+  flex: 0 0 clamp(
+    var(--nagi-sidebar-min-width),
+    var(--nagi-sidebar-width),
+    var(--nagi-sidebar-max-width)
+  );
+  width: clamp(
+    var(--nagi-sidebar-min-width),
+    var(--nagi-sidebar-width),
+    var(--nagi-sidebar-max-width)
+  );
   border-right: 1px solid var(--nagi-c-divider);
+  transition: border-color 150ms ease-out;
+}
+
+.nagi-sidebar--desktop:has(.nagi-sidebar__resizer:hover),
+.nagi-sidebar--desktop:has(.nagi-sidebar__resizer:focus-visible),
+:root[data-nagi-sidebar-resizing] .nagi-sidebar--desktop {
+  border-right-color: var(--nagi-c-brand-1);
+}
+
+.nagi-sidebar__resizer {
+  position: absolute;
+  top: 0;
+  right: -0.375rem;
+  bottom: 0;
+  z-index: 1;
+  width: 0.75rem;
+  cursor: col-resize;
+  outline: none;
+  touch-action: none;
+}
+
+:root[data-nagi-sidebar-resizing],
+:root[data-nagi-sidebar-resizing] * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 .nagi-sidebar__nav {

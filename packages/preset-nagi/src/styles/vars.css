@@ -73,7 +73,9 @@
   --nagi-doc-toolbar-height: 3rem;
   --nagi-layout-width: 90rem;
   --nagi-content-width: 48rem;
+  --nagi-sidebar-min-width: 14rem;
   --nagi-sidebar-width: 17rem;
+  --nagi-sidebar-max-width: 17rem;
   --nagi-outline-width: 16rem;
   --nagi-z-toolbar: 20;
   --nagi-z-nav: 30;

@@ -3,6 +3,7 @@ import type { NagiSidebarConfig } from './sidebar'
 
 export interface ResolvedNagiThemeConfig {
   sidebarMenuLabel: string
+  sidebarResizeLabel: string
   navMenuLabel: string
   outlineLabel: string
   outlineCollapseLabel: string
@@ -25,6 +26,7 @@ export type NagiThemeConfig = Partial<ResolvedNagiThemeConfig>
 
 const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: 'Menu',
+  sidebarResizeLabel: 'Resize sidebar',
   navMenuLabel: 'Open navigation menu',
   outlineLabel: 'On this page',
   outlineCollapseLabel: 'Collapse page outline',
@@ -42,6 +44,7 @@ const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
 
 const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: '菜单',
+  sidebarResizeLabel: '调整侧边栏宽度',
   navMenuLabel: '打开导航菜单',
   outlineLabel: '本页目录',
   outlineCollapseLabel: '收起本页目录',
@@ -67,6 +70,7 @@ export function resolveNagiThemeConfig(
 
   const resolved: ResolvedNagiThemeConfig = {
     sidebarMenuLabel: config.sidebarMenuLabel ?? defaults.sidebarMenuLabel,
+    sidebarResizeLabel: config.sidebarResizeLabel ?? defaults.sidebarResizeLabel,
     navMenuLabel: config.navMenuLabel ?? defaults.navMenuLabel,
     outlineLabel: config.outlineLabel ?? defaults.outlineLabel,
     outlineCollapseLabel: config.outlineCollapseLabel ?? defaults.outlineCollapseLabel,
