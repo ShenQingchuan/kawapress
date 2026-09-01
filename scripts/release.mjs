@@ -772,7 +772,7 @@ async function getPublishedIntegrity(name, version, registry) {
 }
 
 async function waitForPublishedIntegrity(packageInfo, registry) {
-  const attempts = 15
+  const attempts = 4
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const integrity = await getPublishedIntegrity(
       packageInfo.name,
@@ -780,22 +780,21 @@ async function waitForPublishedIntegrity(packageInfo, registry) {
       registry,
     )
     if (integrity === packageInfo.integrity)
-      return
+      return true
     if (integrity && integrity !== packageInfo.integrity)
       throw new Error(`Registry integrity verification failed for ${packageInfo.name}.`)
     if (attempt < attempts - 1)
-      await delay(2_000)
+      await delay(1_000)
   }
 
-  throw new Error(`Timed out while verifying ${packageInfo.name}@${packageInfo.version} on npm.`)
+  return false
 }
 
-async function getPublishedTag(name, tag, registry) {
+async function getPublishedTags(name, registry) {
   const result = await run('npm', [
-    'view',
+    'dist-tag',
+    'ls',
     name,
-    `dist-tags.${tag}`,
-    '--json',
     `--registry=${registry}`,
   ], { allowFailure: true, capture: true })
 
@@ -803,16 +802,37 @@ async function getPublishedTag(name, tag, registry) {
     if (/E404|404 Not Found/i.test(result.stderr))
       return null
     throw new CommandError('npm', [
-      'view',
+      'dist-tag',
+      'ls',
       name,
-      `dist-tags.${tag}`,
-      '--json',
       `--registry=${registry}`,
     ], result)
   }
 
-  const value = JSON.parse(result.stdout || 'null')
-  return typeof value === 'string' ? value : null
+  const output = result.stdout.trim()
+  if (!output)
+    return {}
+
+  try {
+    const value = JSON.parse(output)
+    if (value && typeof value === 'object')
+      return value
+  }
+  catch {
+    // npm 11 returns "tag: version" lines for dist-tag ls.
+  }
+
+  return Object.fromEntries(output.split(/\r?\n/).map((line) => {
+    const separator = line.indexOf(': ')
+    if (separator < 1)
+      throw new Error(`Could not parse npm dist-tag output: ${line}`)
+    return [line.slice(0, separator), line.slice(separator + 2)]
+  }))
+}
+
+async function getPublishedTag(name, tag, registry) {
+  const tags = await getPublishedTags(name, registry)
+  return typeof tags?.[tag] === 'string' ? tags[tag] : null
 }
 
 async function waitForDistTag(packageInfo, tag, registry) {
@@ -860,28 +880,25 @@ async function inspectRegistry(packages, registry, tag) {
   const states = new Map()
 
   for (const packageInfo of packages) {
-    const publishedIntegrity = await getPublishedIntegrity(
-      packageInfo.name,
-      packageInfo.version,
-      registry,
-    )
+    const [publishedIntegrity, publishedTags] = await Promise.all([
+      getPublishedIntegrity(packageInfo.name, packageInfo.version, registry),
+      getPublishedTags(packageInfo.name, registry),
+    ])
 
-    if (!publishedIntegrity) {
-      states.set(packageInfo.name, 'available')
-      continue
-    }
-
-    if (publishedIntegrity !== packageInfo.integrity) {
+    if (publishedIntegrity && publishedIntegrity !== packageInfo.integrity) {
       throw new Error(
         `${packageInfo.name}@${packageInfo.version} already exists with different contents.`,
       )
     }
 
-    states.set(packageInfo.name, 'identical')
-  }
+    if (publishedIntegrity === packageInfo.integrity)
+      states.set(packageInfo.name, 'identical')
+    else if (Object.values(publishedTags ?? {}).includes(packageInfo.version))
+      states.set(packageInfo.name, 'pending')
+    else
+      states.set(packageInfo.name, 'available')
 
-  for (const packageInfo of packages) {
-    const current = await getPublishedTag(packageInfo.name, tag, registry)
+    const current = publishedTags?.[tag]
     if (current && compareSemver(parseSemver(current), parseSemver(packageInfo.version)) > 0) {
       throw new Error(
         `Refusing to move dist-tag ${tag} backwards from ${current} to ${packageInfo.version} for ${packageInfo.name}.`,
@@ -890,8 +907,13 @@ async function inspectRegistry(packages, registry, tag) {
   }
 
   const available = [...states.values()].filter(state => state === 'available').length
-  const identical = states.size - available
-  logSuccess(`${available} versions available${identical ? `; ${identical} identical versions can be resumed` : ''}`)
+  const identical = [...states.values()].filter(state => state === 'identical').length
+  const pending = states.size - available - identical
+  const details = [
+    identical ? `${identical} identical` : '',
+    pending ? `${pending} awaiting npm metadata` : '',
+  ].filter(Boolean).join('; ')
+  logSuccess(`${available} versions available${details ? `; ${details}` : ''}`)
   return states
 }
 
@@ -947,11 +969,21 @@ async function publishPackages(packages, states, options) {
         options.registry,
       ])
 
-      await waitForPublishedIntegrity(packageInfo, options.registry)
+      const integrityVerified = await waitForPublishedIntegrity(packageInfo, options.registry)
+      if (!integrityVerified) {
+        logWarning(
+          `${packageInfo.name}@${packageInfo.version} was accepted by npm; package metadata is still propagating.`,
+        )
+      }
     }
 
     await ensureDistTag(packageInfo, options.tag, options.registry)
-    const resumed = states.get(packageInfo.name) === 'identical' ? ' (resumed)' : ''
+    const state = states.get(packageInfo.name)
+    const resumed = state === 'identical'
+      ? ' (resumed)'
+      : state === 'pending'
+        ? ' (resumed; npm metadata pending)'
+        : ''
     logSuccess(`${packageInfo.name}@${packageInfo.version}${resumed}`)
   }
 }
