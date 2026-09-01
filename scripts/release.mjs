@@ -27,6 +27,9 @@ const readmeFiles = ['README.md', 'README.zh-CN.md']
 const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Z-]+(?:\.[0-9A-Z-]+)*))?$/i
 const testFilePattern = /(?:^|\/)(?:__tests__|tests?)(?:\/|$)|\.(?:spec|test)\.[cm]?[jt]sx?$|\.snap$/i
 const sensitiveFilePattern = /(?:^|\/)(?:\.env(?:\..*)?|\.npmrc|id_rsa|id_ed25519)$|\.(?:key|pem|p12)$/i
+const otpLifetime = 20_000
+let cachedOtp
+let cachedOtpExpiresAt = 0
 
 class CommandError extends Error {
   constructor(command, args, result) {
@@ -861,7 +864,14 @@ async function promptForOtp() {
 }
 
 async function runRegistryWrite(command, args) {
-  let result = await run(command, args, { allowFailure: true, capture: true })
+  let otp = cachedOtpExpiresAt > Date.now() ? cachedOtp : undefined
+  let result = await run(command, args, {
+    allowFailure: true,
+    capture: true,
+    env: otp
+      ? { ...process.env, npm_config_otp: otp }
+      : process.env,
+  })
   if (result.exitCode === 0)
     return result
 
@@ -869,7 +879,9 @@ async function runRegistryWrite(command, args) {
   if (!/EOTP|one-time password|two-factor authentication/i.test(output))
     throw new CommandError(command, args, result)
 
-  const otp = await promptForOtp()
+  otp = await promptForOtp()
+  cachedOtp = otp
+  cachedOtpExpiresAt = Date.now() + otpLifetime
   result = await run(command, args, {
     allowFailure: true,
     capture: true,
@@ -881,6 +893,8 @@ async function runRegistryWrite(command, args) {
   if (result.exitCode === 0)
     return result
 
+  cachedOtp = undefined
+  cachedOtpExpiresAt = 0
   const details = (result.stderr.trim() || result.stdout.trim()).replaceAll(otp, '[redacted]')
   throw new Error(`Registry command failed after OTP verification${details ? `:\n${details}` : '.'}`)
 }
