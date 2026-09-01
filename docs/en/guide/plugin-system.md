@@ -15,7 +15,7 @@ To a site author, this is still one feature: **search**. In many static site gen
 
 The KawaPress plugin system starts with this problem.
 
-## One Feature, Configured in Several Places
+## Pain Point: Configuration Scattered Across Multiple Places
 
 VitePress provides several useful extension points. You can adjust Markdown in configuration, add Vite Plugins, and use build Hooks. In the final website, a theme can use `enhanceApp` to install Vue plugins and components.
 

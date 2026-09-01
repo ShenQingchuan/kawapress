@@ -15,7 +15,7 @@ description: 了解 KawaPress 如何把跨越构建与运行的代码收拢成�
 
 KawaPress 的插件体系，就是从这里开始设计的。
 
-## 一个功能，却要到好几个地方配置
+## 痛点：配置散落在多处
 
 VitePress 提供了不少实用的扩展入口。你可以在配置中调整 Markdown，加入 Vite Plugin，也可以使用构建 Hook。到了最终网站，主题还能通过 `enhanceApp` 安装 Vue 插件和组件。
 
