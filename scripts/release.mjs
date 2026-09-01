@@ -951,7 +951,7 @@ async function dryRunPublish(packages, options) {
   logStep(`Simulating npm publish with dist-tag ${options.tag}`)
 
   for (const packageInfo of packages) {
-    await run('pnpm', [
+    await run('npm', [
       'publish',
       packageInfo.path,
       '--dry-run',
@@ -961,7 +961,6 @@ async function dryRunPublish(packages, options) {
       options.tag,
       '--registry',
       options.registry,
-      '--no-git-checks',
       '--json',
     ], { capture: true })
     logSuccess(`${packageInfo.name}@${packageInfo.version}`)
@@ -989,7 +988,7 @@ async function publishPackages(packages, states, options) {
 
   for (const packageInfo of packages) {
     if (states.get(packageInfo.name) === 'available') {
-      await runRegistryWrite('pnpm', [
+      await runRegistryWrite('npm', [
         'publish',
         packageInfo.path,
         '--access',
@@ -998,7 +997,6 @@ async function publishPackages(packages, states, options) {
         options.tag,
         '--registry',
         options.registry,
-        '--no-git-checks',
       ])
 
       await waitForPublishedIntegrity(packageInfo, options.registry)
