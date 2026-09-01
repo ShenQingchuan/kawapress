@@ -8,7 +8,6 @@ import { tmpdir } from 'node:os'
 import { basename, join, relative } from 'node:path'
 import process from 'node:process'
 import { createInterface } from 'node:readline/promises'
-import { Writable } from 'node:stream'
 import { setTimeout as delay } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 
@@ -27,9 +26,6 @@ const readmeFiles = ['README.md', 'README.zh-CN.md']
 const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Z-]+(?:\.[0-9A-Z-]+)*))?$/i
 const testFilePattern = /(?:^|\/)(?:__tests__|tests?)(?:\/|$)|\.(?:spec|test)\.[cm]?[jt]sx?$|\.snap$/i
 const sensitiveFilePattern = /(?:^|\/)(?:\.env(?:\..*)?|\.npmrc|id_rsa|id_ed25519)$|\.(?:key|pem|p12)$/i
-const otpLifetime = 20_000
-let cachedOtp
-let cachedOtpExpiresAt = 0
 
 class CommandError extends Error {
   constructor(command, args, result) {
@@ -833,70 +829,8 @@ async function waitForDistTag(packageInfo, tag, registry) {
   )
 }
 
-async function promptForOtp() {
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error(
-      'npm requires a fresh one-time password. Rerun in an interactive terminal or use an authorized publishing token.',
-    )
-  }
-
-  const mutedOutput = new Writable({
-    write(_chunk, _encoding, callback) {
-      callback()
-    },
-  })
-  const readline = createInterface({
-    input: process.stdin,
-    output: mutedOutput,
-    terminal: true,
-  })
-  process.stdout.write('npm one-time password: ')
-  try {
-    const otp = (await readline.question('')).trim()
-    if (!/^\d{6}$/.test(otp))
-      throw new Error('The npm one-time password must contain 6 digits.')
-    return otp
-  }
-  finally {
-    readline.close()
-    process.stdout.write('\n')
-  }
-}
-
 async function runRegistryWrite(command, args) {
-  let otp = cachedOtpExpiresAt > Date.now() ? cachedOtp : undefined
-  let result = await run(command, args, {
-    allowFailure: true,
-    capture: true,
-    env: otp
-      ? { ...process.env, npm_config_otp: otp }
-      : process.env,
-  })
-  if (result.exitCode === 0)
-    return result
-
-  const output = `${result.stderr}\n${result.stdout}`
-  if (!/EOTP|one-time password|two-factor authentication/i.test(output))
-    throw new CommandError(command, args, result)
-
-  otp = await promptForOtp()
-  cachedOtp = otp
-  cachedOtpExpiresAt = Date.now() + otpLifetime
-  result = await run(command, args, {
-    allowFailure: true,
-    capture: true,
-    env: {
-      ...process.env,
-      npm_config_otp: otp,
-    },
-  })
-  if (result.exitCode === 0)
-    return result
-
-  cachedOtp = undefined
-  cachedOtpExpiresAt = 0
-  const details = (result.stderr.trim() || result.stdout.trim()).replaceAll(otp, '[redacted]')
-  throw new Error(`Registry command failed after OTP verification${details ? `:\n${details}` : '.'}`)
+  await run(command, args)
 }
 
 async function ensureDistTag(packageInfo, tag, registry) {
