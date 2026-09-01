@@ -4,6 +4,15 @@
   "version": "0.0.0",
   "description": "UnoCSS integration for KawaPress",
   "license": "MIT",
+  "homepage": "https://shenqingchuan.github.io/kawapress/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShenQingchuan/kawapress.git",
+    "directory": "packages/plugin-unocss"
+  },
+  "bugs": {
+    "url": "https://github.com/ShenQingchuan/kawapress/issues"
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -20,6 +29,13 @@
   "files": [
     "src"
   ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "peerDependencies": {
     "kawapress": "workspace:*"
   },

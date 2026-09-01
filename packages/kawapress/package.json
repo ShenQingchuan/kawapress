@@ -4,6 +4,22 @@
   "version": "0.0.0",
   "description": "A Vue-centric static site generator",
   "license": "MIT",
+  "homepage": "https://shenqingchuan.github.io/kawapress/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShenQingchuan/kawapress.git",
+    "directory": "packages/kawapress"
+  },
+  "bugs": {
+    "url": "https://github.com/ShenQingchuan/kawapress/issues"
+  },
+  "keywords": [
+    "documentation",
+    "markdown",
+    "ssg",
+    "vite",
+    "vue"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -34,6 +50,13 @@
     "bin",
     "src"
   ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {
     "@kawapress/preset-nagi": "workspace:*",
     "@mdit-vue/plugin-component": "catalog:markdown",
