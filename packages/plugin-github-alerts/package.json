@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-github-alerts",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1-beta.1",
   "description": "GitHub-style Markdown alerts for KawaPress",
   "license": "MIT",
   "homepage": "https://shenqingchuan.github.io/kawapress/",

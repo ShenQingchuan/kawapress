@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-code-block",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1-beta.1",
   "description": "Language labels, copy controls, and line numbers for KawaPress code blocks",
   "license": "MIT",
   "homepage": "https://shenqingchuan.github.io/kawapress/",
