@@ -255,8 +255,7 @@ Runtime Plugin 会为每个 Vue App 执行一次。服务端渲染时，每次�
     }
   },
   "files": [
-    "src",
-    "!src/**/*.test.*"
+    "src/**/!(*.test.*)"
   ],
   "peerDependencies": {
     "kawapress": "^0.0.1"

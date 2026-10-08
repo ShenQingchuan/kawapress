@@ -256,8 +256,7 @@ The `package.json` exposes both entries and publishes only the source files:
     }
   },
   "files": [
-    "src",
-    "!src/**/*.test.*"
+    "src/**/!(*.test.*)"
   ],
   "peerDependencies": {
     "kawapress": "^0.0.1"
