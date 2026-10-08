@@ -979,14 +979,17 @@ async function publishPackages(packages, states, options) {
           `${packageInfo.name}@${packageInfo.version} was accepted by npm; package metadata is still propagating.`,
         )
       }
-
-      // npm publish 已通过 --tag 设置标签，这里只等待 registry 同步该标签。
-      await waitForDistTag(packageInfo, options.tag, options.registry)
     }
     else {
       await ensureDistTag(packageInfo, options.tag, options.registry)
     }
+  }
 
+  // npm publish 已通过 --tag 设置标签；registry 同步较慢，统一并发等待。
+  logStep('Waiting for the registry to report dist-tags')
+  await Promise.all(packages.map(packageInfo => waitForDistTag(packageInfo, options.tag, options.registry)))
+
+  for (const packageInfo of packages) {
     const state = states.get(packageInfo.name)
     const resumed = state === 'identical'
       ? ' (resumed)'
