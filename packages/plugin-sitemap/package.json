@@ -1,0 +1,46 @@
+{
+  "name": "@kawapress/plugin-sitemap",
+  "type": "module",
+  "version": "0.0.1-beta.1",
+  "description": "sitemap.xml output for KawaPress",
+  "license": "MIT",
+  "homepage": "https://shenqingchuan.github.io/kawapress/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShenQingchuan/kawapress.git",
+    "directory": "packages/plugin-sitemap"
+  },
+  "bugs": {
+    "url": "https://github.com/ShenQingchuan/kawapress/issues"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "kawapress": "workspace:*"
+  },
+  "dependencies": {
+    "consola": "catalog:node",
+    "sitemap": "catalog:node"
+  },
+  "devDependencies": {
+    "kawapress": "workspace:*",
+    "typescript": "catalog:dev",
+    "vite": "catalog:node"
+  }
+}

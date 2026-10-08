@@ -1,5 +1,6 @@
 import type { CodeBlockPluginOptions } from '@kawapress/plugin-code-block'
 import type { LlmsPluginOptions } from '@kawapress/plugin-llms'
+import type { SitemapPluginOptions } from '@kawapress/plugin-sitemap'
 import type { PresetConfig } from 'kawapress'
 import type { NagiThemeConfig, ResolvedNagiThemeConfig } from './theme-config'
 import { codeBlockPlugin } from '@kawapress/plugin-code-block'
@@ -9,6 +10,7 @@ import { githubAlertsPlugin } from '@kawapress/plugin-github-alerts'
 import { llmsPlugin } from '@kawapress/plugin-llms'
 import { searchPlugin } from '@kawapress/plugin-search'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
+import { sitemapPlugin } from '@kawapress/plugin-sitemap'
 import { unocssPlugin } from '@kawapress/plugin-unocss'
 import { definePreset } from 'kawapress'
 import { nagiThemePlugin } from './theme-plugin'
@@ -16,6 +18,7 @@ import { nagiThemePlugin } from './theme-plugin'
 export type NagiConfig = PresetConfig<ResolvedNagiThemeConfig> & {
   codeBlock?: CodeBlockPluginOptions
   llms?: LlmsPluginOptions
+  sitemap?: SitemapPluginOptions
 }
 export type {
   NagiHomeAction,
@@ -38,7 +41,7 @@ export type {
 export type { NagiThemeConfig } from './theme-config'
 
 export function nagi(userConfig: NagiConfig = {}): NagiConfig {
-  const { codeBlock, llms, ...siteConfig } = userConfig
+  const { codeBlock, llms, sitemap, ...siteConfig } = userConfig
   const createConfig = definePreset<NagiThemeConfig>({
     plugins: [
       nagiThemePlugin(),
@@ -59,6 +62,7 @@ export function nagi(userConfig: NagiConfig = {}): NagiConfig {
         },
       }),
       llmsPlugin(llms),
+      sitemapPlugin(sitemap),
     ],
   })
 
