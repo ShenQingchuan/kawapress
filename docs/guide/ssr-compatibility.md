@@ -8,7 +8,7 @@ KawaPress 在开发模式的每次首次请求和生产构建期间都会执行�
 
 如果还不熟悉 SSR，可以先阅读 [Vue 的服务端渲染指南](https://cn.vuejs.org/guide/scaling-up/ssr.html)。
 
-## 访问浏览器 API
+## 访问浏览器 API {#access-browser-apis}
 
 `window`、`document`、`navigator` 和 `localStorage` 等浏览器 API 在服务端不存在。不要在 setup 执行期间直接读取它们。
 
@@ -32,7 +32,7 @@ onMounted(() => {
 
 `onMounted()` 不会在服务端执行，因此 `window` 只会在浏览器中被访问。
 
-## 处理导入时访问浏览器的依赖
+## 处理导入时访问浏览器的依赖 {#handle-dependencies-that-access-browser-apis-on-import}
 
 有些库会在模块加载时立即读取 `window`。即使只在 `onMounted()` 中调用它，文件顶部的静态 `import` 仍会在 SSR 时执行。
 
@@ -60,7 +60,7 @@ if (!import.meta.env.SSR) {
 
 条件分支里的导入必须保持动态形式。静态导入总会在模块求值时执行。
 
-## 只在客户端渲染组件
+## 只在客户端渲染组件 {#render-a-component-only-on-the-client}
 
 如果组件的渲染过程依赖 DOM，可以等页面挂载后再显示它。配合 `defineAsyncComponent()`，还能推迟加载一个在导入时访问浏览器 API 的组件：
 
@@ -89,7 +89,7 @@ onMounted(() => {
 
 服务端和浏览器第一次渲染时，`mounted` 都是 `false`。组件只会在 hydration 完成后加载和显示。
 
-## 在 Runtime Plugin 中使用浏览器插件
+## 在 Runtime Plugin 中使用浏览器插件 {#use-a-browser-plugin-from-a-runtime-plugin}
 
 Runtime Plugin 的同一份源码会进入 SSR 与 client module graph。对于模块加载时访问浏览器 API 的 Vue 插件，请在非 SSR 分支中动态导入：
 
@@ -111,7 +111,7 @@ export default defineRuntimePlugin({
 
 这种方式适合不会改变首次渲染 HTML 的浏览器行为。如果插件会改变组件树，请改用上一节的客户端组件边界，避免服务端与浏览器输出不同。
 
-## 保持首次渲染一致
+## 保持首次渲染一致 {#keep-the-first-render-stable}
 
 hydration 要求服务端 HTML 与浏览器第一次渲染得到相同的节点结构和文字。下面这些值不适合直接参与首次渲染：
 

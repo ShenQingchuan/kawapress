@@ -8,7 +8,7 @@ KawaPress performs server-side rendering (SSR) for initial requests during devel
 
 Read the [Vue Server-Side Rendering guide](https://vuejs.org/guide/scaling-up/ssr.html) for a broader introduction to SSR.
 
-## Access Browser APIs
+## Access Browser APIs {#access-browser-apis}
 
 Browser APIs such as `window`, `document`, `navigator`, and `localStorage` do not exist on the server. Do not access them directly while setup runs.
 
@@ -32,7 +32,7 @@ onMounted(() => {
 
 `onMounted()` does not run during SSR, so `window` is only accessed in the browser.
 
-## Handle Dependencies That Access Browser APIs on Import
+## Handle Dependencies That Access Browser APIs on Import {#handle-dependencies-that-access-browser-apis-on-import}
 
 Some libraries access `window` as soon as their module loads. Calling the library only from `onMounted()` is not enough if a static import at the top of the file still runs during SSR.
 
@@ -60,7 +60,7 @@ if (!import.meta.env.SSR) {
 
 Keep the import dynamic inside the branch. Static imports always run when the module is evaluated.
 
-## Render a Component Only on the Client
+## Render a Component Only on the Client {#render-a-component-only-on-the-client}
 
 If a component requires the DOM while rendering, wait until the page mounts before displaying it. Combine this boundary with `defineAsyncComponent()` when the component also accesses browser APIs during import:
 
@@ -89,7 +89,7 @@ onMounted(() => {
 
 `mounted` is `false` for both the server render and the browser's first render. The component loads and appears only after hydration.
 
-## Use a Browser Plugin from a Runtime Plugin
+## Use a Browser Plugin from a Runtime Plugin {#use-a-browser-plugin-from-a-runtime-plugin}
 
 The same Runtime Plugin source enters both the SSR and client module graphs. Dynamically import a Vue plugin in the non-SSR branch when it accesses browser APIs during module evaluation:
 
@@ -111,7 +111,7 @@ export default defineRuntimePlugin({
 
 Use this pattern only for browser behavior that does not change the initial HTML. If a plugin changes the component tree, use the client-only component boundary from the previous section to keep server and browser output aligned.
 
-## Keep the First Render Stable
+## Keep the First Render Stable {#keep-the-first-render-stable}
 
 Hydration requires the server HTML and the browser's first render to produce the same node structure and text. Avoid using these values directly during the first render:
 

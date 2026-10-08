@@ -13,7 +13,7 @@ import { data as demo } from './data-loading.data.ts'
 
 Data Loader 只在 Node.js 中运行。它的代码和 Node.js 依赖不会送到浏览器；`load()` 返回的结果会变成 JSON，进入使用它的页面包。
 
-## 基本用法
+## 基本用法 {#basic-usage}
 
 创建一个以 `.data.ts` 或 `.data.js` 结尾的文件：
 
@@ -42,7 +42,7 @@ Loader 文件本身没有声明这个 `data`。KawaPress 会执行默认导出�
 
 本站也在使用这项能力：本次构建读取到了 **{{ demo.pageCount }}** 篇中英文指南页面。
 
-## 加载远程数据
+## 加载远程数据 {#load-remote-data}
 
 `load()` 可以是异步函数。Node.js 22 已经提供 `fetch()`：
 
@@ -61,7 +61,7 @@ export default {
 
 这段请求在开发或构建时执行，不会在访客的浏览器中重复发送。一次构建里的 SSR 和浏览器包会共用同一份结果。
 
-## 监听本地文件
+## 监听本地文件 {#watch-local-files}
 
 要根据本地文件生成数据，可以添加 `watch`。路径相对于 Loader 文件，支持 glob：
 
@@ -82,7 +82,7 @@ export default {
 
 `files` 是按路径排序的绝对路径。开发时，匹配文件的新增、修改和删除会重新生成数据并触发热更新。Loader 自己导入的本地辅助文件变化时也会更新。
 
-## 汇总 Markdown 内容
+## 汇总 Markdown 内容 {#collect-markdown-content}
 
 如果要制作文章归档或 API 索引，可以使用 `createContentLoader()`：
 
@@ -140,7 +140,7 @@ export default createContentLoader('posts/*.md', {
 
 这些字段会进入 JavaScript 包，请只保留页面真正需要的数据。`html` 和 `excerpt` 应只来自你信任的 Markdown；不要把不可信内容直接交给 `v-html`。
 
-## 为 Loader 标注类型
+## 为 Loader 标注类型 {#type-a-loader}
 
 `defineLoader()` 会检查 Loader 结构。手动声明 `data` 后，导入它的页面也能得到准确类型：
 
@@ -165,7 +165,7 @@ export default defineLoader({
 })
 ```
 
-## 读取站点配置
+## 读取站点配置 {#read-site-configuration}
 
 Loader 执行时可以从 `globalThis.KAWAPRESS_CONFIG` 读取当前配置：
 
@@ -183,7 +183,7 @@ export default {
 
 `root`、`srcDir` 和 `publicDir` 都是绝对路径；`site` 是会进入网站运行侧的站点数据。这个全局值只用于 Data Loader 的 Node.js 执行阶段。
 
-## 数据边界
+## 数据边界 {#data-boundary}
 
 Loader 结果必须是不会变形的标准 JSON：`null`、布尔值、有限数字、字符串、数组和普通对象。不要返回 `undefined`、`Date`、`Map`、`Set`、函数、类实例、循环引用或 Vue ref。KawaPress 会指出 Loader 文件和出错字段，不会让 `JSON.stringify()` 悄悄删除数据。
 

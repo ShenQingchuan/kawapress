@@ -8,7 +8,7 @@ KawaPress 使用基于文件的路由。你不需要维护一份额外的路由�
 
 如果你已经完成了[快速开始](/guide/getting-started)，这一章会把刚才看到的路径规则完整讲清楚。
 
-## 基于文件的路由
+## 基于文件的路由 {#file-based-routing}
 
 假设站点里有这些文件：
 
@@ -34,7 +34,7 @@ KawaPress 会生成下面的路由和静态文件：
 
 静态托管服务需要把 `/guide/getting-started` 这样的请求解析到对应的 `.html` 文件。KawaPress 自带的预览服务器已经支持这种访问方式；部署到其他平台时，请启用平台提供的简洁 URL 或 HTML 扩展名回退能力。
 
-## `index.md` 的规则
+## `index.md` 的规则 {#how-indexmd-works}
 
 根目录的 `index.md` 对应站点首页 `/`。子目录里的 `index.md` 会去掉路径末尾的 `/index`：
 
@@ -46,7 +46,7 @@ guide/setup/index.md → /guide/setup
 
 因此，请不要同时创建 `guide.md` 和 `guide/index.md`。它们都会映射到 `/guide`，应该只保留一种组织方式。
 
-## 站点根目录与源目录
+## 站点根目录与源目录 {#site-root-and-source-directory}
 
 运行 `kawapress dev` 或 `kawapress build` 时，当前工作目录就是**站点根目录**。KawaPress 默认从这里查找 `kawapress.config.ts` 和 Markdown 页面，并把构建结果写入 `dist`。
 
@@ -81,7 +81,7 @@ docs/guide/getting-started.md → /guide/getting-started
 
 `srcDir` 必须是相对于站点根目录的路径，不能使用绝对路径。
 
-## 在页面之间建立链接
+## 在页面之间建立链接 {#linking-between-pages}
 
 链接到另一个 KawaPress 页面时，可以使用无后缀、`.md` 或 `.html`。也可以选择相对路径，或从站点根路径开始写：
 
@@ -95,13 +95,13 @@ docs/guide/getting-started.md → /guide/getting-started
 
 KawaPress 会根据当前 Markdown 源文件解析相对路径，再把三种页面链接统一成无后缀的公开路由。无后缀写法最接近访客看到的 URL；`.md` 写法则方便编辑器和 GitHub 直接定位源文件。站点可以选择一种风格并保持一致。
 
-链接到当前页面的标题时，使用标题锚点。例如：[前往源目录](#站点根目录与源目录)。
+链接到当前页面的标题时，使用标题锚点。例如：[前往源目录](#site-root-and-source-directory)。
 
 KawaPress 会为 Markdown 标题生成稳定的锚点。默认主题里的本页目录也使用同一组锚点。
 
 外部页面继续使用完整 URL，例如：[访问 Vue 官网](https://vuejs.org/)。外部 Markdown 链接会在新标签页打开，并自动带上 `rel="noreferrer"`。
 
-## 部署到子路径
+## 部署到子路径 {#deploying-under-a-base-path}
 
 站点并不总是发布在域名根目录。例如，页面最终可能位于：
 
@@ -129,7 +129,7 @@ export default nagi({
 
 构建后，这个 Markdown 链接会自动指向 `/my-docs/guide/getting-started`。这样以后更换部署目录时，只需要修改一处配置。
 
-## 首次访问与站内跳转
+## 首次访问与站内跳转 {#initial-requests-and-client-navigation}
 
 第一次打开页面时，KawaPress 会在服务端渲染当前路由，再由浏览器完成 hydration。访客可以立即看到完整内容，不需要等待客户端先生成页面。
 
@@ -145,7 +145,7 @@ export default nagi({
 
 这意味着首次访问和构建使用相同的 SSR 语义，而后续跳转不需要整页刷新。外部链接、下载链接、带 `target` 的链接以及配合修饰键打开新标签页的操作，仍然保留浏览器原本的行为。
 
-## 为什么使用 Vue Router
+## 为什么使用 Vue Router {#why-vue-router}
 
 VitePress 没有把 Vue Router 作为运行时依赖。它在客户端维护了一套专门面向文档站的[轻量路由实现](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts)，直接负责页面模块加载、浏览器历史、滚动位置和路由前后钩子。功能集中、依赖更少，也方便 VitePress 精确控制自己的页面加载流程。
 
@@ -161,7 +161,7 @@ KawaPress 选择使用 Vue 官方的 [Vue Router](https://router.vuejs.org/)。M
 
 静态构建会根据构建时发现的 Markdown 文件生成页面。`router.addRoute()` 更适合添加只在客户端运行期间需要的路由；如果一个页面需要支持直接访问和预渲染，请把它创建为 Markdown 文件。
 
-## 未找到的页面
+## 未找到的页面 {#not-found-pages}
 
 当路径没有对应的 Markdown 文件时，开发服务器会返回 `404` 状态，默认界面会显示未找到页面。执行 `kawapress build` 时，KawaPress 也会生成 `dist/404.html`，供静态托管服务处理未知路径。
 

@@ -8,7 +8,7 @@ KawaPress 是一个以 Vue 为核心的[静态站点生成器](https://en.wikipe
 
 简单来说，你用 Markdown 编写内容，KawaPress 负责把这些内容编译成 Vue 页面、应用主题，并在构建时生成可以直接部署的静态 HTML。部署完成后不需要额外运行 Node.js 服务器，普通的静态托管服务就足够了。
 
-## 适用场景
+## 适用场景 {#use-cases}
 
 - **技术文档**
 
@@ -20,7 +20,7 @@ KawaPress 是一个以 Vue 为核心的[静态站点生成器](https://en.wikipe
 
   除了标准文档布局，nagi 也提供 `home` 和 `page` 布局。只要页面与路由能够在构建时确定，就可以用 KawaPress 来组织项目介绍、使用指南和其他静态内容。
 
-## 开发体验
+## 开发体验 {#developer-experience}
 
 KawaPress 希望让 Markdown 写作保持轻松，同时不牺牲 Vue 项目的开发体验。
 
@@ -32,7 +32,7 @@ KawaPress 希望让 Markdown 写作保持轻松，同时不牺牲 Vue 项目的�
 
 - **清楚的扩展边界**：Generator Plugin 负责配置、Markdown、pageData 和 Vite；Runtime Plugin 负责最终的 Vue App 与 Router。Preset 则把一组插件组合成开箱即用的体验。
 
-## 渲染方式
+## 渲染方式 {#rendering-model}
 
 KawaPress 兼顾了静态 HTML 的可靠性与单页应用的流畅导航。
 
@@ -46,7 +46,7 @@ KawaPress 兼顾了静态 HTML 的可靠性与单页应用的流畅导航。
 
 开发与构建共享同一套 Vue 应用和 SSR 渲染语义。两种环境的模块加载方式不同，但页面生命周期保持一致。
 
-## 与 VitePress 的关系
+## 与 VitePress 的关系 {#relationship-to-vitepress}
 
 KawaPress 期望成为一个更好的 VitePress。它由 Vue 社区成员自主开发，为喜欢 Vue，也期待一个功能更丰富、更易于扩展的文档工具的用户提供另一种选择。
 

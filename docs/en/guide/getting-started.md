@@ -6,7 +6,7 @@ description: Install KawaPress and create, run, and build your first documentati
 
 This guide creates a small but complete KawaPress site from an empty directory. By the end, you will have Markdown pages, a default documentation interface, a local development server, and static files ready to deploy.
 
-## Prerequisites
+## Prerequisites {#prerequisites}
 
 You need:
 
@@ -14,7 +14,7 @@ You need:
 - npm, pnpm, or Yarn;
 - an editor with Markdown support.
 
-## Create a Project
+## Create a Project {#create-a-project}
 
 Create a directory and initialize its `package.json`:
 
@@ -40,7 +40,7 @@ yarn init -y
 
 KawaPress treats the current working directory as the site root. Site configuration, Markdown pages, and build output are all resolved from this directory.
 
-## Install KawaPress
+## Install KawaPress {#install-kawapress}
 
 A site using the built-in nagi (凪) preset only needs KawaPress:
 
@@ -65,7 +65,7 @@ yarn add --dev kawapress
 
 KawaPress is only required while developing and building the site. The deployed output does not require a Node.js server.
 
-## Add Project Scripts
+## Add Project Scripts {#add-project-scripts}
 
 Add these commands to the `scripts` field in `package.json`:
 
@@ -83,7 +83,7 @@ Add these commands to the `scripts` field in `package.json`:
 - `docs:build` generates the static site.
 - `docs:preview` serves the production build locally.
 
-## Configure the Site
+## Configure the Site {#configure-the-site}
 
 Create `kawapress.config.ts` in the project root:
 
@@ -97,7 +97,7 @@ export default nagi({
 
 The `nagi()` preset installs the default documentation interface and its plugins. Its styles are included automatically, so the site does not need a separate theme CSS import.
 
-## Use UnoCSS Utilities
+## Use UnoCSS Utilities {#use-unocss-utilities}
 
 nagi enables [UnoCSS](https://unocss.dev/) with `presetWind4`, `presetIcons`, and `presetWebFonts`. Wind4 utilities work directly in Markdown HTML:
 
@@ -113,7 +113,7 @@ nagi enables [UnoCSS](https://unocss.dev/) with `presetWind4`, `presetIcons`, an
 
 The Wind4 global reset is disabled, so it does not overwrite nagi or other plugin foundations. The Icons and Web Fonts presets are ready, but they load assets only after you configure a specific icon collection or font.
 
-## Add Your First Pages
+## Add Your First Pages {#add-your-first-pages}
 
 Create `index.md` in the project root:
 
@@ -156,7 +156,7 @@ Markdown file paths become public routes:
 
 The home page explicitly selects `layout: home`. Other Markdown pages use the `doc` layout by default, which includes the Sidebar and page outline.
 
-## Start the Development Server
+## Start the Development Server {#start-the-development-server}
 
 Run:
 
@@ -178,7 +178,7 @@ The site is now available at `http://localhost:5173`. Open it in a browser and f
 
 Markdown changes are applied through HMR. Initial requests still run through real server-side rendering, so development and production builds share the same SSR semantics.
 
-## Build and Preview
+## Build and Preview {#build-and-preview}
 
 Generate the static site:
 
@@ -214,7 +214,7 @@ yarn docs:preview
 
 The preview server runs at `http://localhost:4173` by default. After checking the result, deploy the `dist` directory to any static hosting service.
 
-## You Are Ready
+## You Are Ready {#you-are-ready}
 
 You now have a complete KawaPress site that:
 

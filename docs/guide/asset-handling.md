@@ -6,7 +6,7 @@ description: 在 Markdown、Vue 组件和 CSS 中引用资源，并使用公共�
 
 文档里的图片、字体和下载文件，最终都要跟着站点一起部署。KawaPress 提供两种处理方式：让 Vite 管理页面引用的资源，或把文件原样放进公共资源目录。
 
-## 引用静态资源
+## 引用静态资源 {#reference-static-assets}
 
 每篇 Markdown 都会编译成 Vue 组件，再交给 Vite 处理。页面自己的图片，应该使用相对路径：
 
@@ -18,7 +18,7 @@ description: 在 Markdown、Vue 组件和 CSS 中引用资源，并使用公共�
 
 生产构建时，实际被引用的资源会复制到输出目录，并使用带内容哈希的文件名。没有被引用的资源不会复制；很小的资源可能直接内联。
 
-### 链接到的文件不是资源
+### 链接到的文件不是资源 {#a-linked-file-is-not-an-asset}
 
 普通链接只是一个地址，不会自动把目标文件加入构建结果：
 
@@ -65,7 +65,7 @@ export default nagi({
 
 无论磁盘目录叫 `public` 还是 `static`，页面里的地址都保持 `/handbook.pdf`。
 
-## `base`
+## `base` {#base}
 
 如果站点部署在子路径，例如 `https://example.com/kawapress/`，配置 `base: '/kawapress/'`。KawaPress 会自动处理静态资源地址。
 

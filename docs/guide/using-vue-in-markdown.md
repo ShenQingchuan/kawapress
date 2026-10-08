@@ -10,9 +10,9 @@ KawaPress 会把每个 Markdown 页面编译成 Vue 单文件组件。普通 Mar
 页面中的动态代码会同时参与服务端渲染和浏览器 hydration。访问浏览器 API 或使用仅支持客户端的依赖前，请先阅读 [SSR 兼容性](/guide/ssr-compatibility)。
 :::
 
-## 模板语法
+## 模板语法 {#template-syntax}
 
-### 插值
+### 插值 {#interpolation}
 
 正文中的双花括号会作为 Vue 表达式执行：
 
@@ -24,7 +24,7 @@ KawaPress 会把每个 Markdown 页面编译成 Vue 单文件组件。普通 Mar
 
 插值适合简短、没有副作用的表达式。状态和复杂逻辑应该移到 `<script setup>`，让正文继续容易阅读。
 
-### 指令
+### 指令 {#directives}
 
 Markdown 中可以直接写 HTML，也可以使用 Vue 指令：
 
@@ -36,7 +36,7 @@ Markdown 中可以直接写 HTML，也可以使用 Vue 指令：
 
 `v-if`、`:class`、`@click` 等指令也遵循普通 Vue 模板规则。
 
-## 安装 Vue
+## 安装 Vue {#install-vue}
 
 只写 Markdown 并使用 nagi 时，项目只需要安装 `kawapress`。如果要编写 Vue 组件，或从 `vue` 导入响应式 API，请把 Vue 明确安装为项目的开发依赖：
 
@@ -56,7 +56,7 @@ yarn add --dev vue
 
 这样，编辑器和包管理器都能准确知道站点直接使用了 Vue。
 
-## `<script>` 与 `<style>`
+## `<script>` 与 `<style>` {#script-and-style}
 
 Markdown 文件支持根级的 `<script>`、`<script setup>` 和 `<style>` 区块。它们要放在 frontmatter 之后。页面不需要再写 `<template>`，其余 Markdown 内容就是组件模板。
 
@@ -91,9 +91,9 @@ const doubled = computed(() => count.value * 2)
 
 页面级样式优先使用 `<style module>`。与 `<style scoped>` 相比，它不需要给整篇 Markdown 生成的每个元素追加 scoped 属性。需要跨页面共享的样式，应该放进主题或 Runtime Plugin 的 CSS 入口。
 
-## 使用组件
+## 使用组件 {#use-components}
 
-### 导入局部组件
+### 导入局部组件 {#import-a-local-component}
 
 假设页面旁边有一个计数器组件：
 
@@ -148,7 +148,7 @@ import Counter from '../components/Counter.vue'
 
 局部导入可以让组件跟随页面拆分，只在访问相关页面时加载。KawaPress 不会自动注册某个组件目录；只有大多数页面都要使用的组件，才适合通过 Runtime Plugin 注册为全局组件。
 
-## 访问当前页面数据
+## 访问当前页面数据 {#access-current-page-data}
 
 从 `kawapress/client` 导入 `usePageData()`，可以读取当前页面的标题、路径、frontmatter 和标题列表：
 
@@ -164,7 +164,7 @@ const page = usePageData()
 
 `usePageData()` 会随站内导航更新。KawaPress 不把全站页面内容发送到浏览器。
 
-## 转义 Vue 语法
+## 转义 Vue 语法 {#escape-vue-syntax}
 
 需要原样显示双花括号时，可以使用 `v-pre`：
 

@@ -2,7 +2,7 @@
 
 KawaPress adds documentation-oriented extensions on top of standard Markdown.
 
-## Heading Anchors
+## Heading Anchors {#heading-anchors}
 
 Every heading receives an anchor automatically. Hover a heading to copy a link to that section.
 

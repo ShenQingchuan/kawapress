@@ -8,7 +8,7 @@ description: 从安装依赖开始，创建并运行你的第一个 KawaPress �
 
 完成以后，你会得到一个由 Markdown 驱动、带有默认文档界面，并且可以直接构建成静态文件的小网站。
 
-## 开始前的准备
+## 开始前的准备 {#prerequisites}
 
 请先准备好：
 
@@ -16,7 +16,7 @@ description: 从安装依赖开始，创建并运行你的第一个 KawaPress �
 - npm、pnpm 或 Yarn 中任意一种包管理器；
 - 一个你用得顺手的 Markdown 编辑器。
 
-## 创建项目
+## 创建项目 {#create-a-project}
 
 先新建一个文件夹，并初始化 `package.json`：
 
@@ -42,7 +42,7 @@ yarn init -y
 
 KawaPress 会把运行命令时所在的目录作为站点根目录。配置、Markdown 页面和构建产物都会从这里开始组织。
 
-## 安装 KawaPress
+## 安装 KawaPress {#install-kawapress}
 
 使用默认预设 nagi（凪）时，只需要安装 KawaPress：
 
@@ -67,7 +67,7 @@ yarn add --dev kawapress
 
 KawaPress 只在开发和构建时使用。部署完成后，站点不需要在服务器上继续运行 KawaPress 或 Node.js。
 
-## 添加常用命令
+## 添加常用命令 {#add-project-scripts}
 
 打开 `package.json`，把下面三个命令加入 `scripts`：
 
@@ -85,7 +85,7 @@ KawaPress 只在开发和构建时使用。部署完成后，站点不需要在�
 - `docs:build` 生成可部署的静态文件；
 - `docs:preview` 在本地预览构建结果。
 
-## 配置站点
+## 配置站点 {#configure-the-site}
 
 在项目根目录创建 `kawapress.config.ts`：
 
@@ -99,7 +99,7 @@ export default nagi({
 
 这里的 `nagi()` 会为站点准备好默认文档界面和它所需的插件。主题样式也会自动进入最终应用，不需要再手动导入 CSS。
 
-## 使用 UnoCSS 工具类
+## 使用 UnoCSS 工具类 {#use-unocss-utilities}
 
 nagi 默认启用 [UnoCSS](https://unocss.dev/)，并准备好 `presetWind4`、`presetIcons` 与 `presetWebFonts`。你可以直接在 Markdown 的 HTML 中使用 Wind4 工具类：
 
@@ -115,7 +115,7 @@ nagi 默认启用 [UnoCSS](https://unocss.dev/)，并准备好 `presetWind4`、`
 
 Wind4 的全局 reset 默认关闭，不会覆盖 nagi 或其他插件的基础样式。Icons 与 Web Fonts 预设也已经可用，但只有在你配置具体图标集或字体以后才会加载对应资源。
 
-## 写下第一批页面
+## 写下第一批页面 {#add-your-first-pages}
 
 先在项目根目录创建 `index.md`：
 
@@ -158,7 +158,7 @@ Markdown 文件的位置会直接决定访问路径：
 
 首页显式使用了 `layout: home`。普通 Markdown 页面不需要声明布局，默认会使用带 Sidebar 和本页目录的 `doc` 布局。
 
-## 启动开发服务器
+## 启动开发服务器 {#start-the-development-server}
 
 运行：
 
@@ -180,7 +180,7 @@ yarn docs:dev
 
 试着修改任意一个 Markdown 文件，页面会通过 HMR 及时更新。首次访问仍会经过真实的服务端渲染，因此开发时看到的页面与最终构建使用相同的 SSR 语义。
 
-## 构建与预览
+## 构建与预览 {#build-and-preview}
 
 准备发布时，先生成静态站点：
 
@@ -216,7 +216,7 @@ yarn docs:preview
 
 预览服务器默认运行在 `http://localhost:4173`。确认没有问题后，把 `dist` 目录交给任意静态托管服务即可。
 
-## 万事俱备
+## 万事俱备 {#you-are-ready}
 
 到这里，你已经完成了一个最小但完整的 KawaPress 站点：
 

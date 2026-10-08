@@ -8,7 +8,7 @@ KawaPress uses file-based routing. There is no separate route table to maintain.
 
 If you have completed [Getting Started](/en/guide/getting-started), this guide explains the routing rules used by that project.
 
-## File-Based Routing
+## File-Based Routing {#file-based-routing}
 
 Given this directory structure:
 
@@ -34,7 +34,7 @@ Directories form the URL hierarchy, and the file name becomes the final segment.
 
 Your static host must resolve a request such as `/guide/getting-started` to its `.html` file. The KawaPress preview server supports this behavior. On another platform, enable clean URLs or HTML extension fallback.
 
-## How `index.md` Works
+## How `index.md` Works {#how-indexmd-works}
 
 The root `index.md` maps to `/`. An `index.md` inside a directory removes the trailing `/index` segment:
 
@@ -46,7 +46,7 @@ guide/setup/index.md → /guide/setup
 
 Do not create both `guide.md` and `guide/index.md`. They map to the same `/guide` route, so choose one structure.
 
-## Site Root and Source Directory
+## Site Root and Source Directory {#site-root-and-source-directory}
 
 The current working directory is the **site root** when you run `kawapress dev` or `kawapress build`. By default, KawaPress reads `kawapress.config.ts` and Markdown pages from this directory and writes the build to `dist`.
 
@@ -81,7 +81,7 @@ docs/guide/getting-started.md → /guide/getting-started
 
 The value must be relative to the site root. Absolute `srcDir` paths are not supported.
 
-## Linking Between Pages
+## Linking Between Pages {#linking-between-pages}
 
 Links to another KawaPress page may be extensionless or end in `.md` or `.html`. Both relative and site-root paths work:
 
@@ -101,7 +101,7 @@ KawaPress generates stable anchors for Markdown headings. The page outline in th
 
 Use a complete URL for an external page, such as the [Vue website](https://vuejs.org/). External Markdown links open in a new tab and automatically include `rel="noreferrer"`.
 
-## Deploying Under a Base Path
+## Deploying Under a Base Path {#deploying-under-a-base-path}
 
 A site may be served below the domain root, for example:
 
@@ -129,7 +129,7 @@ Keep using logical routes in Markdown instead of repeating `/my-docs/` throughou
 
 The built link points to `/my-docs/en/guide/getting-started`. Moving the site later requires changing only the `base` setting.
 
-## Initial Requests and Client Navigation
+## Initial Requests and Client Navigation {#initial-requests-and-client-navigation}
 
 On the initial request, KawaPress renders the matched route on the server. The browser then hydrates that HTML. Readers see complete content before client-side rendering takes over.
 
@@ -145,7 +145,7 @@ Initial request
 
 The initial request and production build therefore share SSR semantics, while later navigation avoids a full-page reload. External links, downloads, links with a `target`, and modified clicks that open a new tab keep their native browser behavior.
 
-## Why Vue Router?
+## Why Vue Router? {#why-vue-router}
 
 VitePress does not ship Vue Router as a runtime dependency. Its client includes a [small, purpose-built router](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts) that handles page-module loading, browser history, scroll positions, and navigation hooks. This keeps the dependency surface focused and gives VitePress direct control over its page-loading pipeline.
 
@@ -161,7 +161,7 @@ Neither choice is universally better. VitePress optimizes for a small, specializ
 
 The static build generates pages from Markdown files discovered at build time. Use `router.addRoute()` for routes needed only while the client app is running. If a page must support direct visits and prerendering, create it as a Markdown file.
 
-## Not Found Pages
+## Not Found Pages {#not-found-pages}
 
 When no Markdown file matches a path, the development server returns a `404` status and the default interface displays its not-found page. `kawapress build` also generates `dist/404.html` for static hosts.
 

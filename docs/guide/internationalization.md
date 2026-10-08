@@ -7,7 +7,7 @@ description: 使用目录和 locales 配置组织多语言文档站。
 
 KawaPress 根据 URL 选择语言。把默认语言放在根目录，其他语言放进各自的子目录。使用默认 nagi 界面时，站点会自动显示语言切换菜单。
 
-## 放置不同语言的页面
+## 放置不同语言的页面 {#add-pages-for-each-language}
 
 下面的站点以中文为默认语言，并提供英文：
 
@@ -31,7 +31,7 @@ KawaPress 根据 URL 选择语言。把默认语言放在根目录，其他语�
 
 根目录就是默认语言，不需要额外的语言前缀。`en` 这样的目录名会成为 URL 的第一段。
 
-## 配置语言
+## 配置语言 {#configure-languages}
 
 在 `kawapress.config.ts` 中写出每种语言：
 
@@ -64,7 +64,7 @@ export default nagi({
 | `themeConfig` | 只用于这一种语言的界面配置。它会和全站配置合并；同名字段会被这里的值替换。 |
 | `dir` | 文字方向，可写 `ltr` 或 `rtl`。 |
 
-## 切换到对应页面
+## 切换到对应页面 {#switch-between-matching-pages}
 
 语言菜单会尽量跳到另一种语言中的同一篇文档，并保留查询参数和标题锚点：
 
@@ -75,11 +75,11 @@ export default nagi({
 
 因此，请为每种语言保持相同的目录和文件名。KawaPress 不会翻译页面，也不会在目标页面缺失时自动寻找别的内容；缺少对应文件时，链接会进入未找到页面。默认站内搜索也只显示当前语言的结果。
 
-## 默认语言与自动跳转
+## 默认语言与自动跳转 {#default-language-and-redirects}
 
 `/` 始终是默认语言的首页。KawaPress 不会根据浏览器语言自动跳转，也不会记住读者上次选择的语言；读者可以随时从语言菜单切换。
 
-## 本地化侧边栏
+## 本地化侧边栏 {#localize-the-sidebar}
 
 每种语言可以有自己的 `themeConfig`。使用 nagi 时，`defineLocalizedSidebars()` 可以让你只写一份路径结构：
 
@@ -141,7 +141,7 @@ export default nagi({
 
 链接只需要写默认语言的路径。helper 会为英文侧边栏自动加上 `/en`。
 
-## 从右向左书写
+## 从右向左书写 {#right-to-left-languages}
 
 阿拉伯语、希伯来语等从右向左书写的语言，可以设置 `dir: 'rtl'`：
 

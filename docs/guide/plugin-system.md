@@ -15,7 +15,7 @@ description: 了解 KawaPress 如何把跨越构建与运行的代码收拢成�
 
 KawaPress 的插件体系，就是从这里开始设计的。
 
-## 痛点：配置散落在多处
+## 痛点：配置散落在多处 {#pain-point-configuration-scattered-across-multiple-places}
 
 VitePress 提供了不少实用的扩展入口。你可以在配置中调整 Markdown，加入 Vite Plugin，也可以使用构建 Hook。到了最终网站，主题还能通过 `enhanceApp` 安装 Vue 插件和组件。
 
@@ -25,7 +25,7 @@ VitePress 提供了不少实用的扩展入口。你可以在配置中调整 Mar
 
 所以，真正缺少的不是另一个 Hook，而是一种能告诉框架“这些代码都属于同一个插件”的办法。
 
-## KawaPress 插件规范定义
+## KawaPress 插件规范定义 {#the-kawapress-plugin-contract}
 
 生成索引和显示搜索界面，本来就应该在不同的地方完成。KawaPress 不会把它们硬塞进同一个运行环境，而是把它们装进同一个插件包：
 
@@ -39,7 +39,7 @@ VitePress 提供了不少实用的扩展入口。你可以在配置中调整 Mar
 
 KawaPress 把整个搜索能力称为一个 Plugin。这个 Plugin 可以包含两个互相配合的部分。
 
-### Generator Plugin 参与构建生成过程
+### Generator Plugin 参与构建生成过程 {#a-generator-plugin-participates-in-the-build}
 
 Generator Plugin 在 KawaPress 读取配置、编译 Markdown 和构建站点时工作。它可以：
 
@@ -50,7 +50,7 @@ Generator Plugin 在 KawaPress 读取配置、编译 Markdown 和构建站点时
 
 提示容器只需要改变生成的 HTML，因此只用 Generator Plugin 就够了。本地搜索需要在这里生成索引，代码高亮也需要在这里把源码变成最终标记。
 
-### Runtime Plugin 参与页面运行环境
+### Runtime Plugin 参与页面运行环境 {#a-runtime-plugin-participates-in-the-page-runtime}
 
 Runtime Plugin 在 KawaPress 创建 Vue App 和 Vue Router 时工作。它可以：
 
@@ -103,7 +103,7 @@ const plugins = [
 
 不要让使用者再导入 `@kawapress/plugin-search/runtime-plugin`。生成与运行虽然发生在不同阶段，对外仍然是一次安装和一次配置。
 
-### 推荐直接发布 TypeScript 源码
+### 推荐直接发布 TypeScript 源码 {#publish-typescript-source-directly}
 
 KawaPress Plugin 推荐使用 TypeScript 开发，并直接发布 `.ts`、`.vue` 和 CSS 源码，不需要先运行一次打包工具。
 
@@ -115,7 +115,7 @@ KawaPress Plugin 推荐使用 TypeScript 开发，并直接发布 `.ts`、`.vue`
 直接发布源码是推荐方式，不是硬性限制。已经编译为 ESM 的插件也可以使用，只需让 `types` 指向声明文件，让 `import` 和 `default` 指向 JavaScript 产物。
 :::
 
-## 默认配置应当是一个足够好的产品
+## 默认配置应当是一个足够好的产品 {#good-defaults-should-form-a-complete-product}
 
 搜索、代码高亮、提示容器和主题都能独立安装以后，组合会更自由。但如果每个站点都要从零选择和连接它们，简单的文档站反而要先写一长串配置。
 
@@ -145,7 +145,7 @@ export default nagi({
 
 这里没有一个拥有特殊权限的“官方主题层”。nagi 的界面由 Runtime Plugin 安装，它组合的每项能力也都是普通 Plugin。官方自己使用的，就是第三方可以使用的公开入口。
 
-## 在 Preset 上继续添加插件
+## 在 Preset 上继续添加插件 {#add-plugins-to-a-preset}
 
 使用 nagi 以后，仍然可以继续加入独立能力。下面的配置保留 nagi 的全部默认体验，同时增加 MathJax：
 
@@ -181,7 +181,7 @@ export default defineConfig({
 
 自定义主题 Plugin 需要注册 KawaPress 渲染页面所需的布局组件。更换 Preset，就是更换最外层的配置函数；配置中没有另一份需要叠加维护的 `presets` 列表。
 
-## 从需求找到扩展位置
+## 从需求找到扩展位置 {#find-the-extension-point-from-the-work}
 
 当你开始编写扩展时，可以先问“这项工作发生在哪里”：
 

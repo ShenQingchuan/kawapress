@@ -7,7 +7,7 @@ description: Set a page title, description, layout, and other page data at the t
 
 Frontmatter is a small set of settings at the very top of a Markdown file. It does not appear in the document. Use it for a title, description, layout, or your own data.
 
-## Write Frontmatter
+## Write Frontmatter {#write-frontmatter}
 
 YAML is the usual format. Put the data between three dashes before anything else in the page:
 
@@ -33,7 +33,7 @@ A JSON object works too:
 
 These values travel with the page, so keep them simple: text, numbers, `true` or `false`, `null`, lists, and plain objects.
 
-## Use Your Own Data
+## Use Your Own Data {#use-your-own-data}
 
 Alongside the fields below, you can save any page data you need. Read the current page with `usePageData()`:
 
@@ -53,7 +53,7 @@ Current status: {{ page?.frontmatter.status }}
 
 `usePageData()` updates during client-side navigation. It reads only the page that is open.
 
-## Page Titles and Descriptions
+## Page Titles and Descriptions {#page-titles-and-descriptions}
 
 Use these three fields to set a page title and summary:
 
@@ -73,7 +73,7 @@ titleTemplate: '%s · KawaPress Guide'
 
 The browser-tab title for this page is “Configure your site · KawaPress Guide”. The page title is also used by site search.
 
-## Nagi Page Layout
+## Nagi Page Layout {#nagi-page-layout}
 
 With the default nagi experience, `layout` chooses the page layout and navigation:
 
@@ -112,7 +112,7 @@ pageClass: focused-page
 
 See [Getting Started](/en/guide/getting-started) for `hero` and `features`.
 
-## Exclude a Page from Search
+## Exclude a Page from Search {#exclude-a-page-from-search}
 
 To keep a page out of the default local search, write:
 

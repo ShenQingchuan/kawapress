@@ -6,7 +6,7 @@ description: Reference assets from Markdown, Vue components, and CSS, then use t
 
 Images, fonts, and downloads in your documentation need to be deployed with the site. KawaPress offers two ways to handle them: let Vite manage assets referenced by a page, or copy files unchanged from the public assets directory.
 
-## Reference Static Assets
+## Reference Static Assets {#reference-static-assets}
 
 Every Markdown page becomes a Vue component and is processed by Vite. Use relative paths for images owned by that page:
 
@@ -18,7 +18,7 @@ Common image, media, and font files are detected as assets automatically. They c
 
 During a production build, referenced assets are copied to the output with content-hashed filenames. Unused assets are not copied, and very small files may be inlined.
 
-### A Linked File Is Not an Asset
+### A Linked File Is Not an Asset {#a-linked-file-is-not-an-asset}
 
 A normal link only provides an address. It does not automatically add its target to the build output:
 
@@ -65,7 +65,7 @@ Always reference a public asset from the site root:
 
 The URL stays `/handbook.pdf` whether the directory on disk is named `public` or `static`.
 
-## `base`
+## `base` {#base}
 
 Set `base: '/kawapress/'` when the site is deployed below a subpath such as `https://example.com/kawapress/`. KawaPress adjusts static asset URLs automatically.
 

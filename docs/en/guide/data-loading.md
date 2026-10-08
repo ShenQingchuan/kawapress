@@ -13,7 +13,7 @@ Some information does not belong directly in Markdown. A release list may come f
 
 A Data Loader runs only in Node.js. Its source code and Node.js dependencies never reach the browser. The value returned by `load()` is serialized as JSON into the chunks that use it.
 
-## Basic Usage
+## Basic Usage {#basic-usage}
 
 Create a file ending in `.data.ts` or `.data.js`:
 
@@ -42,7 +42,7 @@ The Loader file does not declare this runtime value. KawaPress runs the default 
 
 This documentation site uses the same feature. The current build loaded **{{ demo.pageCount }}** Chinese and English guide pages.
 
-## Load Remote Data
+## Load Remote Data {#load-remote-data}
 
 `load()` may be asynchronous. Node.js 22 includes `fetch()`:
 
@@ -61,7 +61,7 @@ export default {
 
 The request runs during development or production builds, not in each visitor's browser. The SSR and client builds share one result within the same build.
 
-## Watch Local Files
+## Watch Local Files {#watch-local-files}
 
 Add `watch` when data comes from local files. Patterns are relative to the Loader file and support globs:
 
@@ -82,7 +82,7 @@ export default {
 
 `files` contains absolute paths in stable path order. Creating, changing, or deleting a matched file regenerates the data and triggers hot updates in development. Changes to local helper modules imported by the Loader do the same.
 
-## Collect Markdown Content
+## Collect Markdown Content {#collect-markdown-content}
 
 Use `createContentLoader()` for an article archive or API index:
 
@@ -140,7 +140,7 @@ export default createContentLoader('posts/*.md', {
 
 These values are bundled into JavaScript, so keep only what the page needs. Use `html` and `excerpt` only with Markdown you trust. Do not pass untrusted content directly to `v-html`.
 
-## Type a Loader
+## Type a Loader {#type-a-loader}
 
 `defineLoader()` checks the Loader contract. Declaring `data` gives importing pages an exact type as well:
 
@@ -165,7 +165,7 @@ export default defineLoader({
 })
 ```
 
-## Read Site Configuration
+## Read Site Configuration {#read-site-configuration}
 
 The active configuration is available through `globalThis.KAWAPRESS_CONFIG` while a Loader runs:
 
@@ -183,7 +183,7 @@ export default {
 
 `root`, `srcDir`, and `publicDir` are absolute paths. `site` contains the serializable site data shared with the runtime. This global is available only during Node.js Data Loader execution.
 
-## Data Boundary
+## Data Boundary {#data-boundary}
 
 A Loader result must be lossless standard JSON: `null`, booleans, finite numbers, strings, arrays, and plain objects. Do not return `undefined`, `Date`, `Map`, `Set`, functions, class instances, circular references, or Vue refs. KawaPress reports the Loader file and exact property instead of allowing `JSON.stringify()` to silently discard data.
 

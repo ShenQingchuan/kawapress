@@ -9,7 +9,7 @@ A KawaPress theme is more than a color palette and font stack. It decides where 
 
 KawaPress does not provide that interface itself. It creates the Vue App, Vue Router, and Markdown pages, then lets the theme display them.
 
-## A Theme Is a Regular Plugin
+## A Theme Is a Regular Plugin {#a-theme-is-a-regular-plugin}
 
 KawaPress has no separate theme loader or theme-only lifecycle. Themes use the same plugin system as search and syntax highlighting.
 
@@ -31,7 +31,7 @@ When a theme has no generation work, the Generator Plugin can keep an empty `set
 
 The Runtime Plugin is loaded during both server rendering and browser startup. Theme components and statically imported dependencies must support both environments. Follow [SSR Compatibility](/en/guide/ssr-compatibility) for browser-only code.
 
-## KawaPress Requires Two Components
+## KawaPress Requires Two Components {#kawapress-requires-two-components}
 
 Every theme registers two global components:
 
@@ -44,7 +44,7 @@ The component names must match exactly. KawaPress does not require any other com
 
 Navigation bars, sidebars, page outlines, footers, and home components belong to the theme. Names such as `NavBar` and `Sidebar` inside nagi are not general KawaPress extension points, and a custom theme does not need to copy them.
 
-### `Layout` Places the Current Page
+### `Layout` Places the Current Page {#layout-places-the-current-page}
 
 The KawaPress root component renders the global `Layout`. The theme places `<RouterView />` where the current Markdown page should appear:
 
@@ -65,7 +65,7 @@ import { RouterView } from 'kawapress/client'
 
 `Layout` can add any structure around `RouterView` and choose different page frames from the current page data. KawaPress does not require documentation, home, and plain pages to share one layout.
 
-### `NotFound` Handles Unmatched Routes
+### `NotFound` Handles Unmatched Routes {#notfound-handles-unmatched-routes}
 
 When Vue Router cannot match a route, `RouterView` displays the global `NotFound` component:
 
@@ -87,7 +87,7 @@ const site = useSite()
 
 `NotFound` is still rendered inside `Layout`, so it keeps the theme's navigation and surrounding styles.
 
-## A Minimal Theme Package
+## A Minimal Theme Package {#a-minimal-theme-package}
 
 A theme package that KawaPress can load automatically can use this structure:
 
@@ -153,7 +153,7 @@ export default defineConfig({
 
 A site should install only one theme responsible for `Layout` and `NotFound`. Other interface features can continue to use regular Plugins.
 
-## The Theme Defines `themeConfig`
+## The Theme Defines `themeConfig` {#the-theme-defines-themeconfig}
 
 KawaPress does not interpret fields inside `themeConfig`. A theme defines a typed configuration for its own components and behavior:
 
@@ -199,7 +199,7 @@ const theme = useThemeConfig<MyThemeConfig>()
 
 `themeConfig` enters server rendering and the browser, so it only contains serializable data. Do not store components, functions, Vue refs, or class instances in it.
 
-## Each Language Can Override Theme Configuration
+## Each Language Can Override Theme Configuration {#each-language-can-override-theme-configuration}
 
 Top-level `themeConfig` contains settings shared by every language. A locale can replace fields that differ for that language:
 
@@ -236,7 +236,7 @@ KawaPress shallowly merges the two configurations. The Chinese page above keeps 
 
 A shallow merge does not continue into nested objects. If a locale provides `labels`, it replaces the entire `labels` field. Themes can prefer flatter configuration or restore defaults in their own resolver.
 
-## Page Presentation Rules Belong to the Theme
+## Page Presentation Rules Belong to the Theme {#page-presentation-rules-belong-to-the-theme}
 
 Frontmatter is preserved in page data, so a theme can define page-level fields for its own interface:
 
@@ -254,7 +254,7 @@ nagi interprets fields such as `layout`, `hero`, `features`, `sidebar`, and `out
 
 A custom theme can define different layout names and page options. It should publish types and documentation for those fields. Frontmatter still contains serializable data only.
 
-## Themes Use the Public Client API
+## Themes Use the Public Client API {#themes-use-the-public-client-api}
 
 Theme components import public capabilities from `kawapress/client`:
 
@@ -270,7 +270,7 @@ Theme components import public capabilities from `kawapress/client`:
 
 A theme does not import internal KawaPress files or maintain another router or locale state. Server rendering, hydration, and client navigation then use the same data.
 
-## Import Theme Styles from the Runtime Plugin
+## Import Theme Styles from the Runtime Plugin {#import-theme-styles-from-the-runtime-plugin}
 
 The theme Runtime Plugin imports CSS directly. KawaPress includes it in both server and browser builds, so the site does not import theme styles separately.
 

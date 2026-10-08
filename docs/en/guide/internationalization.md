@@ -7,7 +7,7 @@ description: Organize a multilingual documentation site with directories and loc
 
 KawaPress chooses a language from the URL. Keep the default language at the site root and put every other language in its own directory. Sites using the default nagi interface get a language menu automatically.
 
-## Add Pages for Each Language
+## Add Pages for Each Language {#add-pages-for-each-language}
 
 This site uses Chinese as its default language and also has English pages:
 
@@ -31,7 +31,7 @@ Use the same relative path for the same document in each language:
 
 The root directory is the default language, so it has no language prefix. A directory such as `en` becomes the first URL segment.
 
-## Configure Languages
+## Configure Languages {#configure-languages}
 
 List each language in `kawapress.config.ts`:
 
@@ -64,7 +64,7 @@ export default nagi({
 | `themeConfig` | Interface settings for this language only. They merge with site-wide settings, and matching fields are replaced here. |
 | `dir` | The writing direction: `ltr` or `rtl`. |
 
-## Switch Between Matching Pages
+## Switch Between Matching Pages {#switch-between-matching-pages}
 
 The language menu tries to open the same document in the other language. It also keeps query parameters and heading anchors:
 
@@ -75,11 +75,11 @@ The language menu tries to open the same document in the other language. It also
 
 Keep directory and file names the same for every language. KawaPress does not translate pages or look for a fallback when a matching page is missing. A missing file leads to the not-found page. Default site search also shows results for the current language only.
 
-## Default Language and Redirects
+## Default Language and Redirects {#default-language-and-redirects}
 
 `/` is always the default-language home page. KawaPress does not redirect from a browser-language preference or remember a reader’s last choice. Readers can switch at any time from the language menu.
 
-## Localize the Sidebar
+## Localize the Sidebar {#localize-the-sidebar}
 
 Each language can have its own `themeConfig`. With nagi, `defineLocalizedSidebars()` lets you write one route structure:
 
@@ -141,7 +141,7 @@ export default nagi({
 
 Write links with the default-language path. The helper adds `/en` for the English sidebar.
 
-## Right-to-Left Languages
+## Right-to-Left Languages {#right-to-left-languages}
 
 For a right-to-left language such as Arabic or Hebrew, set `dir: 'rtl'`:
 

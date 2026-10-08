@@ -9,7 +9,7 @@ description: 为每个页面生成 Markdown，并用 llms.txt 帮助 AI 工具�
 
 KawaPress 会在生成网页的同时，准备一套更适合这些工具读取的 Markdown 文件。使用默认预设 nagi 时，这项能力已经启用，不需要额外安装或配置。
 
-## 复制当前页面
+## 复制当前页面 {#copy-the-current-page}
 
 每个普通文档页的一级标题下方都有一个 Markdown 操作按钮。
 
@@ -29,7 +29,7 @@ https://docs.example.com/kawapress/guide/start.md
 
 页面正文按需读取，不会被打包进浏览器的 JavaScript。
 
-## 生成的文件
+## 生成的文件 {#generated-files}
 
 运行 `kawapress build` 后，每个页面都会有一个对应的 `.md` 文件。
 
@@ -42,7 +42,7 @@ https://docs.example.com/kawapress/guide/start.md
 
 开发服务器也会提供相同的地址。你可以在编写文档时打开这些链接，查看 AI 工具最终会读到什么。
 
-## `llms.txt` 与 `llms-full.txt`
+## `llms.txt` 与 `llms-full.txt` {#llmstxt-and-llms-fulltxt}
 
 KawaPress 还会为每种语言生成两个入口文件。
 
@@ -65,7 +65,7 @@ KawaPress 还会为每种语言生成两个入口文件。
 
 不同语言的索引只包含自己的页面，不会把多种语言混在一起。
 
-## 独立使用插件
+## 独立使用插件 {#use-the-plugin-independently}
 
 nagi 已经组合了这项能力。没有使用 nagi 的站点，可以独立安装并配置同一个插件：
 
@@ -96,7 +96,7 @@ export default defineConfig({
 
 Generator Plugin 负责生成 Markdown 文件，配套的 Runtime Plugin 会自动加入复制界面和样式，不需要再手动导入运行入口。
 
-## 设置站点简介
+## 设置站点简介 {#add-a-site-description}
 
 可以通过 nagi 的 `llms.description` 为索引补充站点简介。多语言站点可以分别设置：
 
@@ -129,7 +129,7 @@ export default nagi({
 
 回调会为每种语言执行一次。`defaultContent` 是 KawaPress 已经生成好的默认索引，可以直接返回，也可以在它的基础上补充内容。
 
-## 设置页面简介
+## 设置页面简介 {#describe-a-page}
 
 页面的 `description` 会成为 `llms.txt` 中的简介：
 
@@ -162,7 +162,7 @@ llms: false
 
 这适合只用于网站交互、对独立阅读没有帮助的页面。
 
-## Vue 内容也会参与生成
+## Vue 内容也会参与生成 {#vue-content-is-rendered-too}
 
 Markdown 中的 Vue 插值、组件和 `<script setup>` 会在专用的服务端环境中运行。普通 Markdown 保留原来的源码形状，动态 Vue 内容则使用渲染后的结果。
 
@@ -194,7 +194,7 @@ KawaPress 只能读取组件在服务端渲染出的内容，无法猜出交互�
 遇到选项卡、图表和交互式演示时，请直接打开对应的 `.md` 文件检查结果。如果自动结果不适合独立阅读，请参考下面的示例使用 `SsgMarkdown` 明确提供内容。组件本身也应遵守 [SSR 兼容性](/guide/ssr-compatibility)。
 :::
 
-## 为复杂组件提供 Markdown
+## 为复杂组件提供 Markdown {#provide-markdown-for-a-complex-component}
 
 选项卡、图表和交互式演示有时拥有比视觉结构更合适的文字表达。组件可以使用 `SsgMarkdown` 明确提供这份内容。
 

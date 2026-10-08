@@ -15,7 +15,7 @@ To a site author, this is still one feature: **search**. In many static site gen
 
 The KawaPress plugin system starts with this problem.
 
-## Pain Point: Configuration Scattered Across Multiple Places
+## Pain Point: Configuration Scattered Across Multiple Places {#pain-point-configuration-scattered-across-multiple-places}
 
 VitePress provides several useful extension points. You can adjust Markdown in configuration, add Vite Plugins, and use build Hooks. In the final website, a theme can use `enhanceApp` to install Vue plugins and components.
 
@@ -25,7 +25,7 @@ This is manageable when a feature only changes Markdown. Once it also generates 
 
 The missing piece is not another Hook. It is a way to tell the framework that all of this code belongs to one Plugin.
 
-## The KawaPress Plugin Contract
+## The KawaPress Plugin Contract {#the-kawapress-plugin-contract}
 
 Generating an index and displaying a search interface should happen in different places. KawaPress does not force them into one execution environment. It puts them in one plugin package:
 
@@ -39,7 +39,7 @@ Generating an index and displaying a search interface should happen in different
 
 KawaPress calls the complete search feature a Plugin. That Plugin can contain two cooperating parts.
 
-### A Generator Plugin Participates in the Build
+### A Generator Plugin Participates in the Build {#a-generator-plugin-participates-in-the-build}
 
 A Generator Plugin works while KawaPress loads configuration, compiles Markdown, and builds the site. It can:
 
@@ -50,7 +50,7 @@ A Generator Plugin works while KawaPress loads configuration, compiles Markdown,
 
 A custom container only changes generated HTML, so a Generator Plugin is enough. Local search generates its index here, and syntax highlighting turns source code into final markup here as well.
 
-### A Runtime Plugin Participates in the Page Runtime
+### A Runtime Plugin Participates in the Page Runtime {#a-runtime-plugin-participates-in-the-page-runtime}
 
 A Runtime Plugin works when KawaPress creates the Vue App and Vue Router. It can:
 
@@ -103,7 +103,7 @@ const plugins = [
 
 Do not ask site authors to import `@kawapress/plugin-search/runtime-plugin`. Generation and runtime happen at different stages, but the feature still has one installation and one configuration.
 
-### Publish TypeScript Source Directly
+### Publish TypeScript Source Directly {#publish-typescript-source-directly}
 
 KawaPress Plugins are best written in TypeScript and can publish `.ts`, `.vue`, and CSS source files directly. A separate bundling step is not required.
 
@@ -115,7 +115,7 @@ Include the source directory in the published npm package through `files`.
 Publishing source is recommended, not required. A precompiled ESM Plugin also works when `types` points to its declarations and `import` and `default` point to its JavaScript output.
 :::
 
-## Good Defaults Should Form a Complete Product
+## Good Defaults Should Form a Complete Product {#good-defaults-should-form-a-complete-product}
 
 Once search, syntax highlighting, custom containers, and themes can be installed independently, a site has more freedom. But if every site must select and connect each feature from scratch, a basic documentation site begins with a long configuration checklist.
 
@@ -145,7 +145,7 @@ export default nagi({
 
 There is no privileged “official theme layer” here. A Runtime Plugin installs the nagi interface, and every feature it combines is a regular Plugin. Official code uses the same public extension points available to third parties.
 
-## Add Plugins to a Preset
+## Add Plugins to a Preset {#add-plugins-to-a-preset}
 
 Using nagi does not prevent a site from adding independent features. This configuration keeps every nagi default and adds MathJax:
 
@@ -181,7 +181,7 @@ export default defineConfig({
 
 The custom theme Plugin must register the layout components KawaPress needs to render pages. Changing a Preset means changing the outer configuration function; there is no separate `presets` list to maintain.
 
-## Find the Extension Point from the Work
+## Find the Extension Point from the Work {#find-the-extension-point-from-the-work}
 
 When writing an extension, start by asking where the work happens:
 

@@ -9,7 +9,7 @@ description: 了解 KawaPress 主题的架构位置、组件约定和配置边�
 
 KawaPress 不内置这些界面。它只负责创建 Vue App、Vue Router 和 Markdown 页面，再把页面交给主题显示。
 
-## 主题是一个普通 Plugin
+## 主题是一个普通 Plugin {#a-theme-is-a-regular-plugin}
 
 KawaPress 没有单独的主题加载器，也没有只能由主题使用的生命周期。主题和搜索、代码高亮一样，都通过插件体系安装。
 
@@ -31,7 +31,7 @@ KawaPress 没有单独的主题加载器，也没有只能由主题使用的生�
 
 Runtime Plugin 会同时用于服务端渲染和浏览器。主题组件和静态导入的依赖必须兼容这两个环境；浏览器专属代码请按 [SSR 兼容性](/guide/ssr-compatibility)中的方式处理。
 
-## KawaPress 只约定两个组件
+## KawaPress 只约定两个组件 {#kawapress-requires-two-components}
 
 主题必须注册两个全局组件：
 
@@ -44,7 +44,7 @@ Runtime Plugin 会同时用于服务端渲染和浏览器。主题组件和静�
 
 导航栏、侧边栏、本页目录、页脚和首页组件都由主题自己组织。nagi 中的 `NavBar`、`Sidebar` 等名字不是 KawaPress 的通用扩展点，自定义主题不需要照搬。
 
-### `Layout` 决定页面放在哪里
+### `Layout` 决定页面放在哪里 {#layout-places-the-current-page}
 
 KawaPress 的根组件只渲染全局 `Layout`。主题需要在 `Layout` 中放置 `<RouterView />`，当前 Markdown 页面才会出现在界面里：
 
@@ -65,7 +65,7 @@ import { RouterView } from 'kawapress/client'
 
 `Layout` 可以在 `RouterView` 外添加任意结构，也可以根据当前页面数据选择不同布局。KawaPress 不要求文档页、首页和普通页面使用相同框架。
 
-### `NotFound` 只负责未匹配的页面
+### `NotFound` 只负责未匹配的页面 {#notfound-handles-unmatched-routes}
 
 当 Vue Router 找不到对应路由时，`RouterView` 会显示全局 `NotFound`：
 
@@ -87,7 +87,7 @@ const site = useSite()
 
 `NotFound` 仍然位于 `Layout` 里面，因此会继续使用主题的导航和整体样式。
 
-## 最小主题包
+## 最小主题包 {#a-minimal-theme-package}
 
 一个可以被 KawaPress 自动加载的主题包，可以使用下面的结构：
 
@@ -153,7 +153,7 @@ export default defineConfig({
 
 一个站点只应该安装一个负责 `Layout` 和 `NotFound` 的主题。其他界面能力可以继续作为普通 Plugin 加入。
 
-## `themeConfig` 由主题定义
+## `themeConfig` 由主题定义 {#the-theme-defines-themeconfig}
 
 KawaPress 不解释 `themeConfig` 里的字段。主题可以根据自己的组件和交互，定义一套带类型的配置：
 
@@ -199,7 +199,7 @@ const theme = useThemeConfig<MyThemeConfig>()
 
 `themeConfig` 会进入服务端渲染和浏览器，因此只能保存可以序列化的数据。组件、函数、Vue ref 和类实例不应该放进去。
 
-## 每种语言可以覆盖主题配置
+## 每种语言可以覆盖主题配置 {#each-language-can-override-theme-configuration}
 
 顶层 `themeConfig` 保存各语言共用的配置。`locales` 中的 `themeConfig` 可以替换当前语言需要变化的字段：
 
@@ -236,7 +236,7 @@ KawaPress 会浅层合并这两份配置。上面的中文页面会保留顶层 
 
 浅层合并不会继续合并嵌套对象。如果某个语言提供了 `labels`，整个 `labels` 字段都会替换。主题可以使用较扁平的配置，或在自己的解析函数中补齐默认值。
 
-## 页面展示规则属于主题
+## 页面展示规则属于主题 {#page-presentation-rules-belong-to-the-theme}
 
 Frontmatter 会完整保留在页面数据中，主题可以为自己的界面定义页面级字段：
 
@@ -254,7 +254,7 @@ const layout = computed(() =>
 
 自定义主题可以定义完全不同的布局名称和页面选项，但应该把这些字段写进自己的类型和文档。Frontmatter 仍然只能保存可以序列化的数据。
 
-## 主题从公开客户端 API 获取数据
+## 主题从公开客户端 API 获取数据 {#themes-use-the-public-client-api}
 
 主题组件从 `kawapress/client` 使用公开能力：
 
@@ -270,7 +270,7 @@ const layout = computed(() =>
 
 主题不应导入 KawaPress 内部文件，也不应自己维护另一套路由或语言状态。这样，服务端渲染、hydration 和站内跳转会使用同一份数据。
 
-## 在 Runtime Plugin 中导入主题样式
+## 在 Runtime Plugin 中导入主题样式 {#import-theme-styles-from-the-runtime-plugin}
 
 主题的 Runtime Plugin 直接导入 CSS。KawaPress 会把它同时放进服务端和浏览器构建，不需要站点用户再手动导入主题样式。
 

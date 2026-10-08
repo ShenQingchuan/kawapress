@@ -8,7 +8,7 @@ KawaPress is a Vue-first [Static Site Generator](https://en.wikipedia.org/wiki/S
 
 You write content in Markdown. KawaPress compiles it into Vue pages, applies a theme, and generates static HTML during the build. The deployed site does not require a Node.js server and can run on any static hosting service.
 
-## Use Cases
+## Use Cases {#use-cases}
 
 - **Technical Documentation**
 
@@ -22,7 +22,7 @@ You write content in Markdown. KawaPress compiles it into Vue pages, applies a t
 
   KawaPress 0.1 does not include a blog system, CMS content layer, or dynamic routes.
 
-## Developer Experience
+## Developer Experience {#developer-experience}
 
 KawaPress keeps Markdown authoring simple while retaining the development model of a Vue application.
 
@@ -34,7 +34,7 @@ KawaPress keeps Markdown authoring simple while retaining the development model 
 
 - **Explicit extension boundaries**: Generator Plugins configure Markdown, page data, site config, and Vite. Runtime Plugins extend the final Vue App and Router. Presets combine configuration and plugins into a ready-to-use setup.
 
-## Rendering Model
+## Rendering Model {#rendering-model}
 
 KawaPress combines pre-rendered HTML with client-side navigation.
 
@@ -48,7 +48,7 @@ KawaPress combines pre-rendered HTML with client-side navigation.
 
 Development and build use the same Vue application and SSR rendering semantics. Their module loading mechanisms differ, but the page lifecycle remains consistent.
 
-## Relationship to VitePress
+## Relationship to VitePress {#relationship-to-vitepress}
 
 KawaPress aims to be a better VitePress. It is an independent alternative built by members of the Vue community for Vue users who want a more capable documentation tool that is easier to extend.
 
