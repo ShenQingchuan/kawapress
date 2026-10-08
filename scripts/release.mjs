@@ -835,17 +835,21 @@ async function getPublishedTag(name, tag, registry) {
   return typeof tags?.[tag] === 'string' ? tags[tag] : null
 }
 
+const DIST_TAG_WAIT_ATTEMPTS = 36
+const DIST_TAG_WAIT_INTERVAL_MS = 5_000
+
 async function waitForDistTag(packageInfo, tag, registry) {
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const current = await getPublishedTag(packageInfo.name, tag, registry)
+  let current = null
+  for (let attempt = 0; attempt < DIST_TAG_WAIT_ATTEMPTS; attempt += 1) {
+    current = await getPublishedTag(packageInfo.name, tag, registry)
     if (current === packageInfo.version)
       return
-    await delay(500 * (attempt + 1))
+    if (attempt < DIST_TAG_WAIT_ATTEMPTS - 1)
+      await delay(DIST_TAG_WAIT_INTERVAL_MS)
   }
 
-  const current = await getPublishedTag(packageInfo.name, tag, registry)
   throw new Error(
-    `dist-tag verification failed for ${packageInfo.name}: expected ${tag}=${packageInfo.version}, got ${current}.`,
+    `${packageInfo.name}@${packageInfo.version} is not yet reported as ${tag} by the registry (currently ${current}). The registry is still propagating; rerun the same command to resume.`,
   )
 }
 
@@ -975,9 +979,14 @@ async function publishPackages(packages, states, options) {
           `${packageInfo.name}@${packageInfo.version} was accepted by npm; package metadata is still propagating.`,
         )
       }
+
+      // npm publish 已通过 --tag 设置标签，这里只等待 registry 同步该标签。
+      await waitForDistTag(packageInfo, options.tag, options.registry)
+    }
+    else {
+      await ensureDistTag(packageInfo, options.tag, options.registry)
     }
 
-    await ensureDistTag(packageInfo, options.tag, options.registry)
     const state = states.get(packageInfo.name)
     const resumed = state === 'identical'
       ? ' (resumed)'
