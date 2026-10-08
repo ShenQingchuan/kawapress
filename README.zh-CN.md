@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/kawapress"><img src="https://img.shields.io/npm/v/kawapress/beta?label=npm%20beta&color=42b883" alt="npm beta 版本"></a>
+  <a href="https://www.npmjs.com/package/kawapress"><img src="https://img.shields.io/npm/v/kawapress?label=npm&color=42b883" alt="npm 版本"></a>
   <a href="https://github.com/ShenQingchuan/kawapress/actions/workflows/deploy-pages.yml"><img src="https://github.com/ShenQingchuan/kawapress/actions/workflows/deploy-pages.yml/badge.svg" alt="文档构建状态"></a>
   <a href="https://github.com/ShenQingchuan/kawapress/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ShenQingchuan/kawapress" alt="MIT 许可"></a>
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A522.12-339933?logo=nodedotjs&logoColor=white" alt="Node.js 22.12 或更高版本">
@@ -28,8 +28,7 @@
   <a href="https://github.com/ShenQingchuan/kawapress/blob/main/README.md">English</a>
 </p>
 
-> [!IMPORTANT]
-> KawaPress 目前处于 beta 阶段，适合试用和早期项目。0.1.0 之前，公开 API 仍可能调整；现阶段使用时请固定具体版本。
+使用 KawaPress 时遇到任何问题，欢迎到 [提交 Issue](https://github.com/ShenQingchuan/kawapress/issues) 反馈，一起参与本项目的早期建设。
 
 ## 为什么选择 KawaPress？
 
