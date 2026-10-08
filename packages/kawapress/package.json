@@ -48,7 +48,7 @@
   },
   "files": [
     "bin",
-    "src"
+    "src/**/!(*.test.*)"
   ],
   "engines": {
     "node": ">=22.12.0"

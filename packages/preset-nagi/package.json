@@ -27,7 +27,7 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "src"
+    "src/**/!(*.test.*)"
   ],
   "engines": {
     "node": ">=22.12.0"
