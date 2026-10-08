@@ -123,3 +123,15 @@ search: false
 ```
 
 Only a literal `false` excludes a page.
+
+## Exclude a Page from the Sitemap {#exclude-a-page-from-sitemap}
+
+To keep a page out of `sitemap.xml`, write:
+
+```md
+---
+sitemap: false
+---
+```
+
+Only a literal `false` excludes a page. For the other sitemap settings, see [Sitemap](/en/guide/sitemap).

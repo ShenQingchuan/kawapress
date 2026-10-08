@@ -61,33 +61,9 @@ A Runtime Plugin works when KawaPress creates the Vue App and Vue Router. It can
 
 Server rendering and the browser both load Runtime Plugins. Search interfaces, copy buttons, and theme layouts all need this part. Read [SSR Compatibility](/en/guide/ssr-compatibility) before using browser APIs.
 
-### Plugin Package Export Conventions {#plugin-package-exports}
+### Publishing Conventions {#plugin-package-exports}
 
-A Plugin published to npm exposes its Generator Plugin from the default entry and may expose a `./runtime-plugin` entry:
-
-```json
-{
-  "name": "@kawapress/plugin-search",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./runtime-plugin": {
-      "types": "./src/runtime-plugin.ts",
-      "import": "./src/runtime-plugin.ts",
-      "default": "./src/runtime-plugin.ts"
-    }
-  },
-  "files": [
-    "src"
-  ]
-}
-```
-
-The `package.json` name, Generator Plugin name, and Runtime Plugin name should match. KawaPress reads this name from the configured Generator Plugin, then checks whether the package with that name exposes `./runtime-plugin`. When it does, the runtime entry is loaded automatically.
+A Plugin published to npm exposes its Generator Plugin from the default entry. When it also has runtime behavior, it exposes a `./runtime-plugin` entry. KawaPress reads the name of the Generator Plugin from the site configuration, then checks whether the package with that name exposes `./runtime-plugin`. When it does, the runtime entry is loaded automatically.
 
 A build-only Plugin does not expose `./runtime-plugin`. A Plugin used only in the page runtime still needs a default entry whose Generator Plugin declares its stable identity; its `setup()` does not need to register any Hooks.
 
@@ -103,17 +79,9 @@ const plugins = [
 
 Do not ask site authors to import `@kawapress/plugin-search/runtime-plugin`. Generation and runtime happen at different stages, but the feature still has one installation and one configuration.
 
-### Publish TypeScript Source Directly {#publish-typescript-source-directly}
+KawaPress Plugins are best written in TypeScript and can publish `.ts`, `.vue`, and CSS source files directly. A separate bundling step is not required. The Vite used by KawaPress performs the final syntax transforms, dependency resolution, and browser build.
 
-KawaPress Plugins are best written in TypeScript and can publish `.ts`, `.vue`, and CSS source files directly. A separate bundling step is not required.
-
-The `exports` example above already uses the recommended source-package form. KawaPress loads the Generator Plugin through Vite Module Runner. The Runtime Plugin, its Vue SFCs, and its CSS enter the site's Vite module graph. Vite performs the final syntax transforms, dependency resolution, and browser build.
-
-Include the source directory in the published npm package through `files`.
-
-::: info Precompiled output is also supported
-Publishing source is recommended, not required. A precompiled ESM Plugin also works when `types` points to its declarations and `import` and `default` point to its JavaScript output.
-:::
+For the `package.json` layout, the code for each entry, and the publishing checklist, read [Plugin Development](/en/guide/plugin-development).
 
 ## Good Defaults Should Form a Complete Product {#good-defaults-should-form-a-complete-product}
 
@@ -181,18 +149,6 @@ export default defineConfig({
 
 The custom theme Plugin must register the layout components KawaPress needs to render pages. Changing a Preset means changing the outer configuration function; there is no separate `presets` list to maintain.
 
-## Find the Extension Point from the Work {#find-the-extension-point-from-the-work}
+## Start Writing a Plugin {#start-writing-a-plugin}
 
-When writing an extension, start by asking where the work happens:
-
-| What you want to do | Extension point |
-| --- | --- |
-| Change site configuration | Generator Plugin `config()` |
-| Extend Markdown syntax | Generator Plugin `markdown()` |
-| Change data for each page | Generator Plugin `pageData()` |
-| Add or adjust Vite behavior | Generator Plugin `vite()` |
-| Install a Vue plugin or global component | Runtime Plugin `vueApp()` |
-| Add navigation guards or runtime route behavior | Runtime Plugin `router()` |
-| Provide a complete experience ready to use | Preset |
-
-One feature may use several entries in this table, but it should still ship as one plugin package. Extension points place work in the correct stage. Plugin identity gathers that work back into one feature.
+This page explains why KawaPress organizes plugins this way. When you write one, read [Plugin Development](/en/guide/plugin-development). It lists the six generator methods and two runtime methods by extension point, with code you can use as a reference.

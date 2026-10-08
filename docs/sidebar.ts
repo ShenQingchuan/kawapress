@@ -47,6 +47,13 @@ export const sidebars = defineLocalizedSidebars({
           },
           link: '/guide/deploy',
         },
+        {
+          text: {
+            zhCN: '站点地图',
+            en: 'Sitemap',
+          },
+          link: '/guide/sitemap',
+        },
       ],
     },
     {
@@ -104,6 +111,13 @@ export const sidebars = defineLocalizedSidebars({
             en: 'Plugin System',
           },
           link: '/guide/plugin-system',
+        },
+        {
+          text: {
+            zhCN: '插件开发',
+            en: 'Plugin Development',
+          },
+          link: '/guide/plugin-development',
         },
         {
           text: {

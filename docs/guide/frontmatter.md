@@ -123,3 +123,15 @@ search: false
 ```
 
 只有直接写 `false` 才会排除页面。
+
+## 从站点地图中排除页面 {#exclude-a-page-from-sitemap}
+
+不希望页面出现在 `sitemap.xml` 中时，写：
+
+```md
+---
+sitemap: false
+---
+```
+
+只有直接写 `false` 才会排除页面。站点地图的其他设置见[站点地图](/guide/sitemap)。
