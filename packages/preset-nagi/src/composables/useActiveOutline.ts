@@ -1,4 +1,4 @@
-import { usePageData } from 'kawapress/client'
+import { usePageData, useRouter } from 'kawapress/client'
 import { nextTick, onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import {
   findOutlineHeaderByHash,
@@ -15,10 +15,11 @@ let article: HTMLElement | null = null
 let frame = 0
 let ignoreUntil = 0
 let bindGeneration = 0
-let stopPageWatch: (() => void) | undefined
+let stopRouteWatch: (() => void) | undefined
 
 export function useActiveOutline() {
   const page = usePageData()
+  const router = useRouter()
   const getScrollElement = useDocScrollElement()
 
   function activateLink(link: string | null, sticky = false): void {
@@ -141,21 +142,31 @@ export function useActiveOutline() {
     if (subscriberCount === 1) {
       void bind()
       window.addEventListener('hashchange', onHashChange)
-      stopPageWatch = watch(() => page.value?.path, () => {
-        activateLink(
-          flattenOutlineHeaders(getOutlineHeaders(page.value?.headers ?? []))[0]?.link ?? null,
-        )
-        unbind()
-        void bind()
-      })
+      stopRouteWatch = watch(
+        () => [page.value?.path, router.currentRoute.value.hash] as const,
+        ([path], [previousPath]) => {
+          if (path === previousPath) {
+            // 同一页面内的 hash 跳转（如搜索结果）不会触发 hashchange，需要在这里主动定位
+            if (!scrollToLocationHash()) {
+              updateActive()
+            }
+            return
+          }
+          activateLink(
+            flattenOutlineHeaders(getOutlineHeaders(page.value?.headers ?? []))[0]?.link ?? null,
+          )
+          unbind()
+          void bind()
+        },
+      )
     }
   })
 
   onUnmounted(() => {
     subscriberCount -= 1
     if (subscriberCount === 0) {
-      stopPageWatch?.()
-      stopPageWatch = undefined
+      stopRouteWatch?.()
+      stopRouteWatch = undefined
       window.removeEventListener('hashchange', onHashChange)
       unbind()
     }

@@ -8,10 +8,16 @@ const testState = vi.hoisted(() => ({
   unmountedHook: undefined as (() => void) | undefined,
   page: { value: undefined } as { value: { headers: PageHeader[], path: string } | undefined },
   getScrollElement: (() => null) as () => HTMLElement | null,
+  router: { currentRoute: { value: { hash: '' } } },
+  routeWatch: undefined as {
+    source: () => readonly unknown[]
+    callback: (value: readonly unknown[], previous: readonly unknown[]) => void
+  } | undefined,
 }))
 
 vi.mock('kawapress/client', () => ({
   usePageData: () => testState.page as Ref<typeof testState.page.value>,
+  useRouter: () => testState.router,
 }))
 
 vi.mock('vue', async (importOriginal) => {
@@ -24,7 +30,13 @@ vi.mock('vue', async (importOriginal) => {
     onUnmounted: (hook: () => void) => {
       testState.unmountedHook = hook
     },
-    watch: () => () => {},
+    watch: (
+      source: () => readonly unknown[],
+      callback: (value: readonly unknown[], previous: readonly unknown[]) => void,
+    ) => {
+      testState.routeWatch = { source, callback }
+      return () => {}
+    },
   }
 })
 
@@ -122,6 +134,71 @@ describe('active outline', () => {
 
     location.hash = '#child'
     listeners.get('hashchange')?.(new Event('hashchange'))
+
+    expect(root.scrollTop).toBe(320)
+    expect(activeOutlineLink.value).toBe('#child')
+  })
+
+  it('scrolls to the target when only the route hash changes on the same page', async () => {
+    const root = {
+      scrollTop: 0,
+      clientHeight: 400,
+      scrollHeight: 1200,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      getBoundingClientRect: () => ({ top: 0 }),
+    }
+    const positions: Record<string, number> = {
+      parent: 100,
+      child: 320,
+    }
+    const article = {
+      querySelector: (selector: string) => {
+        const top = positions[selector.slice(1)]
+        if (top === undefined) {
+          return null
+        }
+        return {
+          getBoundingClientRect: () => ({ top: top - root.scrollTop }),
+          scrollIntoView: () => {
+            root.scrollTop = top
+          },
+        }
+      },
+    }
+    testState.page.value = {
+      path: '/guide',
+      headers: [header(2, 'Parent', 'parent', [
+        header(3, 'Child', 'child'),
+      ])],
+    }
+    testState.getScrollElement = () => root as unknown as HTMLElement
+    vi.stubGlobal('window', {
+      location: { hash: '' },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        callback(0)
+        return 1
+      },
+      cancelAnimationFrame: vi.fn(),
+    })
+    vi.stubGlobal('document', {
+      querySelector: () => article,
+    })
+    vi.stubGlobal('CSS', { escape: (value: string) => value })
+
+    const { activeOutlineLink } = useActiveOutline()
+    testState.mountedHook?.()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(activeOutlineLink.value).toBe('#parent')
+
+    window.location.hash = '#child'
+    testState.routeWatch?.callback(
+      ['/guide', '#child'],
+      ['/guide', ''],
+    )
 
     expect(root.scrollTop).toBe(320)
     expect(activeOutlineLink.value).toBe('#child')
