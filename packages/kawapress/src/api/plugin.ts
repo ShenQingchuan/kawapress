@@ -2,6 +2,7 @@ import type { MarkdownExit } from 'markdown-exit'
 import type { UserConfig } from 'vite'
 import type { App } from 'vue'
 import type { Router } from 'vue-router'
+import type { OutletItemInput, OutletName } from '../core/outlet'
 import type { PageData, SiteConfig } from '../core/site'
 
 export type MaybePromise<T> = T | Promise<T>
@@ -53,6 +54,8 @@ export function definePlugin(plugin: KawaPressPlugin): KawaPressPlugin {
 export type RuntimePluginHandler<T> = (value: T) => MaybePromise<void>
 
 export interface RuntimePluginAPI {
+  /** Places a component in a theme outlet. */
+  addToOutlet: (outlet: OutletName, item: OutletItemInput) => void
   vueApp: (handler: RuntimePluginHandler<App>) => void
   router: (handler: RuntimePluginHandler<Router>) => void
 }

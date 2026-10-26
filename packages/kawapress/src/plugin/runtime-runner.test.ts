@@ -81,3 +81,88 @@ describe('createRuntimePluginRunner', () => {
     await expect(run).rejects.toHaveProperty('cause', cause)
   })
 })
+
+describe('runtime plugin outlets', () => {
+  const First = { name: 'FirstItem' }
+  const Second = { name: 'SecondItem' }
+
+  it('collects items in plugin order, then call order, with full ids', async () => {
+    const runner = await createRuntimePluginRunner([
+      defineRuntimePlugin({
+        name: '@acme/plugin-first',
+        setup(api) {
+          api.addToOutlet('header.actions', { id: 'trigger', component: First })
+          api.addToOutlet('doc.after', { id: 'comments', component: Second })
+        },
+      }),
+      defineRuntimePlugin({
+        name: '@acme/plugin-second',
+        setup(api) {
+          api.addToOutlet('header.actions', { id: 'trigger', component: Second })
+        },
+      }),
+    ])
+
+    expect(runner.outlets['header.actions'].map(item => item.id)).toEqual([
+      '@acme/plugin-first:trigger',
+      '@acme/plugin-second:trigger',
+    ])
+    expect(runner.outlets['doc.after']).toEqual([
+      {
+        id: '@acme/plugin-first:comments',
+        owner: '@acme/plugin-first',
+        component: Second,
+      },
+    ])
+    expect(runner.outlets['doc.footer']).toEqual([])
+  })
+
+  it('rejects unknown outlet names with the plugin identity', async () => {
+    const runner = createRuntimePluginRunner([
+      defineRuntimePlugin({
+        name: '@acme/plugin-broken',
+        setup(api) {
+          api.addToOutlet('header.action' as 'header.actions', {
+            id: 'trigger',
+            component: First,
+          })
+        },
+      }),
+    ])
+
+    await expect(runner).rejects.toThrow(
+      'KawaPress: plugin "@acme/plugin-broken" calling api.addToOutlet() uses the unknown outlet "header.action".',
+    )
+  })
+
+  it('rejects empty item ids', async () => {
+    const runner = createRuntimePluginRunner([
+      defineRuntimePlugin({
+        name: '@acme/plugin-broken',
+        setup(api) {
+          api.addToOutlet('doc.footer', { id: '  ', component: First })
+        },
+      }),
+    ])
+
+    await expect(runner).rejects.toThrow(
+      '[@acme/plugin-broken / runtime / addToOutlet] Item id for outlet "doc.footer" must be a non-empty string.',
+    )
+  })
+
+  it('rejects duplicate ids inside one plugin', async () => {
+    const runner = createRuntimePluginRunner([
+      defineRuntimePlugin({
+        name: '@acme/plugin-broken',
+        setup(api) {
+          api.addToOutlet('doc.footer', { id: 'updated-at', component: First })
+          api.addToOutlet('doc.footer', { id: 'updated-at', component: Second })
+        },
+      }),
+    ])
+
+    await expect(runner).rejects.toThrow(
+      '[@acme/plugin-broken / runtime / addToOutlet] Duplicate item id "@acme/plugin-broken:updated-at"',
+    )
+  })
+})

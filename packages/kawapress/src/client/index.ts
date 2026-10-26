@@ -1,4 +1,7 @@
 export { withBase } from '../core/base'
+export { OUTLET_NAMES } from '../core/outlet'
+export type { OutletItem, OutletName, OutletRegistry } from '../core/outlet'
+export { default as KawaOutlet } from './components/KawaOutlet.vue'
 export { useLocale, usePageData, useSite, useThemeConfig } from './composables'
 export type { LocaleContext } from './composables'
 export { RouterLink, RouterView, useRouter } from 'vue-router'
