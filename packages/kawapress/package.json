@@ -36,6 +36,11 @@
       "import": "./src/client/index.ts",
       "default": "./src/client/index.ts"
     },
+    "./generator": {
+      "types": "./src/generator.ts",
+      "import": "./src/generator.ts",
+      "default": "./src/generator.ts"
+    },
     "./nagi": {
       "types": "./src/nagi.ts",
       "import": "./src/nagi.ts",

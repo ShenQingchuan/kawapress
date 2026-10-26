@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parseGitLog, readGitLastUpdated } from './git'
 
 const directories: string[] = []
+const OPTIONS = { label: 'KawaPress Test', skipped: 'lastmod' }
 
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -14,7 +15,7 @@ afterEach(async () => {
 })
 
 async function createDirectory(): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), 'kawapress-sitemap-git-'))
+  const directory = await mkdtemp(join(tmpdir(), 'kawapress-git-'))
   directories.push(directory)
   return directory
 }
@@ -45,8 +46,8 @@ describe('readGitLastUpdated', () => {
     const warn = vi.spyOn(consola, 'warn').mockImplementation(() => {})
     const directory = await createDirectory()
 
-    expect(await readGitLastUpdated(directory)).toBeUndefined()
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('不在 git 仓库'))
+    expect(await readGitLastUpdated(directory, OPTIONS)).toBeUndefined()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('not inside a git repository'))
   })
 
   it('reads the last commit time of each markdown file', async () => {
@@ -56,7 +57,7 @@ describe('readGitLastUpdated', () => {
     git(directory, ['add', '-A'])
     git(directory, ['commit', '-q', '-m', 'init'], '2024-01-02T03:04:05Z')
 
-    const map = await readGitLastUpdated(directory)
+    const map = await readGitLastUpdated(directory, OPTIONS)
     expect(map?.get(join(directory, 'index.md'))).toBe(Date.parse('2024-01-02T03:04:05Z'))
   })
 
@@ -73,7 +74,7 @@ describe('readGitLastUpdated', () => {
     const clone = join(await createDirectory(), 'clone')
     execFileSync('git', ['clone', '-q', '--depth', '1', `file://${origin}`, clone])
 
-    expect(await readGitLastUpdated(clone)).toBeUndefined()
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('浅克隆'))
+    expect(await readGitLastUpdated(clone, OPTIONS)).toBeUndefined()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('shallow clone'))
   })
 })

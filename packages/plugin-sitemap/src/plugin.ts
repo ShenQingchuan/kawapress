@@ -4,8 +4,8 @@ import { resolve } from 'node:path'
 import process from 'node:process'
 import { consola } from 'consola'
 import { definePlugin } from 'kawapress'
+import { readGitLastUpdated } from 'kawapress/generator'
 import { SitemapStream, streamToPromise } from 'sitemap'
-import { readGitLastUpdated } from './git'
 import { resolveSitemapHostname } from './hostname'
 import { createSitemapItems } from './items'
 
@@ -35,7 +35,10 @@ export function sitemapPlugin(options: SitemapPluginOptions = {}) {
         consola.start('sitemap 正在生成中…')
         const hostname = resolveSitemapHostname(options.hostname, base)
         const gitLastUpdated = options.lastUpdated
-          ? await readGitLastUpdated(root)
+          ? await readGitLastUpdated(root, {
+              label: 'KawaPress Sitemap',
+              skipped: 'lastmod',
+            })
           : undefined
         let items = createSitemapItems({
           pages,

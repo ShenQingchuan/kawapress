@@ -12,24 +12,34 @@ async function runGit(cwd: string, args: string[]): Promise<string> {
   return stdout
 }
 
+export interface ReadGitLastUpdatedOptions {
+  /** Prefix of the warning, naming the caller, e.g. `KawaPress Sitemap`. */
+  label: string
+  /** What the caller skips when git history is unavailable, e.g. `lastmod`. */
+  skipped: string
+}
+
 /**
- * 批量读取站点目录下每个文件最后一次提交的时间（毫秒）。
- * 仓库不可用或为浅克隆时返回 `undefined`，并给出 warning，不输出错误日期。
+ * Reads the last commit time (milliseconds) of every file under the site root
+ * in one `git log` call, keyed by absolute path. Returns `undefined` with a
+ * warning outside a git repository or in a shallow clone, where the dates
+ * would be wrong.
  */
 export async function readGitLastUpdated(
   siteRoot: string,
+  { label, skipped }: ReadGitLastUpdatedOptions,
 ): Promise<Map<string, number> | undefined> {
   try {
     await runGit(siteRoot, ['rev-parse', '--is-inside-work-tree'])
   }
   catch {
-    consola.warn('KawaPress Sitemap: 当前目录不在 git 仓库中，已跳过 lastmod。')
+    consola.warn(`${label}: the site is not inside a git repository, ${skipped} is skipped.`)
     return undefined
   }
 
   const shallow = (await runGit(siteRoot, ['rev-parse', '--is-shallow-repository'])).trim()
   if (shallow === 'true') {
-    consola.warn('KawaPress Sitemap: 当前仓库是浅克隆，已跳过 lastmod。请在 CI 中设置 fetch-depth: 0。')
+    consola.warn(`${label}: the repository is a shallow clone, ${skipped} is skipped. Fetch the full history in CI, e.g. \`fetch-depth: 0\` for actions/checkout.`)
     return undefined
   }
 
@@ -58,7 +68,7 @@ export function parseGitLog(output: string, siteRoot: string): Map<string, numbe
       if (!name) {
         continue
       }
-      // git 输出按时间从新到旧排列，第一次出现即为最后一次提交
+      // git log lists commits newest first, so the first time wins
       const absolute = resolve(siteRoot, name)
       if (!timestamps.has(absolute)) {
         timestamps.set(absolute, seconds * 1000)
