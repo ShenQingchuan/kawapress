@@ -135,6 +135,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '最后更新时间',
+            en: 'Last Updated',
+          },
+          link: '/guide/last-updated',
+        },
+        {
+          text: {
             zhCN: 'SSR 兼容性',
             en: 'SSR Compatibility',
           },
