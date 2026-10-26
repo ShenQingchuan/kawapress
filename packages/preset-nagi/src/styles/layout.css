@@ -789,10 +789,28 @@
   text-align: center;
 }
 
+/*
+ * Layout of a scroll area before and after the OverlayScrollbars runtime
+ * (progressive enhancement) takes over.
+ *
+ * The host is the element the parent places in the layout and the element the
+ * runtime attaches its scrollbars to. The viewport is the element that actually
+ * scrolls: it is a plain `overflow: auto` box from the first paint, styled by the
+ * native scrollbar rules in `base.css`, and the runtime keeps it as its viewport
+ * afterwards. Only the not-yet-enhanced viewport is styled here, so the runtime
+ * owns the element completely once it has loaded.
+ */
 .nagi-os-scroll {
+  display: flex;
   min-width: 0;
   min-height: 0;
   width: 100%;
+}
+
+.nagi-os-scroll__viewport:not([data-overlayscrollbars-viewport]) {
+  flex: auto;
+  min-width: 0;
+  overflow: auto;
 }
 
 @media (min-width: 40rem) {

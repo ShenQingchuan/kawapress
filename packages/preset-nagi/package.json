@@ -51,8 +51,7 @@
     "@kawapress/plugin-sitemap": "workspace:*",
     "@kawapress/plugin-unocss": "workspace:*",
     "@unhead/vue": "catalog:frontend",
-    "overlayscrollbars": "catalog:frontend",
-    "overlayscrollbars-vue": "catalog:frontend"
+    "overlayscrollbars": "catalog:frontend"
   },
   "devDependencies": {
     "happy-dom": "catalog:dev",

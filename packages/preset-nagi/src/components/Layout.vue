@@ -145,7 +145,7 @@ function resolveImageSrc(image: string | NagiImageSource): string {
           @toggle-outline="outlineOpen = !outlineOpen"
           @toggle-sidebar="sidebarOpen = !sidebarOpen"
         />
-        <OsScroll ref="docScroll" class="nagi-main__scroll" :defer="false">
+        <OsScroll ref="docScroll" class="nagi-main__scroll">
           <div class="nagi-main__content">
             <article class="nagi-doc">
               <RouterView />
