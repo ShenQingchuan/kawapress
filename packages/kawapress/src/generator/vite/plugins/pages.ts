@@ -4,7 +4,9 @@ import type { MarkdownPageLoader } from '../../../compiler/page-loader'
 import type { PageData } from '../../../core/site'
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { markdownFileToSourcePath } from '../../../compiler/page-loader'
 import { stringifyJsonForScript } from '../../../core/json'
+import { markdownPagePathToRoutePath } from '../../../core/markdown-route'
 
 const MODULE_ID = 'virtual:kawapress-pages'
 const RESOLVED_ID = `\0${MODULE_ID}`
@@ -16,9 +18,49 @@ export interface VirtualPagesOptions {
   srcDir: string
   publicDir: string
   pageLoader: MarkdownPageLoader
+  pageRoutes: PageRouteIndex
+}
+
+/** Public routes of the Markdown files on disk, cached until the site changes. */
+export interface PageRouteIndex {
+  routes: () => Promise<string[]>
+  invalidate: () => void
+}
+
+export function createPageRouteIndex(
+  pageLoader: MarkdownPageLoader,
+  publicDir: string,
+): PageRouteIndex {
+  let cached: Promise<string[]> | undefined
+  return {
+    routes() {
+      cached ??= listPageRoutes(pageLoader, publicDir)
+      return cached
+    },
+    invalidate() {
+      cached = undefined
+    },
+  }
+}
+
+export async function listPageRoutes(
+  pageLoader: MarkdownPageLoader,
+  publicDir: string,
+): Promise<string[]> {
+  const publicDirectory = resolve(pageLoader.sourceRoot, publicDir)
+  const files = await findMarkdownFiles(pageLoader.sourceRoot, publicDirectory)
+  return files.map(file => markdownPagePathToRoutePath(
+    markdownFileToSourcePath(file, pageLoader.sourceRoot),
+  ))
 }
 
 export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
+  const isPage = (file: string) => isMarkdownFile(
+    file,
+    options.pageLoader.sourceRoot,
+    resolve(options.pageLoader.sourceRoot, options.publicDir),
+  )
+
   return {
     name: 'kawapress:virtual-pages',
     resolveId(id) {
@@ -31,14 +73,21 @@ export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
         return generatePagesModule(options)
       }
     },
+    configureServer(server) {
+      // Added and removed pages never reach `handleHotUpdate`, so watch them too.
+      for (const event of ['add', 'unlink'] as const) {
+        server.watcher.on(event, (file: string) => {
+          if (isPage(file)) {
+            options.pageRoutes.invalidate()
+          }
+        })
+      }
+    },
     handleHotUpdate(context) {
-      if (!isMarkdownFile(
-        context.file,
-        options.pageLoader.sourceRoot,
-        resolve(options.pageLoader.sourceRoot, options.publicDir),
-      )) {
+      if (!isPage(context.file)) {
         return
       }
+      options.pageRoutes.invalidate()
 
       const virtualModule = context.server.moduleGraph.getModuleById(RESOLVED_ID)
       if (virtualModule) {

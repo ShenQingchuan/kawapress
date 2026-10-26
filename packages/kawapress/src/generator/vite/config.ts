@@ -1,4 +1,5 @@
 import type { InlineConfig, Plugin } from 'vite'
+import type { MarkdownPageLoader } from '../../compiler/page-loader'
 import type { ResolvedSiteConfig } from '../config'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
@@ -6,18 +7,26 @@ import vue from '@vitejs/plugin-vue'
 import { createMarkdownPageLoader } from '../../compiler/page-loader'
 import { createDataLoaderContext } from '../data/context'
 import { dataLoaderPlugin } from './plugins/data'
+import { devDeadLinksPlugin } from './plugins/dev-dead-links'
 import { markdownPlugin } from './plugins/markdown'
-import { virtualPagesPlugin } from './plugins/pages'
+import { createPageRouteIndex, virtualPagesPlugin } from './plugins/pages'
 import { virtualRuntimePluginsPlugin } from './plugins/runtime-plugins'
 import { virtualSitePlugin } from './plugins/site'
 
 const require = createRequire(import.meta.url)
 const VUE_PACKAGE_PATH = 'vue/package.json'
 
+export interface CreateBaseViteConfigOptions {
+  /** Reuse a page loader created by the caller, for example to read its link registry. */
+  pageLoader?: MarkdownPageLoader
+}
+
 export function createBaseViteConfig(
   root: string,
   siteConfig: ResolvedSiteConfig,
+  options: CreateBaseViteConfigOptions = {},
 ): InlineConfig {
+  const pageLoader = options.pageLoader ?? createSitePageLoader(root, siteConfig)
   return {
     root,
     base: siteConfig.base,
@@ -34,8 +43,21 @@ export function createBaseViteConfig(
         conditions: ['module'],
       },
     },
-    plugins: createBasePlugins(root, siteConfig),
+    plugins: createBasePlugins(root, siteConfig, pageLoader),
   }
+}
+
+/** Page loader shared by the Vite plugins and, during a build, the link checker. */
+export function createSitePageLoader(
+  root: string,
+  siteConfig: ResolvedSiteConfig,
+): MarkdownPageLoader {
+  return createMarkdownPageLoader({
+    root,
+    base: siteConfig.base,
+    srcDir: siteConfig.srcDir,
+    pluginRunner: siteConfig.pluginRunner,
+  })
 }
 
 function resolveVueAliases(root: string) {
@@ -60,14 +82,10 @@ function resolveVueAliases(root: string) {
 function createBasePlugins(
   root: string,
   siteConfig: ResolvedSiteConfig,
+  pageLoader: MarkdownPageLoader,
 ): Plugin[] {
-  const pageLoader = createMarkdownPageLoader({
-    root,
-    base: siteConfig.base,
-    srcDir: siteConfig.srcDir,
-    pluginRunner: siteConfig.pluginRunner,
-  })
   const dataLoaderContext = createDataLoaderContext(root, siteConfig)
+  const pageRoutes = createPageRouteIndex(pageLoader, siteConfig.publicDir)
 
   return [
     dataLoaderPlugin(dataLoaderContext),
@@ -85,6 +103,7 @@ function createBasePlugins(
       srcDir: siteConfig.srcDir,
       publicDir: siteConfig.publicDir,
       pageLoader,
+      pageRoutes,
     }),
     virtualSitePlugin({
       title: siteConfig.title,
@@ -95,6 +114,11 @@ function createBasePlugins(
           ? {}
           : { themeConfig: siteConfig.themeConfig }
       ),
+    }),
+    devDeadLinksPlugin({
+      pageLoader,
+      pageRoutes,
+      deadLinks: siteConfig.deadLinks,
     }),
   ]
 }
