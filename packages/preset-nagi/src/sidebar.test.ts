@@ -1,4 +1,4 @@
-import type { PageData } from 'kawapress'
+import type { PageRouteMeta } from 'kawapress'
 import { describe, expect, it } from 'vitest'
 import {
   createSidebar,
@@ -7,13 +7,8 @@ import {
   resolveConfiguredSidebar,
 } from './sidebar'
 
-function page(path: string, title: string): PageData {
-  return {
-    path,
-    title,
-    frontmatter: {},
-    headers: [],
-  }
+function page(path: string, title: string): PageRouteMeta {
+  return { path, title }
 }
 
 describe('nagi sidebar metadata', () => {
@@ -63,6 +58,19 @@ describe('nagi sidebar metadata', () => {
         link: '/en/guide/getting-started',
       }],
     })
+  })
+
+  it('keeps only doc layout pages in the automatic sidebar', () => {
+    const pages = {
+      '/': { path: '/', title: 'Home', layout: 'home' },
+      '/about': { path: '/about', title: 'About', layout: 'page' },
+      '/guide/start': { path: '/guide/start', title: 'Start' },
+    }
+
+    expect(createSidebar(pages)).toEqual([{
+      text: 'Guide',
+      items: [{ text: 'Start', link: '/guide/start' }],
+    }])
   })
 
   it('uses the sidebar order for previous and next page navigation', () => {

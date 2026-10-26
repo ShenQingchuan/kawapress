@@ -1,7 +1,9 @@
+/// <reference path="./types/route-meta.d.ts" />
 export { withBase } from '../core/base'
 export { resolveLocaleIndex } from '../core/locale'
 export { OUTLET_NAMES } from '../core/outlet'
 export type { OutletItem, OutletName, OutletRegistry } from '../core/outlet'
+export type { PageRouteMeta } from '../core/site'
 export { default as KawaOutlet } from './components/KawaOutlet.vue'
 export { useLocale, usePageData, useSite, useThemeConfig } from './composables'
 export type { LocaleContext } from './composables'

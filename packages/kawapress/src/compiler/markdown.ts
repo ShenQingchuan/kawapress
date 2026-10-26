@@ -11,11 +11,11 @@ import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../core/base'
-import { normalizeFrontmatterSource } from '../core/frontmatter'
 import { resolveHeadConfig } from '../core/head'
 import { stringifyJsonForScript } from '../core/json'
 import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { resolvePageMetadata } from '../core/page-metadata'
+import { installJsonFrontmatterCompatibility } from './frontmatter-compat'
 import { useMarkdownItPlugin } from './markdown-it-compat'
 
 /** Class of the permalink that KawaPress renders inside every heading. */
@@ -79,11 +79,6 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
 
   await options.pluginRunner?.runMarkdown(md)
   return md
-}
-
-function installJsonFrontmatterCompatibility(md: MarkdownExit): void {
-  const parse = md.parse.bind(md)
-  md.parse = (source, env = {}) => parse(normalizeFrontmatterSource(source), env)
 }
 
 function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {

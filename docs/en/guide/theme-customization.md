@@ -330,6 +330,26 @@ Theme components import public capabilities from `kawapress/client`:
 
 A theme does not import internal KawaPress files or maintain another router or locale state. Server rendering, hydration, and client navigation then use the same data.
 
+### List Pages for Navigation {#list-pages-for-navigation}
+
+`usePageData()` returns the current page only. To list other pages, for example for an automatic sidebar or previous and next links, read `route.meta.page` of every route. Its type is `PageRouteMeta`:
+
+```ts
+import { useRouter } from 'kawapress/client'
+import { computed } from 'vue'
+
+const router = useRouter()
+const pages = computed(() =>
+  router.getRoutes()
+    .map(route => route.meta.page)
+    .filter(page => page !== undefined),
+)
+```
+
+A `PageRouteMeta` has three fields: `path` (the public route), `title` (the page title), and an optional `layout` (the `layout` string from Frontmatter). These summaries ship with the route list and stay small. The page body, the remaining Frontmatter fields, and the heading outline load only when someone visits that page.
+
+The summaries come from the Frontmatter and the first level-1 heading the author wrote. They run no Markdown rendering and no plugin `pageData()`. When you need more fields, publish your own virtual module from a Generator Plugin with `vite()`, like nagi does for its `_meta.json` module.
+
 ## Import Theme Styles from the Runtime Plugin {#import-theme-styles-from-the-runtime-plugin}
 
 The theme Runtime Plugin imports CSS directly. KawaPress includes it in both server and browser builds, so the site does not import theme styles separately.

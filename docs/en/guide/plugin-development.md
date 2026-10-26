@@ -141,6 +141,8 @@ api.pageData((pageData, { file, sourcePath }) => {
 
 Both values stay on the generator side and are never sent to the browser. Copy what the page needs into `pageData`, as above.
 
+A `title` you change in `pageData()` only affects that page's own data. It does not reach the route summaries used for navigation (`route.meta.page`), which describe the title the author wrote in Frontmatter or in the first level-1 heading.
+
 ### `pageArtifact()`: Observe the Build Result of Each Page {#page-artifact}
 
 `pageArtifact()` runs after a page has been compiled from Markdown and all `pageData()` handlers have finished. The handler can read the result but cannot change the source file, data, or route of the page.

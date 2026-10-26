@@ -1,5 +1,5 @@
 import type { Router, RouteRecordRaw } from 'vue-router'
-import { pageData, pages } from 'virtual:kawapress-pages'
+import { pageRoutes, pages } from 'virtual:kawapress-pages'
 import { site } from 'virtual:kawapress-site'
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
 import { decodeUrlPathname, withoutBase } from '../core/base'
@@ -23,7 +23,7 @@ export function createRoutes(): RouteRecordRaw[] {
     ...Object.entries(pages).map(([path, loader]) => ({
       path,
       component: wrapPageLoader(path, loader),
-      meta: { pageData: pageData[path] },
+      meta: { page: pageRoutes[path] },
     })),
     { path: '/:pathMatch(.*)*', name: NOT_FOUND_ROUTE_NAME, component: NotFoundRoute },
   ]
