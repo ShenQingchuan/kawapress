@@ -15,6 +15,8 @@ export interface RenderResult {
   htmlAttrs: string
   /** Outlets the rendered page actually mounted. */
   outlets: string[]
+  /** Module ids of the page module and every SFC the render used. */
+  modules: string[]
 }
 
 // The registry only depends on runtime plugin setup, so any render returns the
@@ -51,5 +53,14 @@ export async function render(url: string): Promise<RenderResult> {
     head: headTags,
     htmlAttrs,
     outlets: getRenderedOutlets(ssrContext),
+    modules: getRenderedModules(ssrContext),
   }
+}
+
+/**
+ * `@vitejs/plugin-vue` pushes every SFC it renders into `ssrContext.modules`, so
+ * prerendering can tell which page chunks and page CSS this render needed.
+ */
+function getRenderedModules(context: Record<string, unknown>): string[] {
+  return context.modules instanceof Set ? [...context.modules] as string[] : []
 }

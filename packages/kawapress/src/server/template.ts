@@ -5,12 +5,17 @@ export interface HtmlTemplateOptions {
   appHtml: string
   clientEntryUrl: string
   cssUrls?: string[]
+  /** Page chunk JS, preloaded so hydration does not wait for a waterfall. */
+  modulepreloadUrls?: string[]
   htmlAttrs?: string
 }
 
 export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
   const cssLinks = (options.cssUrls ?? [])
     .map(href => `<link rel="stylesheet" href="${href}">`)
+    .join('\n')
+  const modulepreloadLinks = (options.modulepreloadUrls ?? [])
+    .map(href => `<link rel="modulepreload" href="${href}">`)
     .join('\n')
   // Layer order and tokens lead the head in dev and build alike, so plugin and
   // theme styles resolve the same way before any stylesheet loads.
@@ -28,6 +33,7 @@ export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
     ${kawaStyles}
     ${options.head}
     ${cssLinks}
+    ${modulepreloadLinks}
   </head>
   <body>
     <div id="app">${options.appHtml}</div>
