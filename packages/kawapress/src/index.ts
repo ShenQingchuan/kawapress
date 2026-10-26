@@ -29,6 +29,7 @@ export type {
 export { useMarkdownItPlugin } from './compiler/markdown-it-compat'
 export type { MarkdownItPluginHost } from './compiler/markdown-it-compat'
 export { normalizeFrontmatterSource } from './core/frontmatter'
+export type { HeadAttrs, HeadConfig, HeadTag } from './core/head'
 export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
 export type { JsonOperationOptions } from './core/json'
 export { markdownPagePathToRoutePath } from './core/markdown-route'

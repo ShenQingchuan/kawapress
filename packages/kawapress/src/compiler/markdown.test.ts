@@ -70,6 +70,38 @@ titleTemplate: '%s · KawaPress'
     })
   })
 
+  it('keeps valid frontmatter head in page data', async () => {
+    const { pageData } = await compileMarkdownToVue(
+      md,
+      `{
+  "head": [["meta", { "property": "og:image", "content": "/page.png" }]]
+}
+
+# Page head
+`,
+      '/page-head',
+    )
+
+    expect(pageData.head).toEqual([
+      ['meta', { property: 'og:image', content: '/page.png' }],
+    ])
+  })
+
+  it('rejects invalid frontmatter head with the page route', async () => {
+    await expect(compileMarkdownToVue(
+      md,
+      `{
+  "head": [["base", { "href": "/handbook/" }]]
+}
+
+# Broken head
+`,
+      '/broken-head',
+    )).rejects.toThrow(
+      'KawaPress: invalid head config in the frontmatter of route "/broken-head".\nhead[0][0] must be one of',
+    )
+  })
+
   it('parses a JSON frontmatter object at the start of a page', async () => {
     const { code, pageData } = await compileMarkdownToVue(
       md,

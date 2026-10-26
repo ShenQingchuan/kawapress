@@ -89,6 +89,7 @@ function createBasePlugins(
     virtualSitePlugin({
       title: siteConfig.title,
       base: siteConfig.base,
+      head: siteConfig.head,
       locales: siteConfig.locales,
       ...(
         siteConfig.themeConfig === undefined

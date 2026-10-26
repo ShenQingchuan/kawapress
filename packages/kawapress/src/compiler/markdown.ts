@@ -11,6 +11,7 @@ import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../core/base'
 import { normalizeFrontmatterSource } from '../core/frontmatter'
+import { resolveHeadConfig } from '../core/head'
 import { stringifyJsonForScript } from '../core/json'
 import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { resolvePageMetadata } from '../core/page-metadata'
@@ -169,9 +170,14 @@ export async function parseMarkdown(
   const frontmatter = env.frontmatter ?? {}
   const headers = env.headers ?? []
   const metadata = resolvePageMetadata(frontmatter, headers)
+  const head = resolveHeadConfig(frontmatter.head, {
+    owner: `the frontmatter of route ${JSON.stringify(path)}`,
+    path: 'head',
+  })
   const pageData: PageData = {
     path,
     ...metadata,
+    ...(head.length === 0 ? {} : { head }),
     frontmatter,
     headers,
   }

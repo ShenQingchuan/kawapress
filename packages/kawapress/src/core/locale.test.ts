@@ -10,6 +10,7 @@ interface TestThemeConfig {
 const site: SiteData<TestThemeConfig> = {
   title: 'KawaPress',
   base: '/kawapress/',
+  head: [['meta', { name: 'theme-color', content: '#ffffff' }]],
   themeConfig: {
     menu: 'Menu',
     outline: 'Contents',
@@ -23,6 +24,7 @@ const site: SiteData<TestThemeConfig> = {
       label: '简体中文',
       lang: 'zh-CN',
       title: 'KawaPress 中文',
+      head: [['meta', { property: 'og:locale', content: 'zh_CN' }]],
       themeConfig: {
         menu: '菜单',
       },
@@ -48,6 +50,16 @@ describe('locale routing', () => {
         menu: '菜单',
         outline: 'Contents',
       },
+    })
+  })
+
+  it('keeps site and locale head tags apart', () => {
+    expect(resolveSiteDataByPath(site, '/zh/guide')).toMatchObject({
+      head: [['meta', { name: 'theme-color', content: '#ffffff' }]],
+      localeHead: [['meta', { property: 'og:locale', content: 'zh_CN' }]],
+    })
+    expect(resolveSiteDataByPath(site, '/guide')).toMatchObject({
+      localeHead: [],
     })
   })
 

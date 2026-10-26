@@ -1,3 +1,4 @@
+import type { HeadConfig } from './head'
 import { assertJsonSerializable } from './json'
 
 export type LocaleDirection = 'ltr' | 'rtl'
@@ -8,6 +9,7 @@ export interface LocaleConfig<ThemeConfig extends object = object> {
   dir?: LocaleDirection
   link?: string
   title?: string
+  head?: HeadConfig[]
   themeConfig?: ThemeConfig
 }
 
@@ -16,6 +18,7 @@ export interface SiteConfig<ThemeConfig extends object = object> {
   base?: string
   srcDir?: string
   publicDir?: string
+  head?: HeadConfig[]
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>
 }
@@ -24,6 +27,7 @@ export interface SiteConfig<ThemeConfig extends object = object> {
 export interface SiteData<ThemeConfig extends object = object> {
   title: string
   base: string
+  head: HeadConfig[]
   themeConfig?: ThemeConfig
   locales: Record<string, LocaleConfig<ThemeConfig>>
 }
@@ -38,6 +42,10 @@ export interface ResolvedSiteData<ThemeConfig extends object = object> {
   lang?: string
   dir?: LocaleDirection
   link: string
+  /** `<head>` tags from the site config, shared by every page. */
+  head: HeadConfig[]
+  /** `<head>` tags of the current locale, rendered after the site tags. */
+  localeHead: HeadConfig[]
 }
 
 export interface LocaleLink {
@@ -61,6 +69,8 @@ export interface PageData {
   title: string
   description?: string
   titleTemplate?: string | false
+  /** `<head>` tags from frontmatter, rendered after site and locale tags. */
+  head?: HeadConfig[]
   frontmatter: Record<string, unknown>
   headers: PageHeader[]
 }

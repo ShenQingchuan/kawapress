@@ -47,6 +47,8 @@ export function resolveSiteDataByPath<ThemeConfig extends object>(
     lang: locale?.lang,
     dir: locale?.dir,
     link: withBase(getLocaleHome(site, localeIndex), site.base),
+    head: site.head,
+    localeHead: locale?.head ?? [],
   }
 }
 

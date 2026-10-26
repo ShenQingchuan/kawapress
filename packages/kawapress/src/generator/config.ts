@@ -1,9 +1,11 @@
 import type { KawapressConfig } from '../api/config'
 import type { KawaPressPlugin } from '../api/plugin'
+import type { HeadConfig } from '../core/head'
 import type { LocaleConfig, SiteConfig } from '../core/site'
 import type { GeneratorPluginRunner } from '../plugin/generator-runner'
 import { isAbsolute } from 'node:path'
 import { normalizeBase } from '../core/base'
+import { resolveHeadConfig } from '../core/head'
 import { createGeneratorPluginRunner } from '../plugin/generator-runner'
 
 export interface ResolvedSiteConfig {
@@ -11,6 +13,7 @@ export interface ResolvedSiteConfig {
   base: string
   srcDir: string
   publicDir: string
+  head: HeadConfig[]
   themeConfig?: object
   locales: Record<string, LocaleConfig>
   plugins: KawaPressPlugin[]
@@ -34,6 +37,7 @@ export async function resolveSiteConfig(
     base: userConfig.base,
     srcDir: userConfig.srcDir,
     publicDir: userConfig.publicDir,
+    head: userConfig.head,
     themeConfig: userConfig.themeConfig,
     locales: userConfig.locales,
   }
@@ -45,14 +49,18 @@ export async function resolveSiteConfig(
   }
 
   const publicDir = normalizePublicDir(site.publicDir ?? 'public')
-  const locales = site.locales ?? DEFAULT_LOCALES
-  validateLocales(locales)
+  const head = resolveHeadConfig(site.head, {
+    owner: 'the site config',
+    path: 'head',
+  })
+  const locales = normalizeLocales(site.locales ?? DEFAULT_LOCALES)
 
   return {
     title: site.title ?? 'KawaPress',
     base: normalizeBase(site.base),
     srcDir,
     publicDir,
+    head,
     themeConfig: site.themeConfig,
     locales,
     plugins,
@@ -80,17 +88,32 @@ function normalizePublicDir(publicDir: string): string {
   return segments.join('/')
 }
 
-function validateLocales(locales: Record<string, LocaleConfig>): void {
+function normalizeLocales(
+  locales: Record<string, LocaleConfig>,
+): Record<string, LocaleConfig> {
+  const normalized: Record<string, LocaleConfig> = {}
   for (const [localeIndex, locale] of Object.entries(locales)) {
-    if (!localeIndex || (localeIndex !== 'root' && /[/?#]/.test(localeIndex))) {
-      throw new Error(
-        `KawaPress: locale key ${JSON.stringify(localeIndex)} must be "root" or one URL path segment.`,
-      )
-    }
-    if (!locale.label.trim()) {
-      throw new Error(
-        `KawaPress: locale ${JSON.stringify(localeIndex)} must have a non-empty label.`,
-      )
-    }
+    validateLocale(localeIndex, locale)
+    const head = resolveHeadConfig(locale.head, {
+      owner: `locale ${JSON.stringify(localeIndex)} in the site config`,
+      path: `locales.${localeIndex}.head`,
+    })
+    normalized[localeIndex] = head.length === 0
+      ? locale
+      : { ...locale, head }
+  }
+  return normalized
+}
+
+function validateLocale(localeIndex: string, locale: LocaleConfig): void {
+  if (!localeIndex || (localeIndex !== 'root' && /[/?#]/.test(localeIndex))) {
+    throw new Error(
+      `KawaPress: locale key ${JSON.stringify(localeIndex)} must be "root" or one URL path segment.`,
+    )
+  }
+  if (!locale.label.trim()) {
+    throw new Error(
+      `KawaPress: locale ${JSON.stringify(localeIndex)} must have a non-empty label.`,
+    )
   }
 }
