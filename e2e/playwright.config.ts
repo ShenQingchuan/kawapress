@@ -13,6 +13,12 @@ import {
  * The main suite runs against the production build served by `kawapress
  * preview`; a small smoke suite runs against `kawapress dev`. Both read
  * `KAWAPRESS_BASE`, so the same specs pass with and without a site base.
+ *
+ * Every server also gets `KAWAPRESS_E2E=1`, which keeps Vue's hydration
+ * mismatch details in the built bundles so the console guard can see them.
+ * `NODE_ENV` is pinned per server instead of being inherited: a shell that
+ * exports `NODE_ENV=production` would otherwise make `kawapress dev` start in
+ * production mode and hide the very warnings the suite looks for.
  */
 export default defineConfig({
   testDir: './specs',
@@ -35,6 +41,10 @@ export default defineConfig({
       // checkout or another base.
       reuseExistingServer: false,
       stderr: 'pipe',
+      env: {
+        KAWAPRESS_E2E: '1',
+        NODE_ENV: 'production',
+      },
     },
     {
       // `kawapress dev` always listens on its default port.
@@ -45,6 +55,10 @@ export default defineConfig({
       timeout: 120_000,
       reuseExistingServer: false,
       stderr: 'pipe',
+      env: {
+        KAWAPRESS_E2E: '1',
+        NODE_ENV: 'development',
+      },
     },
     {
       // Plugins that the docs site does not enable get their own small site.
@@ -53,6 +67,10 @@ export default defineConfig({
       timeout: 180_000,
       reuseExistingServer: false,
       stderr: 'pipe',
+      env: {
+        KAWAPRESS_E2E: '1',
+        NODE_ENV: 'production',
+      },
     },
   ],
   use: {
