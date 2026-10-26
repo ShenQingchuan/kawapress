@@ -97,6 +97,46 @@ export default nagi({
 
 The `nagi()` preset installs the default documentation interface and its plugins. Its styles are included automatically, so the site does not need a separate theme CSS import.
 
+## Add Head Tags {#add-head-tags}
+
+Use `head` to put tags into the `<head>` of every page. Analytics scripts, Open Graph cards for sharing, and site verification tags all go here:
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  head: [
+    ['script', { src: 'https://example.com/analytics.js', defer: true }],
+    ['meta', { property: 'og:image', content: 'https://example.com/social.png' }],
+  ],
+})
+```
+
+Each entry is `[tag, attributes, content?]`. The tag name must be `meta`, `link`, `script`, `style`, or `noscript`. Attribute values are strings or `true`/`false`. The optional third element is the raw content inside the tag, which suits inline scripts and styles. KawaPress owns `title` and `base`, so they are not accepted here. Addresses are used as written, so include the site `base` yourself on internal paths.
+
+Multi-language sites can give each language its own `head`. Tags with the same `name` or `property` follow the language setting:
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  locales: {
+    root: {
+      label: 'English',
+      lang: 'en',
+      head: [['meta', { property: 'og:locale', content: 'en_US' }]],
+    },
+    zh: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      head: [['meta', { property: 'og:locale', content: 'zh_CN' }]],
+    },
+  },
+})
+```
+
+A single page can add tags of its own in frontmatter. See [Frontmatter](/en/guide/frontmatter#page-head).
+
 ## Use UnoCSS Utilities {#use-unocss-utilities}
 
 nagi enables [UnoCSS](https://unocss.dev/) with `presetWind4`, `presetIcons`, and `presetWebFonts`. Wind4 utilities work directly in Markdown HTML:

@@ -19,6 +19,7 @@ export function createDataLoaderContext(
   const site: SiteData = {
     title: config.title,
     base: config.base,
+    head: config.head,
     locales: config.locales,
     ...(config.themeConfig === undefined
       ? {}

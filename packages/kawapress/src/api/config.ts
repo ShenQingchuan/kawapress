@@ -1,3 +1,4 @@
+import type { HeadConfig } from '../core/head'
 import type { LocaleConfig } from '../core/site'
 import type { KawaPressPlugin } from './plugin'
 
@@ -6,6 +7,7 @@ export interface KawapressConfig<ThemeConfig extends object = object> {
   base?: string
   srcDir?: string
   publicDir?: string
+  head?: HeadConfig[]
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>
   plugins?: KawaPressPlugin[]
