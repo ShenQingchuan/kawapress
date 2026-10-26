@@ -4,7 +4,7 @@ description: 从安装依赖开始，创建并运行你的第一个 KawaPress �
 
 # 快速开始
 
-这一章会陪你从一个空文件夹开始，搭好第一个可以编写、预览和构建的 KawaPress 文档站。
+这一章会陪你搭好第一个可以编写、预览和构建的 KawaPress 文档站。
 
 完成以后，你会得到一个由 Markdown 驱动、带有默认文档界面，并且可以直接构建成静态文件的小网站。
 
@@ -15,6 +15,53 @@ description: 从安装依赖开始，创建并运行你的第一个 KawaPress �
 - [Node.js](https://nodejs.org/) 22.12 或更高版本；
 - npm、pnpm 或 Yarn 中任意一种包管理器；
 - 一个你用得顺手的 Markdown 编辑器。
+
+## 用脚手架创建 {#create-with-scaffolder}
+
+最省事的方式是用脚手架 `create-kawapress`。它会替你在目标目录里准备好配置文件、首页和一篇示例文档，生成完就能直接运行。
+
+::: code-group
+```sh [npm]
+npm create kawapress@latest my-kawapress-site
+```
+
+```sh [pnpm]
+pnpm create kawapress my-kawapress-site
+```
+
+```sh [Yarn]
+yarn create kawapress my-kawapress-site
+```
+:::
+
+运行过程中它会依次询问站点标题、默认语言，以及要不要顺手把依赖装上。想全部用默认值、一次生成完，加上 `--yes` 就不再提问：
+
+```sh
+npm create kawapress@latest my-kawapress-site --yes
+```
+
+常用参数还有 `--title`、`--lang`、`--second-lang`、`--pm` 和 `--install` / `--no-install`，完整说明可以用 `--help` 查看。
+
+生成完成后进入目录，启动开发服务器：
+
+::: code-group
+```sh [npm]
+cd my-kawapress-site
+npm run dev
+```
+
+```sh [pnpm]
+cd my-kawapress-site
+pnpm run dev
+```
+
+```sh [Yarn]
+cd my-kawapress-site
+yarn dev
+```
+:::
+
+接下来的几节会把同一个站点从空目录手动搭一遍。如果你想弄清每个文件在做什么，或者打算把 KawaPress 加进已有项目，可以直接从这里往下读。
 
 ## 创建项目 {#create-a-project}
 
