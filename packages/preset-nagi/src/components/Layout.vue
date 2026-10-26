@@ -150,7 +150,13 @@ function resolveImageSrc(image: string | NagiImageSource): string {
             <article class="nagi-doc">
               <RouterView />
             </article>
+            <div class="nagi-doc-footer">
+              <KawaOutlet name="doc.footer" />
+            </div>
             <DocNavigation />
+            <div class="nagi-doc-after">
+              <KawaOutlet name="doc.after" />
+            </div>
           </div>
         </OsScroll>
       </main>

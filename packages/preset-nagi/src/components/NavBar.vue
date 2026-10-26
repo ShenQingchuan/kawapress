@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Search } from '@kawapress/plugin-search/client'
 import { useRouter, useSite } from 'kawapress/client'
 import { onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
@@ -49,7 +48,7 @@ onUnmounted(() => {
         <span>{{ site.title }}</span>
       </a>
       <div class="nagi-nav__end">
-        <Search />
+        <KawaOutlet name="header.actions" />
         <div class="nagi-nav__controls nagi-nav__controls--desktop">
           <LanguageMenu />
           <AppearanceSwitch />
