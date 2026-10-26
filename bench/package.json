@@ -1,0 +1,15 @@
+{
+  "name": "@kawapress/bench",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "bench": "node --experimental-strip-types src/run.ts"
+  },
+  "devDependencies": {
+    "chrome-launcher": "catalog:bench",
+    "consola": "catalog:node",
+    "kawapress": "workspace:*",
+    "lighthouse": "catalog:bench",
+    "vitepress": "catalog:bench"
+  }
+}
