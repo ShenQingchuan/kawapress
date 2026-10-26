@@ -1,17 +1,23 @@
 import type { Dirent } from 'node:fs'
-import type { Plugin } from 'vite'
+import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
 import type { MarkdownPageLoader } from '../../../compiler/page-loader'
 import type { PageSummaryReader } from '../../../compiler/page-summary'
-import type { PageRouteMeta } from '../../../core/site'
+import type { PageSummary } from '../../../core/page-manifest'
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { markdownFileToSourcePath } from '../../../compiler/page-loader'
 import { createPageSummaryReader } from '../../../compiler/page-summary'
-import { stringifyJsonForScript } from '../../../core/json'
+import { stringifyJson } from '../../../core/json'
 import { markdownPagePathToRoutePath } from '../../../core/markdown-route'
 
-const MODULE_ID = 'virtual:kawapress-pages'
-const RESOLVED_ID = `\0${MODULE_ID}`
+/** Virtual module holding the page manifest. */
+export const PAGE_MANIFEST_MODULE_ID = 'virtual:kawapress-pages'
+const RESOLVED_ID = `\0${PAGE_MANIFEST_MODULE_ID}`
+/**
+ * Own chunk of the page manifest in the client build. Page content changes far
+ * more often than framework and theme code, so the two must not share a chunk.
+ */
+export const PAGE_MANIFEST_CHUNK_NAME = 'page-manifest'
 const IGNORED_DIRECTORIES = new Set([
   'dist',
   'node_modules',
@@ -49,11 +55,8 @@ export async function listPageRoutes(
   pageLoader: MarkdownPageLoader,
   publicDir: string,
 ): Promise<string[]> {
-  const publicDirectory = resolve(pageLoader.sourceRoot, publicDir)
-  const files = await findMarkdownFiles(pageLoader.sourceRoot, publicDirectory)
-  return files.map(file => markdownPagePathToRoutePath(
-    markdownFileToSourcePath(file, pageLoader.sourceRoot),
-  ))
+  const pages = await listMarkdownPages(pageLoader, publicDir)
+  return pages.map(page => page.path)
 }
 
 export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
@@ -67,21 +70,27 @@ export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
   return {
     name: 'kawapress:virtual-pages',
     resolveId(id) {
-      if (id === MODULE_ID) {
+      if (id === PAGE_MANIFEST_MODULE_ID) {
         return RESOLVED_ID
       }
     },
     async load(id) {
       if (id === RESOLVED_ID) {
-        return generatePagesModule(options, summaryReader)
+        return renderPagesModule(await readManifestPages(options, summaryReader))
       }
     },
     configureServer(server) {
-      // Added and removed pages never reach `handleHotUpdate`, so watch them too.
+      // A page that is added or removed changes the manifest, and the manifest
+      // is written by this plugin only: nothing else invalidates the virtual
+      // module, so a running browser has to be sent back to the server.
       for (const event of ['add', 'unlink'] as const) {
         server.watcher.on(event, (file: string) => {
-          if (isPage(file)) {
-            options.pageRoutes.invalidate()
+          if (!isPage(file)) {
+            return
+          }
+          options.pageRoutes.invalidate()
+          if (invalidateManifestModule(server)) {
+            server.hot.send({ type: 'full-reload' })
           }
         })
       }
@@ -92,71 +101,112 @@ export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
       }
       options.pageRoutes.invalidate()
 
-      const virtualModule = context.server.moduleGraph.getModuleById(RESOLVED_ID)
+      const virtualModule = invalidateManifestModule(context.server)
       if (virtualModule) {
-        context.server.moduleGraph.invalidateModule(virtualModule)
         return [...context.modules, virtualModule]
       }
     },
   }
 }
 
-async function generatePagesModule(
-  options: VirtualPagesOptions,
-  summaryReader: PageSummaryReader,
-): Promise<string> {
-  const prefix = options.srcDir === '.' ? '' : `/${options.srcDir}`
-  const publicPrefix = `${prefix}/${options.publicDir}`
-  const globPatterns = [
-    `${prefix}/**/*.md`,
-    `!${publicPrefix}/**`,
-    '!**/node_modules/**',
-    '!**/dist/**',
-    '!**/.*/**',
-  ]
-  const pageRoutes = await loadPageRoutes(options, summaryReader)
-  const serializedPageRoutes = stringifyJsonForScript(pageRoutes, {
-    label: 'the page route summaries',
-    path: 'pageRoutes',
+/**
+ * Marks the manifest module stale and returns it when the dev server holds a
+ * copy, which is the case as soon as a browser asked for it.
+ */
+function invalidateManifestModule(server: ViteDevServer): ModuleNode | undefined {
+  const virtualModule = server.moduleGraph.getModuleById(RESOLVED_ID)
+  if (!virtualModule) {
+    return
+  }
+  server.moduleGraph.invalidateModule(virtualModule)
+  return virtualModule
+}
+
+/** One Markdown page on disk, before its route summary is read. */
+interface MarkdownPage {
+  file: string
+  /** Public route path, for example `/guide/intro`. */
+  path: string
+  /** Path relative to `srcDir`, for example `/guide/intro.md`. */
+  sourcePath: string
+}
+
+/** One record of the generated manifest: a page module and its route summary. */
+export interface ManifestPage {
+  /** Public route path the record is keyed by. */
+  path: string
+  /** Module id to import when the page is needed. */
+  id: string
+  summary: PageSummary
+}
+
+/**
+ * Source of the page manifest virtual module: one record per page, keyed by
+ * route path. The generator resolves the module ids, so the browser never maps
+ * source file paths to routes.
+ */
+export function renderPagesModule(pages: readonly ManifestPage[]): string {
+  const records = pages.map(page =>
+    `  ${jsonLiteral(page.path)}: { ${manifestFields(page)} },`,
+  )
+  return `export const pageManifest = {\n${records.join('\n')}\n}\n`
+}
+
+function manifestFields(page: ManifestPage): string {
+  const fields = [`title: ${jsonLiteral(page.summary.title)}`]
+  if (page.summary.layout !== undefined) {
+    fields.push(`layout: ${jsonLiteral(page.summary.layout)}`)
+  }
+  fields.push(`load: () => import(${jsonLiteral(page.id)})`)
+  return fields.join(', ')
+}
+
+/** Escaped string literal, so a title can never break out of the module. */
+function jsonLiteral(value: string): string {
+  return stringifyJson(value, {
+    label: 'the page manifest',
+    path: 'pageManifest',
   })
-
-  return `
-import { markdownPagePathToRoutePath } from 'kawapress'
-
-const mdFiles = import.meta.glob(${JSON.stringify(globPatterns)})
-
-export const pages = Object.fromEntries(
-  Object.entries(mdFiles).map(([file, loader]) => [
-    markdownPagePathToRoutePath(file.slice(${JSON.stringify(prefix)}.length)),
-    loader,
-  ]),
-)
-
-export const pageRoutes = ${serializedPageRoutes}
-`
 }
 
 /**
  * Route summaries of every page on disk. Reading them never renders a page, so
  * the first dev request does not compile the whole site.
  */
-async function loadPageRoutes(
+async function readManifestPages(
   options: VirtualPagesOptions,
   summaryReader: PageSummaryReader,
-): Promise<Record<string, PageRouteMeta>> {
-  const files = await findMarkdownFiles(
-    options.pageLoader.sourceRoot,
-    resolve(options.pageLoader.sourceRoot, options.publicDir),
-  )
-  const entries = await Promise.all(files.map(async (file) => {
-    const source = await readFile(file, 'utf8')
-    const path = markdownPagePathToRoutePath(
-      markdownFileToSourcePath(file, options.pageLoader.sourceRoot),
-    )
-    return [path, { path, ...summaryReader.read(source, file) }] as const
+): Promise<ManifestPage[]> {
+  const pages = await listMarkdownPages(options.pageLoader, options.publicDir)
+  return Promise.all(pages.map(async (page) => {
+    const source = await readFile(page.file, 'utf8')
+    return {
+      path: page.path,
+      id: pageModuleId(page.sourcePath, options.srcDir),
+      summary: summaryReader.read(source, page.file),
+    }
   }))
+}
 
-  return Object.fromEntries(entries)
+/**
+ * Root-relative module id of a page, for example `/src/guide/intro.md`. Dev and
+ * build both resolve such an id against the site root, which is why the
+ * generator can write one import per page instead of a glob at runtime.
+ */
+function pageModuleId(sourcePath: string, srcDir: string): string {
+  return `${srcDir === '.' ? '' : `/${srcDir}`}${sourcePath}`
+}
+
+async function listMarkdownPages(
+  pageLoader: MarkdownPageLoader,
+  publicDir: string,
+): Promise<MarkdownPage[]> {
+  const publicDirectory = resolve(pageLoader.sourceRoot, publicDir)
+  const files = await findMarkdownFiles(pageLoader.sourceRoot, publicDirectory)
+  return files.map((file) => {
+    const sourcePath = markdownFileToSourcePath(file, pageLoader.sourceRoot)
+    return { file, path: markdownPagePathToRoutePath(sourcePath), sourcePath }
+  })
 }
 
 async function findMarkdownFiles(

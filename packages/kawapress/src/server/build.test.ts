@@ -25,12 +25,22 @@ const CONFIG = `export default {
 }
 `
 
-const PAGE = `---
+const HOME_PAGE = `---
 title: Home
 ---
 
 # Build Env Test
 `
+
+/** A guide page whose title the chunk test edits between two builds. */
+function guidePage(title: string): string {
+  return `---
+title: ${title}
+---
+
+# ${title}
+`
+}
 
 let siteDirectory: string
 
@@ -55,7 +65,9 @@ async function createSite(): Promise<void> {
     type: 'module',
   }, null, 2))
   await writeFile(join(siteDirectory, 'kawapress.config.ts'), CONFIG)
-  await writeFile(join(siteDirectory, 'index.md'), PAGE)
+  await writeFile(join(siteDirectory, 'index.md'), HOME_PAGE)
+  await mkdir(join(siteDirectory, 'guide'), { recursive: true })
+  await writeFile(join(siteDirectory, 'guide/one.md'), guidePage('One'))
   await mkdir(join(siteDirectory, 'node_modules'), { recursive: true })
   await symlink(
     kawapressPackageDirectory,
@@ -73,12 +85,17 @@ async function buildWithoutNodeEnv(): Promise<void> {
   })
 }
 
-async function readClientEntryChunk(): Promise<string> {
+async function listClientChunks(): Promise<string[]> {
+  return (await readdir(join(siteDirectory, 'dist/assets')))
+    .filter(file => file.endsWith('.js'))
+    .sort()
+}
+
+async function readClientChunks(): Promise<string[]> {
   const assetsDirectory = join(siteDirectory, 'dist/assets')
-  const entryChunk = (await readdir(assetsDirectory))
-    .find(file => file.startsWith('entry-client-') && file.endsWith('.js'))
-  expect(entryChunk, 'client entry chunk in dist/assets').toBeDefined()
-  return readFile(join(assetsDirectory, entryChunk!), 'utf8')
+  return Promise.all((await listClientChunks()).map(
+    file => readFile(join(assetsDirectory, file), 'utf8'),
+  ))
 }
 
 describe('buildSite', () => {
@@ -86,12 +103,14 @@ describe('buildSite', () => {
     await createSite()
     await buildWithoutNodeEnv()
 
-    const chunk = await readClientEntryChunk()
+    const chunks = await readClientChunks()
 
     for (const marker of DEVELOPMENT_ONLY_MARKERS) {
-      expect(chunk, `${marker} must be tree-shaken out of the client bundle`)
-        .not
-        .toContain(marker)
+      for (const [index, chunk] of chunks.entries()) {
+        expect(chunk, `${marker} must be tree-shaken out of client chunk ${index}`)
+          .not
+          .toContain(marker)
+      }
     }
   }, 300_000)
 })

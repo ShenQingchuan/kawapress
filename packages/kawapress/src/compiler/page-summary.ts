@@ -1,14 +1,11 @@
 import type { MarkdownExit, Token } from 'markdown-exit'
-import type { PageRouteMeta } from '../core/site'
+import type { PageSummary } from '../core/page-manifest'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
 import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { createMarkdownExit } from 'markdown-exit'
 import { resolvePageMetadata } from '../core/page-metadata'
 import { installJsonFrontmatterCompatibility } from './frontmatter-compat'
 import { useMarkdownItPlugin } from './markdown-it-compat'
-
-/** Everything a route needs about a page except the route path itself. */
-export type PageSummary = Omit<PageRouteMeta, 'path'>
 
 export interface PageSummaryReader {
   /**

@@ -1,12 +1,11 @@
-import type { Router, RouteRecordRaw } from 'vue-router'
-import { pageRoutes, pages } from 'virtual:kawapress-pages'
+import type { Router } from 'vue-router'
+import type { PageManifest } from '../core/page-manifest'
 import { site } from 'virtual:kawapress-site'
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
 import { decodeUrlPathname, withoutBase } from '../core/base'
 import { NOT_FOUND_ROUTE_NAME } from '../core/not-found'
-import NotFoundRoute from './components/NotFoundRoute.vue'
 import { createClientHydration } from './hydration'
-import { wrapPageLoader } from './page-data'
+import { createRoutes } from './page-routes'
 
 export interface AppRouter {
   router: Router
@@ -18,22 +17,11 @@ export interface AppRouter {
   adoptRequestedUrl: () => Promise<void>
 }
 
-export function createRoutes(): RouteRecordRaw[] {
-  return [
-    ...Object.entries(pages).map(([path, loader]) => ({
-      path,
-      component: wrapPageLoader(path, loader),
-      meta: { page: pageRoutes[path] },
-    })),
-    { path: '/:pathMatch(.*)*', name: NOT_FOUND_ROUTE_NAME, component: NotFoundRoute },
-  ]
-}
-
-export function createAppRouter(): AppRouter {
+export function createAppRouter(pageManifest: PageManifest): AppRouter {
   if (import.meta.env.SSR) {
     const router = createRouter({
       history: createMemoryHistory(site.base),
-      routes: createRoutes(),
+      routes: createRoutes(pageManifest),
     })
     return { router, adoptRequestedUrl: () => Promise.resolve() }
   }
@@ -44,20 +32,23 @@ export function createAppRouter(): AppRouter {
   const hydration = createClientHydration(createWebHistory(site.base), () => createdRouter)
   const router = createRouter({
     history: hydration.history,
-    routes: createRoutes(),
+    routes: createRoutes(pageManifest),
   })
   createdRouter = router
-  installEncodedPagePathRedirect(router)
+  installEncodedPagePathRedirect(router, pageManifest)
   installLinkInterceptor(router)
   return { router, adoptRequestedUrl: hydration.adoptRequestedUrl }
 }
 
 const externalRE = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i
 
-function installEncodedPagePathRedirect(router: Router): void {
+function installEncodedPagePathRedirect(
+  router: Router,
+  pageManifest: PageManifest,
+): void {
   router.beforeEach((to) => {
     const decodedPath = decodeUrlPathname(to.path)
-    if (decodedPath !== to.path && Object.hasOwn(pages, decodedPath)) {
+    if (decodedPath !== to.path && Object.hasOwn(pageManifest, decodedPath)) {
       return {
         path: decodedPath,
         query: to.query,

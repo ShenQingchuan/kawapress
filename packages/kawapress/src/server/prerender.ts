@@ -1,4 +1,5 @@
 import type { OutletRegistry } from '../core/outlet'
+import type { PageManifest } from '../core/page-manifest'
 import type { SiteData } from '../core/site'
 import type { ClientManifest } from './page-assets'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
@@ -24,14 +25,14 @@ interface RenderResult {
 interface ServerBundle {
   render: (path: string) => Promise<RenderResult>
   getOutletRegistry: () => OutletRegistry
-  pages: Record<string, unknown>
+  pageManifest: PageManifest
   site: SiteData
 }
 
 export async function prerenderPages(root: string): Promise<void> {
   const distDir = join(root, 'dist')
   const serverEntry = join(distDir, '.server/entry-server.js')
-  const { render, getOutletRegistry, pages, site } = await import(
+  const { render, getOutletRegistry, pageManifest, site } = await import(
     pathToFileURL(serverEntry).href,
   ) as ServerBundle
 
@@ -46,7 +47,7 @@ export async function prerenderPages(root: string): Promise<void> {
   const [entryKey, entryChunk] = entry
   const clientEntryUrl = withBase(entryChunk.file, site.base)
 
-  const paths = [...Object.keys(pages), NOT_FOUND_ROUTE_PATH]
+  const paths = [...Object.keys(pageManifest), NOT_FOUND_ROUTE_PATH]
   const renderedOutlets = new Set<string>()
   for (const path of paths) {
     const { html, head, htmlAttrs, outlets, modules } = await render(path)

@@ -1,11 +1,7 @@
 /// <reference types="vite/client" />
 
 declare module 'virtual:kawapress-pages' {
-  export const pages: Record<string, () => Promise<{
-    default: import('vue').Component
-    __pageData?: import('../../core/site').PageData
-  }>>
-  export const pageRoutes: Record<string, import('../../core/site').PageRouteMeta>
+  export const pageManifest: import('../../core/page-manifest').PageManifest
 }
 
 declare module 'virtual:kawapress-site' {

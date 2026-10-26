@@ -1,9 +1,10 @@
 import { createHead } from '@unhead/vue/client'
+import { pageManifest } from 'virtual:kawapress-pages'
 import { createKawapressApp } from '../app'
 
 async function bootstrap(): Promise<void> {
   const head = createHead()
-  const { app, router, adoptRequestedUrl } = await createKawapressApp({ head })
+  const { app, router, adoptRequestedUrl } = await createKawapressApp({ head, pageManifest })
   await router.isReady()
   app.mount('#app')
   // The first render had to match the served HTML, which for the prerendered
