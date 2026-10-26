@@ -1,4 +1,5 @@
-export { default, lastUpdatedPlugin, PLUGIN_NAME } from './plugin'
+export { PLUGIN_NAME } from './name'
+export { default, lastUpdatedPlugin } from './plugin'
 export type {
   LastUpdatedDateOptions,
   LastUpdatedEditLinkOptions,

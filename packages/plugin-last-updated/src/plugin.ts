@@ -7,11 +7,9 @@ import { definePlugin } from 'kawapress'
 import { readGitLastUpdated } from 'kawapress/generator'
 import { createEditLink, toRepositoryPath, validateEditLinkPattern } from './edit-link'
 import { readGitTopLevel } from './git'
+import { PLUGIN_NAME } from './name'
 import { createRuntimeOptions, lastUpdatedOptionsPlugin } from './options-module'
 
-export type { LastUpdatedPageData }
-
-export const PLUGIN_NAME = '@kawapress/plugin-last-updated'
 const WARNING_LABEL = 'KawaPress Last Updated'
 
 export function lastUpdatedPlugin(

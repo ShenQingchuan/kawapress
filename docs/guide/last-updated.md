@@ -125,7 +125,7 @@ editLink: false
 ## 关于 git 历史 {#git-history}
 
 - 时间只来自 git 提交记录，不读文件修改时间。文件最后一次修改时间和最后一次提交时间常常不同。
-- 只提交过、还没提交的新文件没有日期，开发时也一样。想要日期，先 `git commit`。
+- 还没提交过的新文件没有日期，开发时也一样。想要日期，先 `git commit`。
 - 仓库是浅克隆时，插件输出 warning 并跳过这一行，因为历史不完整会算出错误的日期。在 GitHub Actions 中使用 `actions/checkout` 时，请设置 `fetch-depth: 0`。
 - 站点不在 git 仓库里时，同样输出 warning，并跳过「最后更新于」和「编辑此页」。
 
