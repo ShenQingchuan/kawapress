@@ -10,6 +10,7 @@
     "consola": "catalog:node",
     "kawapress": "workspace:*",
     "lighthouse": "catalog:bench",
+    "playwright": "catalog:test",
     "vitepress": "catalog:bench"
   }
 }

@@ -1,8 +1,13 @@
 import { Buffer } from 'node:buffer'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  combineAssetSizes,
   extractRelativeImports,
   findFirstPaintAssets,
+  measurePageSize,
   summarizeAssets,
 } from './measure-size.ts'
 
@@ -107,5 +112,61 @@ describe('summarizeAssets', () => {
       js: { files: 0, raw: 0, gzip: 0, brotli: 0 },
       css: { files: 0, raw: 0, gzip: 0, brotli: 0 },
     })
+  })
+})
+
+describe('combineAssetSizes', () => {
+  it('adds up every field of the given summaries', () => {
+    expect(combineAssetSizes([
+      { files: 1, raw: 10, gzip: 6, brotli: 5 },
+      { files: 2, raw: 20, gzip: 12, brotli: 10 },
+    ])).toEqual({ files: 3, raw: 30, gzip: 18, brotli: 15 })
+    expect(combineAssetSizes([])).toEqual({ files: 0, raw: 0, gzip: 0, brotli: 0 })
+  })
+})
+
+describe('measurePageSize', () => {
+  it('counts the HTML document next to the scripts and stylesheets', async () => {
+    const distDir = await mkdtemp(join(tmpdir(), 'kawapress-bench-size-'))
+    const html = [
+      '<!DOCTYPE html><html><head>',
+      '<link rel="stylesheet" href="/assets/style.css">',
+      '<link rel="modulepreload" href="/assets/chunk.js">',
+      '<script type="module" src="/assets/entry.js"></script>',
+      '</head><body></body></html>',
+    ].join('')
+    const entry = 'import "./chunk.js"\nexport const entry = 1\n'
+    const chunk = 'export const chunk = 2\n'
+    const style = 'body { margin: 0 }\n'
+
+    try {
+      await mkdir(join(distDir, 'assets'), { recursive: true })
+      await Promise.all([
+        writeFile(join(distDir, 'index.html'), html),
+        writeFile(join(distDir, 'assets/entry.js'), entry),
+        writeFile(join(distDir, 'assets/chunk.js'), chunk),
+        writeFile(join(distDir, 'assets/style.css'), style),
+      ])
+
+      const result = await measurePageSize({
+        distDir,
+        htmlFile: 'index.html',
+        base: '/',
+        page: '/',
+      })
+
+      expect(result.page).toBe('/')
+      expect(result.html.files).toBe(1)
+      expect(result.html.raw).toBe(Buffer.byteLength(html))
+      expect(result.js.files).toBe(2)
+      expect(result.js.raw).toBe(Buffer.byteLength(entry) + Buffer.byteLength(chunk))
+      expect(result.css.raw).toBe(Buffer.byteLength(style))
+      expect(result.firstPaint).toEqual(combineAssetSizes([result.html, result.js, result.css]))
+      expect(result.firstPaint.raw).toBe(Buffer.byteLength(html + entry + chunk + style))
+      expect(result.firstPaint.gzip).toBeGreaterThan(0)
+    }
+    finally {
+      await rm(distDir, { recursive: true, force: true })
+    }
   })
 })

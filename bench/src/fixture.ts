@@ -26,6 +26,11 @@ export interface Fixture {
 export const GUIDE_DIR = 'guide'
 /** Route prefix of the guide pages. */
 export const GUIDE_ROUTE_PREFIX = '/guide'
+/**
+ * Hero name of the home page. Both themes render it inside the first `h1`, so the
+ * dev measurement can wait for visible home page content through the same selector.
+ */
+export const HOME_HERO_NAME = 'Benchmark'
 
 const SEED = 20_260_101
 
@@ -268,7 +273,7 @@ export function createFixture(size: number): Fixture {
     home: {
       file: 'index.md',
       route: '/',
-      title: 'Benchmark',
+      title: HOME_HERO_NAME,
       markdown: createHomeMarkdown(titles),
     },
     pages,
@@ -281,10 +286,10 @@ function createHomeMarkdown(titles: readonly string[]): string {
   return [
     '---',
     'layout: home',
-    'title: Benchmark',
+    `title: ${HOME_HERO_NAME}`,
     '',
     'hero:',
-    '  name: Benchmark',
+    `  name: ${HOME_HERO_NAME}`,
     '  text: The same Markdown, rendered by two generators',
     '  tagline: A seeded fixture that compares KawaPress and VitePress on build speed and output size.',
     '  actions:',

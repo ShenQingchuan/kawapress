@@ -1,6 +1,6 @@
 import type { LighthouseScore } from './measure-lighthouse.ts'
 import type { PageSizeResult } from './measure-size.ts'
-import type { BenchReport, Measurement, SizeResult } from './report.ts'
+import type { BenchReport, DevMeasurement, Measurement, SizeResult } from './report.ts'
 import type { SiteKind, SitePaths } from './sites.ts'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -9,12 +9,13 @@ import { fileURLToPath } from 'node:url'
 import { consola } from 'consola'
 import { parseArgs, USAGE } from './args.ts'
 import { readEnvironment, readToolVersions } from './environment.ts'
-import { createFixture } from './fixture.ts'
+import { createFixture, HOME_HERO_NAME } from './fixture.ts'
 import { measureColdBuild } from './measure-build.ts'
 import { measureDevReady } from './measure-dev.ts'
 import { measureLighthouse } from './measure-lighthouse.ts'
 import { measurePageSize } from './measure-size.ts'
 import {
+  formatBytes,
   formatDuration,
   formatReport,
   formatReportJson,
@@ -25,7 +26,7 @@ import { SITE_KINDS, SITE_LABELS, writeSites } from './sites.ts'
 
 interface SiteMeasurement {
   build: Measurement
-  dev: Measurement
+  dev: DevMeasurement
   assets: { home: PageSizeResult, guide: PageSizeResult }
   lighthouse?: LighthouseScore
 }
@@ -50,7 +51,11 @@ async function measureSite(
   log(`${label}: dev ready, ${runs} run(s)`)
   const devRuns = await measureDevReady(site, {
     runs,
-    onRun: ({ run, durationMs }) => log(`  run ${run}: ${formatDuration(durationMs)}`),
+    expectHeading: HOME_HERO_NAME,
+    onRun: ({ run, contentVisibleMs, firstHtmlMs }) => log(
+      `  run ${run}: ${formatDuration(contentVisibleMs)} until visible, `
+      + `${formatDuration(firstHtmlMs)} until the first HTML response`,
+    ),
   })
 
   const home = await measurePageSize({
@@ -65,11 +70,17 @@ async function measureSite(
     base: site.base,
     page: '/guide/page-0001',
   })
-  log(`${label}: first paint JS ${home.js.raw} B raw, CSS ${home.css.raw} B raw`)
+  log(
+    `${label}: home first paint ${formatBytes(home.firstPaint.raw)} raw / ${formatBytes(home.firstPaint.gzip)} gzip, `
+    + `guide first paint ${formatBytes(guide.firstPaint.gzip)} gzip`,
+  )
 
   const measurement: SiteMeasurement = {
     build: summarizeRuns(buildRuns),
-    dev: summarizeRuns(devRuns),
+    dev: {
+      contentVisible: summarizeRuns(devRuns.map(run => run.contentVisibleMs)),
+      firstHtml: summarizeRuns(devRuns.map(run => run.firstHtmlMs)),
+    },
     assets: { home, guide },
   }
 
