@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter, useSite } from 'kawapress/client'
+import { usePageData, useRouter, useSite } from 'kawapress/client'
 import { computed, nextTick, onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'vue'
 
 interface Labels {
@@ -34,6 +34,7 @@ const CHINESE_LABELS: Labels = {
 
 const router = useRouter()
 const site = useSite()
+const page = usePageData()
 const root = useTemplateRef<HTMLElement>('root')
 const menuItem = useTemplateRef<HTMLButtonElement>('menuItem')
 const toggle = useTemplateRef<HTMLButtonElement>('toggle')
@@ -51,6 +52,18 @@ const labels = computed(() => (
     ? CHINESE_LABELS
     : ENGLISH_LABELS
 ))
+/**
+ * Pages that opted out of the Markdown mirror, or that are not prose at all,
+ * get no actions. The plain-Markdown pass renders page bodies without any
+ * theme interface, so it must not add them either.
+ */
+const visible = computed(() => {
+  if (import.meta.env.SSG_MD) {
+    return false
+  }
+  const frontmatter = page.value?.frontmatter
+  return frontmatter?.llms !== false && frontmatter?.layout !== 'home'
+})
 const primaryLabel = computed(() => (
   primaryStatus.value || labels.value.copyMarkdown
 ))
@@ -244,6 +257,7 @@ function markdownUrl(routePath: string, locale: string, base: string): string {
 
 <template>
   <div
+    v-if="visible"
     ref="root"
     class="kawa-llms-actions"
     role="group"

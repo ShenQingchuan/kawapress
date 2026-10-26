@@ -15,14 +15,21 @@ interface TestSite {
   localeIndex: string
 }
 
+interface TestPage {
+  path: string
+  frontmatter: Record<string, unknown>
+}
+
 const testState = vi.hoisted(() => ({
   route: undefined as unknown as ShallowRef<TestRoute>,
   site: undefined as unknown as ShallowRef<TestSite>,
+  page: undefined as unknown as ShallowRef<TestPage>,
 }))
 
 vi.mock('kawapress/client', () => ({
   useRouter: () => ({ currentRoute: testState.route }),
   useSite: () => testState.site,
+  usePageData: () => testState.page,
 }))
 
 let app: App<Element> | undefined
@@ -35,19 +42,25 @@ beforeEach(() => {
     lang: 'en',
     localeIndex: 'root',
   })
+  testState.page = shallowRef({ path: '/guide', frontmatter: {} })
   originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
 
+  mountActions()
+})
+
+function mountActions(): void {
   const host = document.createElement('div')
   document.body.append(host)
   app = createApp(LlmsActions)
   app.mount(host)
-})
+}
 
 afterEach(() => {
   app?.unmount()
   app = undefined
   document.body.innerHTML = ''
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
   vi.restoreAllMocks()
 
   if (originalClipboard) {
@@ -59,6 +72,34 @@ afterEach(() => {
 })
 
 describe('llms actions', () => {
+  it('renders the actions once for a prose page', () => {
+    expect(document.querySelectorAll('.kawa-llms-actions')).toHaveLength(1)
+  })
+
+  it('renders nothing when the page turns the Markdown copy off', async () => {
+    testState.page.value = { path: '/private', frontmatter: { llms: false } }
+    await nextTick()
+
+    expect(document.querySelector('.kawa-llms-actions')).toBeNull()
+  })
+
+  it('renders nothing on a home layout page', async () => {
+    testState.page.value = { path: '/', frontmatter: { layout: 'home' } }
+    await nextTick()
+
+    expect(document.querySelector('.kawa-llms-actions')).toBeNull()
+  })
+
+  it('renders nothing inside the plain Markdown pass', async () => {
+    vi.stubEnv('SSG_MD', 'true')
+    app?.unmount()
+    document.body.innerHTML = ''
+    mountActions()
+    await nextTick()
+
+    expect(document.querySelector('.kawa-llms-actions')).toBeNull()
+  })
+
   it('clears copy feedback immediately when the route changes', async () => {
     const clipboard = {
       writeText: vi.fn<(value: string) => Promise<void>>().mockResolvedValue(),

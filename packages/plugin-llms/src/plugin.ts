@@ -15,7 +15,6 @@ import process from 'node:process'
 import { definePlugin } from 'kawapress'
 import { createLlmsArtifacts } from './artifacts'
 import { SSG_MD_ENVIRONMENT } from './constants'
-import { installLlmsActionsMarkdown } from './markdown-actions'
 import { renderMarkdownPages } from './ssg/render'
 import {
   createLlmsDevMiddlewarePlugin,
@@ -66,7 +65,6 @@ export function llmsPlugin(
       })
       api.markdown((compiler) => {
         markdown = compiler
-        installLlmsActionsMarkdown(compiler)
       })
       api.pageArtifact((page) => {
         pageArtifacts.set(page.file, page)

@@ -134,11 +134,11 @@ llms: false
     expect(full).toContain('<!-- Source: /guide.md -->')
     await expect(access(join(root, 'dist/private.md'))).rejects.toThrow()
 
+    expect(guideMarkdown).not.toContain('kawa-llms-actions')
     expect(guideHtml).toContain('class="kawa-llms-actions"')
     expect(guideHtml).toContain('aria-expanded="false"')
     expect(guideHtml).toContain('复制页面 Markdown')
-    expect(guideHtml).toContain('id="nagi-initial-appearance"')
-    expect(guideHtml).toContain('id="nagi-initial-sidebar-width"')
+    expect(guideHtml.match(/class="kawa-llms-actions"/g)).toHaveLength(1)
     await expect(access(join(root, 'dist/.kawapress'))).rejects.toThrow()
   })
 
