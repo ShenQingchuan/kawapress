@@ -1,8 +1,10 @@
 import type { GeneratorPluginRunner } from '../plugin/generator-runner'
+import type { LinkRegistry } from './link-registry'
 import type { ParsedMarkdown } from './markdown'
 import { relative, resolve, sep } from 'node:path'
 import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { assertPageDataSerializable } from '../core/site'
+import { createLinkRegistry } from './link-registry'
 import { createMarkdownCompiler, parseMarkdown } from './markdown'
 
 interface CachedPage {
@@ -12,6 +14,8 @@ interface CachedPage {
 
 export interface MarkdownPageLoader {
   sourceRoot: string
+  /** Links and heading IDs of every page loaded so far. */
+  registry: LinkRegistry
   load: (source: string, file: string) => Promise<ParsedMarkdown>
 }
 
@@ -26,6 +30,7 @@ export function createMarkdownPageLoader(
   options: MarkdownPageLoaderOptions,
 ): MarkdownPageLoader {
   const sourceRoot = resolve(options.root, options.srcDir)
+  const registry = createLinkRegistry()
   const mdPromise = createMarkdownCompiler({
     base: options.base,
     pluginRunner: options.pluginRunner,
@@ -34,6 +39,7 @@ export function createMarkdownPageLoader(
 
   return {
     sourceRoot,
+    registry,
     load(source, file) {
       const cached = cache.get(file)
       if (cached?.source === source) {
@@ -49,6 +55,12 @@ export function createMarkdownPageLoader(
           routePath,
           sourcePath,
         )
+        registry.set({
+          route: routePath,
+          source: sourcePath,
+          headings: result.env.headings ?? [],
+          links: result.env.links ?? [],
+        })
         assertPageDataSerializable(result.pageData)
         await options.pluginRunner.runPageData(result.pageData)
         assertPageDataSerializable(result.pageData)
@@ -67,6 +79,7 @@ export function createMarkdownPageLoader(
   }
 }
 
-function markdownFileToSourcePath(file: string, sourceRoot: string): string {
+/** Path of a Markdown file relative to srcDir, for example `/guide/intro.md`. */
+export function markdownFileToSourcePath(file: string, sourceRoot: string): string {
   return `/${relative(sourceRoot, file).split(sep).join('/')}`
 }

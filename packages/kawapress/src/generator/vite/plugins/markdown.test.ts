@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { createLinkRegistry } from '../../../compiler/link-registry'
 import { markdownPlugin } from './markdown'
 
 describe('markdownPlugin', () => {
@@ -12,6 +13,7 @@ describe('markdownPlugin', () => {
     const calls: Array<{ file: string, source: string }> = []
     const pageLoader: MarkdownPageLoader = {
       sourceRoot: directory,
+      registry: createLinkRegistry(),
       async load(source, loadedFile) {
         calls.push({ file: loadedFile, source })
         return {

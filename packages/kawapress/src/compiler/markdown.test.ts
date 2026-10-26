@@ -4,7 +4,7 @@ import { nagi } from '@kawapress/preset-nagi'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { definePlugin } from '../api/plugin'
 import { createGeneratorPluginRunner } from '../plugin/generator-runner'
-import { compileMarkdownToVue, createMarkdownCompiler } from './markdown'
+import { compileMarkdownToVue, createMarkdownCompiler, parseMarkdown } from './markdown'
 
 let md: MarkdownExit
 let mdWithBase: MarkdownExit
@@ -501,5 +501,87 @@ describe('syntax highlighting', () => {
       '/x',
     )
     expect(code).toContain('MOVE X TO Y')
+  })
+})
+
+describe('link records for dead link checking', () => {
+  it('records internal links with file line numbers across frontmatter', async () => {
+    const { env } = await parseMarkdown(
+      md,
+      `---
+title: Linked
+---
+
+# Home
+
+[Guide](./guide.md#setup)
+
+[Anchor](#home)
+
+[External](https://vuejs.org/)
+
+[Asset](./manual.pdf)
+`,
+      '/index',
+      '/index.md',
+    )
+
+    expect(env.links).toEqual([
+      { href: './guide.md#setup', target: '/guide#setup', line: 7 },
+      { href: '#home', target: '#home', line: 9 },
+      { href: './manual.pdf', target: '/manual.pdf', line: 13 },
+    ])
+  })
+
+  it('collects every heading ID from h1 to h6, including custom IDs', async () => {
+    const { env } = await parseMarkdown(
+      md,
+      [
+        '# One',
+        '## Two',
+        '### Three',
+        '#### Four',
+        '##### Five',
+        '###### Six',
+        '## Custom {#custom-id}',
+      ].join('\n\n'),
+      '/headings',
+    )
+
+    expect(env.headings).toEqual(['one', 'two', 'three', 'four', 'five', 'six', 'custom-id'])
+  })
+
+  it('skips the permalink KawaPress renders inside headings', async () => {
+    const { env } = await parseMarkdown(md, '# Only\n', '/only')
+
+    expect(env.links).toEqual([])
+  })
+
+  it('leaves raw HTML links unchecked', async () => {
+    const { env } = await parseMarkdown(
+      md,
+      '<a href="./missing.md">Missing</a>\n',
+      '/html-links',
+    )
+
+    expect(env.links).toEqual([])
+  })
+
+  it('counts JSON frontmatter lines when reporting link lines', async () => {
+    const { env } = await parseMarkdown(
+      md,
+      `{
+  "title": "JSON"
+}
+
+# J
+
+[j](./a.md)
+`,
+      '/json-lines',
+      '/json-lines.md',
+    )
+
+    expect(env.links).toEqual([{ href: './a.md', target: '/a', line: 7 }])
   })
 })

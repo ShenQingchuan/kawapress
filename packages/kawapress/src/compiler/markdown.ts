@@ -1,5 +1,6 @@
 import type { MarkdownSfcBlocks } from '@mdit-vue/plugin-sfc'
-import type { MarkdownExit } from 'markdown-exit'
+import type { MarkdownExit, Token } from 'markdown-exit'
+import type { LinkRecord } from '../core/dead-links'
 import type { PageData, PageHeader } from '../core/site'
 import type { GeneratorPluginRunner } from '../plugin/generator-runner'
 import { componentPlugin } from '@mdit-vue/plugin-component'
@@ -16,12 +17,23 @@ import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { resolvePageMetadata } from '../core/page-metadata'
 import { useMarkdownItPlugin } from './markdown-it-compat'
 
+/** Class of the permalink that KawaPress renders inside every heading. */
+const HEADER_ANCHOR_CLASS = 'header-anchor'
+
 interface MarkdownEnv {
   path: string
   sourcePath?: string
   frontmatter?: Record<string, unknown>
   headers?: PageHeader[]
   sfcBlocks?: MarkdownSfcBlocks
+  /** Page body after frontmatter removal, set by the frontmatter plugin. */
+  content?: string
+  /** Internal links of the page, with line numbers relative to the source file. */
+  links?: LinkRecord[]
+  /** Anchor IDs of every heading on the page, from h1 to h6. */
+  headings?: string[]
+  /** 1-based line of each inline link token, filled while parsing. */
+  linkLines?: Map<Token, number>
 }
 
 export interface CompiledPage {
@@ -48,7 +60,7 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   useMarkdownItPlugin(md, anchorPlugin, {
     level: [1, 2, 3, 4, 5, 6],
     permalink: anchorPlugin.permalink.linkInsideHeader({
-      class: 'header-anchor',
+      class: HEADER_ANCHOR_CLASS,
       placement: 'after',
       space: true,
       symbol: '#',
@@ -56,6 +68,7 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   })
   // include h1: page title inference reads it; outline rendering filters to h2+ itself
   useMarkdownItPlugin(md, headersPlugin, { level: [1, 2, 3] })
+  installPageLinkCollector(md)
   installLinkRenderer(md, options.base ?? '/')
 
   await options.pluginRunner?.runMarkdown(md)
@@ -93,6 +106,43 @@ function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {
 
 const EXTERNAL_LINK_RE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
 
+/**
+ * Collect what the dead link checker needs: the line of every inline link and
+ * the final anchor ID of every heading. Runs after `markdown-it-anchor`, so
+ * `heading_open` tokens already carry the generated slug or a custom `{#id}`.
+ */
+function installPageLinkCollector(md: MarkdownExit): void {
+  md.core.ruler.push('kawapress:page-links', (state) => {
+    const env = state.env as MarkdownEnv
+    const linkLines = new Map<Token, number>()
+    const headings: string[] = []
+    let blockLine = 1
+
+    for (const token of state.tokens) {
+      if (token.map) {
+        blockLine = token.map[0] + 1
+      }
+      if (token.type === 'heading_open') {
+        const id = token.attrGet('id')
+        if (id) {
+          headings.push(id)
+        }
+      }
+      if (token.type !== 'inline') {
+        continue
+      }
+      for (const child of token.children ?? []) {
+        if (child.type === 'link_open') {
+          linkLines.set(child, blockLine)
+        }
+      }
+    }
+
+    env.linkLines = linkLines
+    env.headings = headings
+  })
+}
+
 function installLinkRenderer(md: MarkdownExit, base: string): void {
   const defaultRender = md.renderer.rules.link_open
   md.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
@@ -108,13 +158,17 @@ function installLinkRenderer(md: MarkdownExit, base: string): void {
         appendRel(token, 'noreferrer')
       }
     }
-    else if (href && !href.startsWith('#')) {
-      token.attrSet('href', normalizeInternalLink(
+    else if (href) {
+      const link = resolveInternalLink(
         href,
         markdownEnv,
         base,
         token.attrIndex('download') < 0,
-      ))
+      )
+      token.attrSet('href', link.href)
+      if (!isHeaderAnchor(token)) {
+        recordLink(markdownEnv, token, href, link.target)
+      }
     }
 
     return defaultRender
@@ -129,12 +183,23 @@ function appendRel(token: { attrGet: (name: string) => null | string, attrSet: (
   token.attrSet('rel', [...rel].join(' '))
 }
 
-function normalizeInternalLink(
+interface ResolvedInternalLink {
+  /** Value written to the page, including the site base. */
+  href: string
+  /** Public route or public file path without the site base, including search and hash. */
+  target: string
+}
+
+function resolveInternalLink(
   href: string,
   env: MarkdownEnv,
   base: string,
   normalizePage: boolean,
-): string {
+): ResolvedInternalLink {
+  if (href.startsWith('#')) {
+    return { href, target: href }
+  }
+
   const sourcePath = env.sourcePath ?? inferMarkdownSourcePath(env.path)
   const encodedSourcePath = sourcePath
     .split('/')
@@ -144,7 +209,28 @@ function normalizeInternalLink(
   const pathname = decodeURI(normalizePage
     ? markdownPagePathToRoutePath(resolved.pathname)
     : resolved.pathname)
-  return withBase(`${pathname}${resolved.search}${resolved.hash}`, base)
+  const target = `${pathname}${resolved.search}${resolved.hash}`
+  return { href: withBase(target, base), target }
+}
+
+function recordLink(
+  env: MarkdownEnv,
+  token: Token,
+  href: string,
+  target: string,
+): void {
+  const links = (env.links ??= [])
+  links.push({
+    href,
+    target,
+    line: env.linkLines?.get(token) ?? 1,
+  })
+}
+
+/** The permalink inside every heading is generated by KawaPress, not authored. */
+function isHeaderAnchor(token: Token): boolean {
+  const classes = token.attrGet('class')?.split(/\s+/) ?? []
+  return classes.includes(HEADER_ANCHOR_CLASS)
 }
 
 function inferMarkdownSourcePath(routePath: string): string {
@@ -163,9 +249,10 @@ export async function parseMarkdown(
   path: string,
   sourcePath?: string,
 ): Promise<ParsedMarkdown> {
-  const env: MarkdownEnv = { path, sourcePath }
+  const env: MarkdownEnv = { path, sourcePath, links: [], headings: [] }
   const html = await md.renderAsync(src, env)
 
+  env.links = shiftLinksToSourceLines(src, env)
   const frontmatter = env.frontmatter ?? {}
   const headers = env.headers ?? []
   const metadata = resolvePageMetadata(frontmatter, headers)
@@ -176,6 +263,23 @@ export async function parseMarkdown(
     headers,
   }
   return { html, env, pageData }
+}
+
+/**
+ * Token line numbers start at the page body, so frontmatter lines are added back
+ * to report the line the author sees in the Markdown file.
+ */
+function shiftLinksToSourceLines(src: string, env: MarkdownEnv): LinkRecord[] {
+  const offset = countRemovedLines(src, env.content)
+  return (env.links ?? []).map(link => ({ ...link, line: link.line + offset }))
+}
+
+function countRemovedLines(source: string, body: string | undefined): number {
+  if (!body || !source.endsWith(body)) {
+    return 0
+  }
+  const removed = source.slice(0, source.length - body.length)
+  return (removed.match(/\n/g) ?? []).length
 }
 
 export async function compileMarkdownToVue(
