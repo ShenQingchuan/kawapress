@@ -1,18 +1,5 @@
 import { expect, test } from '../support/fixtures'
-import { base, sitePath } from '../support/site'
-
-/**
- * Known bug: `kawapress dev` answers 404 for every page when the site uses a
- * non-root base. Vite's base middleware already strips the base from the
- * request URL and the SSR handler strips it a second time
- * (`packages/kawapress/src/server/request-handler.ts`), so no route matches and
- * the request falls back to the not-found route. The dev smoke tests stay
- * skipped on that leg until the dev server handles a base.
- */
-test.fixme(
-  base !== '/',
-  'kawapress dev returns 404 for every page when base is not "/"',
-)
+import { sitePath } from '../support/site'
 
 interface MarkerWindow extends Window {
   __kawapressE2eMarker?: string
@@ -32,6 +19,7 @@ test('the dev server renders a guide page', async ({ page }) => {
 
 test('sidebar links navigate on the client in dev', async ({ page }) => {
   await page.goto(sitePath('/guide/getting-started'))
+  await page.waitForLoadState('networkidle')
   await page.evaluate(() => {
     (window as MarkerWindow).__kawapressE2eMarker = 'kept'
   })
