@@ -135,6 +135,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '评论',
+            en: 'Comments',
+          },
+          link: '/guide/comments',
+        },
+        {
+          text: {
             zhCN: 'SSR 兼容性',
             en: 'SSR Compatibility',
           },
