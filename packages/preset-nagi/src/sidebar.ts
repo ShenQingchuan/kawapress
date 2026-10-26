@@ -122,6 +122,16 @@ export function findSidebarNavigation(
   return navigation
 }
 
+/**
+ * Whether a sidebar link points at `routePath`, which is the current route path
+ * as vue-router reports it. Query and hash are ignored, a trailing slash is
+ * ignored, and links that leave the site never match.
+ */
+export function isSidebarLinkActive(link: string, routePath: string): boolean {
+  return isInternalPageRoute(link)
+    && normalizePageRoute(link) === normalizePageRoute(routePath)
+}
+
 export function createSidebar(
   pages: Readonly<Record<string, PageRouteMeta>>,
   options: CreateSidebarOptions = {},
