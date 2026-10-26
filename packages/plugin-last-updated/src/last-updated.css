@@ -1,0 +1,33 @@
+@layer kawa.plugin {
+  .kawa-last-updated {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    align-items: baseline;
+    margin: 0;
+    color: var(--kawa-c-text-3);
+    font-family: var(--kawa-font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+
+  .kawa-last-updated__edit {
+    color: var(--kawa-c-text-2);
+    text-decoration: none;
+    border-radius: calc(var(--kawa-radius) / 2);
+  }
+
+  .kawa-last-updated__edit:hover {
+    color: var(--kawa-c-brand);
+    text-decoration: underline;
+  }
+
+  .kawa-last-updated__edit:focus-visible {
+    outline: 2px solid var(--kawa-c-brand);
+    outline-offset: 2px;
+  }
+
+  .kawa-last-updated__time {
+    font-variant-numeric: tabular-nums;
+  }
+}
