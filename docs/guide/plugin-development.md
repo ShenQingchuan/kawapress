@@ -110,6 +110,29 @@ api.markdown((markdown) => {
 })
 ```
 
+#### 让自己的组件出现在页面上 {#page-components}
+
+有些插件会输出自己的组件，比如图表或可交互的示例。用 `addPageComponent()` 告诉 KawaPress“这一页用到了某个组件”，它会把对应的导入写进当前页面的 SFC，Vue 就能在模板里认出这个标签：
+
+```ts
+import { addPageComponent } from 'kawapress'
+
+api.markdown((markdown) => {
+  const renderFence = markdown.renderer.rules.fence
+  markdown.renderer.rules.fence = (tokens, index, options, env, renderer) => {
+    if (tokens[index].info.trim() !== 'acme-chart') {
+      return renderFence(tokens, index, options, env, renderer)
+    }
+    addPageComponent(env, { name: 'AcmeChart', from: '@acme/chart' })
+    return '<AcmeChart />'
+  }
+})
+```
+
+`env` 是渲染这一页时使用的那份环境对象。规则、围栏渲染器和 Shiki 高亮回调都能拿到它，把它们收到的 `env` 直接传进来就行。`name` 是模板里使用的标签名，也是生成的导入绑定名；`from` 是默认导出该组件的模块，可以写包名，也可以写绝对路径。
+
+写 Markdown 的人不需要声明任何东西。组件只在真正用到的页面上加载，没写这个围栏的页面不会为它多下载一个字节。页面自己写的 `<script setup>` 会被保留，导入追加在同一个块里；页面只有普通 `<script>` 或者完全没有脚本时，KawaPress 会补一个 `lang` 相同的 `<script setup>`。
+
 ### `pageData()`：修改每个页面的数据 {#page-data}
 
 `pageData()` 在每个页面的 `pageData` 生成之后调用。handler 接收当前页面的可修改数据：

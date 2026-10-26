@@ -3,6 +3,7 @@ import type { MarkdownExit, Token } from 'markdown-exit'
 import type { LinkRecord } from '../core/dead-links'
 import type { PageData, PageHeader } from '../core/site'
 import type { GeneratorPluginRunner } from '../plugin/generator-runner'
+import type { PageComponent, PageComponentEnv } from './page-components'
 import { componentPlugin } from '@mdit-vue/plugin-component'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
 import { headersPlugin } from '@mdit-vue/plugin-headers'
@@ -17,11 +18,16 @@ import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { resolvePageMetadata } from '../core/page-metadata'
 import { installJsonFrontmatterCompatibility } from './frontmatter-compat'
 import { useMarkdownItPlugin } from './markdown-it-compat'
+import {
+  injectPageComponentImports,
+  isScriptSetupBlock,
+  readScriptLang,
+} from './page-components'
 
 /** Class of the permalink that KawaPress renders inside every heading. */
 const HEADER_ANCHOR_CLASS = 'header-anchor'
 
-interface MarkdownEnv {
+interface MarkdownEnv extends PageComponentEnv {
   path: string
   sourcePath?: string
   frontmatter?: Record<string, unknown>
@@ -39,6 +45,8 @@ interface MarkdownEnv {
   headings?: string[]
   /** 1-based line of each inline link token, filled while parsing. */
   linkLines?: Map<Token, number>
+  /** Components the page declared with `addPageComponent()`. */
+  pageComponents?: PageComponent[]
 }
 
 export interface CompiledPage {
@@ -329,8 +337,6 @@ export async function compileMarkdownToVue(
   return { code: assembleVueSfc(html, env, pageData), pageData }
 }
 
-const scriptSetupRE = /<\s*script[^>]*\ssetup\b/
-const scriptLangRE = /\slang\s*=\s*["']([^"']+)["']/
 const scriptEndRE = /<\/script>/
 
 export function assembleVueSfc(html: string, env: MarkdownEnv, pageData: PageData): string {
@@ -344,20 +350,19 @@ export function assembleVueSfc(html: string, env: MarkdownEnv, pageData: PageDat
   const pageDataCode = `export const __pageData = ${serializedPageData}`
 
   const scripts = env.sfcBlocks?.scripts.map(block => block.content) ?? []
-  const plainIndex = scripts.findIndex(content => !scriptSetupRE.test(content))
+  const plainIndex = scripts.findIndex(content => !isScriptSetupBlock(content))
   if (plainIndex >= 0) {
     scripts[plainIndex] = scripts[plainIndex].replace(scriptEndRE, `${pageDataCode}\n</script>`)
   }
   else {
-    const setupScript = scripts.find(content => scriptSetupRE.test(content))
-    const lang = setupScript?.match(scriptLangRE)?.[1]
+    const lang = scripts.map(readScriptLang).find(value => value !== undefined)
     const langAttribute = lang ? ` lang=${JSON.stringify(lang)}` : ''
     scripts.unshift(`<script${langAttribute}>\n${pageDataCode}\nexport default { name: ${JSON.stringify(pageData.path)} }\n</script>`)
   }
 
   return [
     `<template>${templateHtml}</template>`,
-    ...scripts,
+    ...injectPageComponentImports(scripts, env.pageComponents ?? []),
     ...(env.sfcBlocks?.styles.map(block => block.content) ?? []),
     ...(env.sfcBlocks?.customBlocks.map(block => block.content) ?? []),
   ].join('\n')
