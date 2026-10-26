@@ -1,5 +1,5 @@
 import type { ImageZoomLocaleLanguages } from './locale'
-import { resolveLocaleIndex } from './locale'
+import { resolveLocaleIndex } from 'kawapress'
 
 export interface ImageZoomLabels {
   /** Accessible name of a zoomable image. `{alt}` is replaced by the image alt text. */

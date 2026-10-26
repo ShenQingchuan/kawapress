@@ -1,5 +1,6 @@
 import type { LocaleConfig } from 'kawapress'
 import type { LlmsPage, LlmsPluginOptions } from './types'
+import { resolveLocaleIndex } from 'kawapress'
 import { normalizeMarkdown } from './ssg/html-to-markdown'
 
 export interface RenderedPage {
@@ -78,7 +79,7 @@ interface EnrichedPage extends RenderedPage {
 }
 
 function enrichPage(page: RenderedPage, site: LlmsSiteContext): EnrichedPage {
-  const locale = localeForRoute(page.routePath, site.locales)
+  const locale = resolveLocaleIndex(page.routePath, Object.keys(site.locales))
   const description = typeof page.pageData.frontmatter.llmsTxt === 'string'
     ? page.pageData.frontmatter.llmsTxt
     : typeof page.pageData.frontmatter.description === 'string'
@@ -185,21 +186,6 @@ function localeEntries(
     }
     return left.localeCompare(right)
   })
-}
-
-function localeForRoute(
-  routePath: string,
-  locales: Record<string, LocaleConfig>,
-): string {
-  for (const locale of Object.keys(locales)) {
-    if (locale !== 'root' && (
-      routePath === `/${locale}`
-      || routePath.startsWith(`/${locale}/`)
-    )) {
-      return locale
-    }
-  }
-  return 'root'
 }
 
 function routeToMarkdownPath(routePath: string, locale: string): string {

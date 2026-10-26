@@ -3,7 +3,7 @@ import type {
   LocaleConfig,
 } from 'kawapress'
 import type { MarkdownExit } from 'markdown-exit'
-import { definePlugin } from 'kawapress'
+import { definePlugin, resolveLocaleIndex } from 'kawapress'
 
 export interface CodeBlockCopyLabels {
   copy: string
@@ -256,7 +256,7 @@ function resolveCopyLabels(
   locales: Record<string, LocaleConfig>,
   options: CodeBlockPluginOptions,
 ): CodeBlockCopyLabels {
-  const localeIndex = resolveLocaleIndex(path, locales)
+  const localeIndex = resolveLocaleIndex(path, Object.keys(locales))
   const language = locales[localeIndex]?.lang
   const builtIn = language?.toLowerCase().startsWith('zh')
     ? CHINESE_COPY_LABELS
@@ -267,20 +267,6 @@ function resolveCopyLabels(
     ...options.copyLabels,
     ...options.localeCopyLabels?.[localeIndex],
   }
-}
-
-function resolveLocaleIndex(
-  path: string,
-  locales: Record<string, LocaleConfig>,
-): string {
-  const pathname = path.replace(/([?#].*)$/, '')
-  return Object.keys(locales)
-    .filter(locale => locale !== 'root')
-    .sort((left, right) => right.length - left.length)
-    .find((locale) => {
-      const prefix = `/${locale}`
-      return pathname === prefix || pathname.startsWith(`${prefix}/`)
-    }) ?? 'root'
 }
 
 function normalizeLanguageLabels(

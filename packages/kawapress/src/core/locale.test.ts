@@ -1,6 +1,11 @@
 import type { SiteData } from './site'
 import { describe, expect, it } from 'vitest'
-import { getLocaleIndex, resolveLocaleLink, resolveSiteDataByPath } from './locale'
+import {
+  getLocaleIndex,
+  resolveLocaleIndex,
+  resolveLocaleLink,
+  resolveSiteDataByPath,
+} from './locale'
 
 interface TestThemeConfig {
   menu?: string
@@ -31,6 +36,39 @@ const site: SiteData<TestThemeConfig> = {
     },
   },
 }
+
+describe('resolveLocaleIndex', () => {
+  const localeKeys = ['root', 'en', 'zh', 'zh-hant']
+
+  it('gives every other path to root', () => {
+    expect(resolveLocaleIndex('/', localeKeys)).toBe('root')
+    expect(resolveLocaleIndex('/guide/start', localeKeys)).toBe('root')
+  })
+
+  it('matches a locale prefix as a whole segment', () => {
+    expect(resolveLocaleIndex('/en', localeKeys)).toBe('en')
+    expect(resolveLocaleIndex('/en/', localeKeys)).toBe('en')
+    expect(resolveLocaleIndex('/en/guide', localeKeys)).toBe('en')
+    expect(resolveLocaleIndex('/english', localeKeys)).toBe('root')
+    expect(resolveLocaleIndex('/english/guide', localeKeys)).toBe('root')
+  })
+
+  it('prefers the longest matching prefix', () => {
+    expect(resolveLocaleIndex('/zh/guide', localeKeys)).toBe('zh')
+    expect(resolveLocaleIndex('/zh-hant/guide', localeKeys)).toBe('zh-hant')
+  })
+
+  it('ignores query and hash when matching', () => {
+    expect(resolveLocaleIndex('/en?tab=api', localeKeys)).toBe('en')
+    expect(resolveLocaleIndex('/en/guide#setup', localeKeys)).toBe('en')
+    expect(resolveLocaleIndex('/guide#en', localeKeys)).toBe('root')
+  })
+
+  it('only falls back to root when root is the only locale key', () => {
+    expect(resolveLocaleIndex('/en/guide', ['root'])).toBe('root')
+    expect(resolveLocaleIndex('/en/guide', [])).toBe('root')
+  })
+})
 
 describe('locale routing', () => {
   it('resolves locales from whole URL path segments', () => {

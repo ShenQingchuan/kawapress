@@ -1,5 +1,6 @@
 import type { LocaleConfig, PageBuildArtifact } from 'kawapress'
 import type { SitemapPluginItem } from './types'
+import { resolveLocaleIndex } from 'kawapress'
 
 export interface CreateSitemapItemsOptions {
   pages: readonly PageBuildArtifact[]
@@ -20,9 +21,6 @@ const DEFAULT_LANG = 'en'
 export function createSitemapItems(options: CreateSitemapItemsOptions): SitemapPluginItem[] {
   const locales = options.locales ?? {}
   const rootLang = locales.root?.lang ?? DEFAULT_LANG
-  const localeKeys = Object.keys(locales)
-    .filter(key => key !== 'root')
-    .sort((left, right) => right.length - left.length)
 
   const groups = new Map<string, PageVariant[]>()
   for (const page of options.pages) {
@@ -30,9 +28,7 @@ export function createSitemapItems(options: CreateSitemapItemsOptions): SitemapP
       continue
     }
 
-    const localeIndex = localeKeys.find(key => (
-      page.routePath === `/${key}` || page.routePath.startsWith(`/${key}/`)
-    )) ?? 'root'
+    const localeIndex = resolveLocaleIndex(page.routePath, Object.keys(locales))
     const groupKey = localeIndex === 'root'
       ? page.routePath
       : page.routePath.slice(`/${localeIndex}`.length) || '/'
