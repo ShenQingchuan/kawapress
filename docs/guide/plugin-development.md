@@ -257,6 +257,8 @@ export default defineRuntimePlugin({
 
 不要在插件里读取某个主题的私有变量（例如 `--nagi-*`），也不要自己再定义一套通用颜色变量。真正只属于插件自己的数值（例如搜索弹窗宽度）可以保留为插件私有变量。
 
+插件样式也不要限定在某个主题的正文容器里（例如 `.nagi-doc .kawa-container`）。选择器请直接基于插件自己的 `.kawa-*` class 和 ARIA、原生属性，这样换一个主题也照样生效。
+
 ### `router()`：调整运行时路由 {#router}
 
 `router()` 接收真实的 vue-router `Router`。它适合添加导航守卫：
