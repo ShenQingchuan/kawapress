@@ -99,6 +99,46 @@ export default nagi({
 
 这里的 `nagi()` 会为站点准备好默认文档界面和它所需的插件。主题样式也会自动进入最终应用，不需要再手动导入 CSS。
 
+## 添加 head 标签 {#add-head-tags}
+
+`head` 用来往每一页的 `<head>` 里加入标签。统计脚本、分享卡片要用的 Open Graph、站点验证都写在这里：
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  head: [
+    ['script', { src: 'https://example.com/analytics.js', defer: true }],
+    ['meta', { property: 'og:image', content: 'https://example.com/social.png' }],
+  ],
+})
+```
+
+每一条的写法是 `[标签名, 属性, 内容?]`。标签名只能是 `meta`、`link`、`script`、`style` 或 `noscript`；属性值写文字或者 `true`/`false`；可选的第三个元素是标签里的原始内容，适合内联脚本和样式。`title` 和 `base` 由 KawaPress 自己管理，不能写在这里。这里写下的地址不会被改写，站内地址需要你自己带上 `base`。
+
+多语言站点可以给每种语言单独设置 `head`，同 `name` 或 `property` 的标签以语言设置为准：
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  locales: {
+    root: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      head: [['meta', { property: 'og:locale', content: 'zh_CN' }]],
+    },
+    en: {
+      label: 'English',
+      lang: 'en',
+      head: [['meta', { property: 'og:locale', content: 'en_US' }]],
+    },
+  },
+})
+```
+
+单个页面还可以在 frontmatter 里补充自己的标签，写法见 [Frontmatter](/guide/frontmatter#page-head)。
+
 ## 使用 UnoCSS 工具类 {#use-unocss-utilities}
 
 nagi 默认启用 [UnoCSS](https://unocss.dev/)，并准备好 `presetWind4`、`presetIcons` 与 `presetWebFonts`。你可以直接在 Markdown 的 HTML 中使用 Wind4 工具类：

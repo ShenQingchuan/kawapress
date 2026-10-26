@@ -60,6 +60,7 @@ export default nagi({
 | `label` | The name shown in the language menu. |
 | `lang` | The page language, such as `zh-CN` or `en`. nagi uses it for its built-in Chinese and English interface text. |
 | `title` | A site title for this language only. |
+| `head` | Extra `<head>` tags for this language; see [Add Head Tags](/en/guide/getting-started#add-head-tags). |
 | `link` | The address to open when this language is selected. It defaults to the language directory and can point to another site. |
 | `themeConfig` | Interface settings for this language only. They merge with site-wide settings, and matching fields are replaced here. |
 | `dir` | The writing direction: `ltr` or `rtl`. |

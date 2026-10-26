@@ -73,6 +73,23 @@ titleTemplate: '%s · KawaPress Guide'
 
 The browser-tab title for this page is “Configure your site · KawaPress Guide”. The page title is also used by site search.
 
+## Page Head {#page-head}
+
+To add `<head>` tags to a single page, write them in the frontmatter `head` field. Every entry has the same `[tag, attributes, content?]` shape as in the site config:
+
+```md
+---
+head:
+  - - meta
+    - property: og:image
+      content: https://example.com/guide.png
+---
+```
+
+This page’s share image replaces the `og:image` set for the site. Tags render in the order site, current language, then current page, so later sources win. See [Add Head Tags](/en/guide/getting-started#add-head-tags) for the site and language settings.
+
+The validated list is available as `page.head` when you read page data.
+
 ## Nagi Page Layout {#nagi-page-layout}
 
 With the default nagi experience, `layout` chooses the page layout and navigation:

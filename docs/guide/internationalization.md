@@ -60,6 +60,7 @@ export default nagi({
 | `label` | 语言菜单里显示的名称。 |
 | `lang` | 页面语言，例如 `zh-CN` 或 `en`。nagi 会据此使用中文或英文的内置界面文字。 |
 | `title` | 只用于这一种语言的站点标题。 |
+| `head` | 只用于这一种语言的 `<head>` 标签，写法见[添加 head 标签](/guide/getting-started#add-head-tags)。 |
 | `link` | 选择这种语言时打开的地址。不填写时，默认使用它的语言目录；也可以填写另一个站点的地址。 |
 | `themeConfig` | 只用于这一种语言的界面配置。它会和全站配置合并；同名字段会被这里的值替换。 |
 | `dir` | 文字方向，可写 `ltr` 或 `rtl`。 |

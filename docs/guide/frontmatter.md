@@ -73,6 +73,23 @@ titleTemplate: '%s · KawaPress 指南'
 
 上面的浏览器标签标题是“配置站点 · KawaPress 指南”。页面标题也会用于站内搜索。
 
+## 页面 head {#page-head}
+
+需要给某一页单独加 `<head>` 标签时，写进 frontmatter 的 `head`。它和站点配置里的 `head` 一样，每一项都是 `[标签名, 属性, 内容?]`：
+
+```md
+---
+head:
+  - - meta
+    - property: og:image
+      content: https://example.com/guide.png
+---
+```
+
+上面这一项让本页的分享图片覆盖站点设置的 `og:image`。渲染顺序是站点、当前语言、当前页面，越靠后越优先。站点和语言的 `head` 怎么写，见[添加 head 标签](/guide/getting-started#add-head-tags)。
+
+读取页面数据时，这一项就是 `page.head`。
+
 ## Nagi 页面布局 {#nagi-page-layout}
 
 使用默认界面 nagi 时，`layout` 用来选择页面的样式和导航结构：
