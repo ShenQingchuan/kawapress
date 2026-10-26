@@ -183,6 +183,37 @@ api.buildArtifacts(async ({ pages, emitFile }) => {
 
 `emitFile()` accepts only relative paths inside the output directory. Absolute paths, paths containing `..`, and files that conflict with `public/` or with output from another plugin fail immediately. `pages` is sorted by source path, so the result is stable.
 
+### Produce Different Output per Language {#localized-output}
+
+Plugins for a multilingual site usually need different labels or files per language. To find out which language a route belongs to, do not split the path yourself. Use `resolveLocaleIndex()`:
+
+```ts
+import { resolveLocaleIndex, useMarkdownItPlugin } from 'kawapress'
+
+const LABELS: Record<string, string> = {
+  root: 'Note',
+  zh: '说明',
+}
+
+let localeKeys = ['root']
+
+api.config((config) => {
+  localeKeys = Object.keys(config.locales ?? { root: {} })
+})
+
+api.markdown((markdown) => {
+  useMarkdownItPlugin(markdown, notePlugin, {
+    // '/zh/guide' resolves to 'zh', '/guide' to 'root'
+    title: (env: { path?: string }) =>
+      LABELS[resolveLocaleIndex(env.path ?? '/', localeKeys)] ?? LABELS.root,
+  })
+})
+```
+
+It applies the same rule KawaPress uses for the site itself: `root` owns every path outside the other language prefixes, and the longest matching prefix wins. `/en` only claims `/en` and `/en/...`, so `/english` stays on the root locale. `/zh-hant` is longer than `zh`, so configuring both still picks the right one. The query string and hash are ignored, which keeps `/zh/guide?tab=api` on `zh`.
+
+The function is pure and works on the runtime side too; import it from `kawapress/client` there.
+
 ## Runtime API {#runtime-api}
 
 A Runtime Plugin works while the website runs. Its code enters the site's Vite module graph, so it can statically import `.vue` files, CSS, and regular Vue plugins.

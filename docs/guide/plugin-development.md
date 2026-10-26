@@ -182,6 +182,37 @@ api.buildArtifacts(async ({ pages, emitFile }) => {
 
 `emitFile()` 只接受输出目录内的相对路径。绝对路径、包含 `..` 的路径，以及与 `public/` 或其他插件产物同名的文件，都会直接报错。`pages` 按源文件路径排序，结果稳定。
 
+### 按语言给出不同输出 {#localized-output}
+
+多语言站点的插件往往要给不同语言不同的文案或文件。判断一个路由属于哪种语言时，别自己拆路径，用 `resolveLocaleIndex()`：
+
+```ts
+import { resolveLocaleIndex, useMarkdownItPlugin } from 'kawapress'
+
+const LABELS: Record<string, string> = {
+  root: 'Note',
+  zh: '说明',
+}
+
+let localeKeys = ['root']
+
+api.config((config) => {
+  localeKeys = Object.keys(config.locales ?? { root: {} })
+})
+
+api.markdown((markdown) => {
+  useMarkdownItPlugin(markdown, notePlugin, {
+    // '/zh/guide' 得到 'zh'，'/guide' 得到 'root'
+    title: (env: { path?: string }) =>
+      LABELS[resolveLocaleIndex(env.path ?? '/', localeKeys)] ?? LABELS.root,
+  })
+})
+```
+
+它的规则与站点本身一致：`root` 负责其他语言前缀之外的所有路径，前缀最长者优先。`/en` 只认 `/en` 和 `/en/...`，所以 `/english` 不会落到英文站；`/zh-hant` 长于 `zh`，同时配置两者时也能选对。查询串和 hash 会被忽略，`/zh/guide?tab=api` 依然是 `zh`。
+
+这个函数是纯函数，运行侧同样可以用，从 `kawapress/client` 导入即可。
+
 ## 运行侧 API {#runtime-api}
 
 Runtime Plugin 在网站运行时工作，它的代码会进入站点的 Vite 模块图，所以可以静态导入 `.vue`、CSS 和普通 Vue 插件。
