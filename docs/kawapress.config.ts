@@ -1,4 +1,5 @@
 import process from 'node:process'
+import imageZoomPlugin from '@kawapress/plugin-image-zoom'
 import lastUpdatedPlugin from '@kawapress/plugin-last-updated'
 import mathjaxPlugin from '@kawapress/plugin-mathjax'
 import { nagi } from 'kawapress/nagi'
@@ -8,6 +9,7 @@ export default nagi({
   title: 'KawaPress',
   base: process.env.KAWAPRESS_BASE,
   plugins: [
+    imageZoomPlugin(),
     mathjaxPlugin(),
     lastUpdatedPlugin({
       editLink: {

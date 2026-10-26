@@ -214,6 +214,9 @@ importers:
 
   docs:
     devDependencies:
+      '@kawapress/plugin-image-zoom':
+        specifier: workspace:*
+        version: link:../packages/plugin-image-zoom
       '@kawapress/plugin-last-updated':
         specifier: workspace:*
         version: link:../packages/plugin-last-updated
@@ -359,6 +362,22 @@ importers:
       markdown-exit:
         specifier: catalog:markdown
         version: 1.3.0
+
+  packages/plugin-image-zoom:
+    dependencies:
+      kawapress:
+        specifier: workspace:*
+        version: link:../kawapress
+    devDependencies:
+      happy-dom:
+        specifier: catalog:dev
+        version: 20.11.6
+      markdown-exit:
+        specifier: catalog:markdown
+        version: 1.3.0
+      vite:
+        specifier: catalog:node
+        version: 8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0)
 
   packages/plugin-last-updated:
     dependencies:

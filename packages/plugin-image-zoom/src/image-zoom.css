@@ -1,0 +1,74 @@
+@layer kawa.plugin {
+  .kawa-image-zoom {
+    /* Size limits of the enlarged image, private to this plugin. */
+    --kawa-image-zoom-max-width: min(92vw, 1600px);
+    --kawa-image-zoom-max-height: 92vh;
+
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    color: var(--kawa-c-text-1);
+    border: 0;
+    background: transparent;
+    cursor: zoom-out;
+    transition:
+      opacity 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .kawa-image-zoom::backdrop {
+    background: color-mix(in oklab, var(--kawa-c-bg) 80%, transparent);
+  }
+
+  .kawa-image-zoom[open] {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* First frame of the opening animation, see `@starting-style` below. */
+  @starting-style {
+    .kawa-image-zoom[open] {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+
+  .kawa-image-zoom__figure {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    margin: 0;
+  }
+
+  .kawa-image-zoom__image {
+    display: block;
+    max-width: var(--kawa-image-zoom-max-width);
+    max-height: var(--kawa-image-zoom-max-height);
+    object-fit: contain;
+    border-radius: var(--kawa-radius);
+    box-shadow: var(--kawa-shadow-overlay);
+  }
+
+  .kawa-image-zoom__caption {
+    max-width: var(--kawa-image-zoom-max-width);
+    color: var(--kawa-c-text-2);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  img[data-kawa-zoom] {
+    cursor: zoom-in;
+  }
+
+  img[data-kawa-zoom]:focus-visible {
+    outline: 2px solid var(--kawa-c-brand);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kawa-image-zoom {
+      transition: none;
+    }
+  }
+}
