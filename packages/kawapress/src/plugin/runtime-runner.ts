@@ -4,12 +4,15 @@ import type {
   RuntimePlugin,
   RuntimePluginAPI,
 } from '../api/plugin'
+import type { OutletRegistry } from '../core/outlet'
 import {
   createPluginHandlerRegistry,
   runPluginSetup,
 } from './execution'
+import { createOutletCollector } from './outlet-collector'
 
 export interface RuntimePluginRunner {
+  outlets: OutletRegistry
   runVueApp: (app: App) => Promise<void>
   runRouter: (router: Router) => Promise<void>
 }
@@ -19,9 +22,11 @@ export async function createRuntimePluginRunner(
 ): Promise<RuntimePluginRunner> {
   const vueAppHandlers = createPluginHandlerRegistry<App>('runtime', 'vueApp')
   const routerHandlers = createPluginHandlerRegistry<Router>('runtime', 'router')
+  const outletCollector = createOutletCollector()
 
   for (const plugin of plugins) {
     const api: RuntimePluginAPI = {
+      addToOutlet: outletCollector.addForPlugin(plugin.name),
       vueApp: handler => vueAppHandlers.add(plugin.name, handler),
       router: handler => routerHandlers.add(plugin.name, handler),
     }
@@ -34,6 +39,7 @@ export async function createRuntimePluginRunner(
   }
 
   return {
+    outlets: outletCollector.createRegistry(),
     runVueApp: vueAppHandlers.run,
     runRouter: routerHandlers.run,
   }

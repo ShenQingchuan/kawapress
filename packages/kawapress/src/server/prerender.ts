@@ -1,3 +1,4 @@
+import type { OutletRegistry } from '../core/outlet'
 import type { SiteData } from '../core/site'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -5,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { consola } from 'consola'
 import { withBase } from '../core/base'
 import { parseJson } from '../core/json'
+import { findUnconsumedOutletItems, formatUnconsumedOutletWarnings } from '../core/outlet'
 import { renderHtmlTemplate } from './template'
 
 interface ClientManifestEntry {
@@ -17,10 +19,12 @@ interface RenderResult {
   html: string
   head: string
   htmlAttrs: string
+  outlets: string[]
 }
 
 interface ServerBundle {
   render: (path: string) => Promise<RenderResult>
+  getOutletRegistry: () => OutletRegistry
   pages: Record<string, unknown>
   site: SiteData
 }
@@ -28,7 +32,7 @@ interface ServerBundle {
 export async function prerenderPages(root: string): Promise<void> {
   const distDir = join(root, 'dist')
   const serverEntry = join(distDir, '.server/entry-server.js')
-  const { render, pages, site } = await import(
+  const { render, getOutletRegistry, pages, site } = await import(
     pathToFileURL(serverEntry).href,
   ) as ServerBundle
 
@@ -50,8 +54,12 @@ export async function prerenderPages(root: string): Promise<void> {
   )]
 
   const paths = [...Object.keys(pages), '/404']
+  const renderedOutlets = new Set<string>()
   for (const path of paths) {
-    const { html, head, htmlAttrs } = await render(path)
+    const { html, head, htmlAttrs, outlets } = await render(path)
+    for (const outlet of outlets) {
+      renderedOutlets.add(outlet)
+    }
     const file = join(distDir, pathToHtmlFile(path))
     await mkdir(dirname(file), { recursive: true })
     await writeFile(file, renderHtmlTemplate({
@@ -62,10 +70,21 @@ export async function prerenderPages(root: string): Promise<void> {
       htmlAttrs,
     }))
   }
+  reportUnconsumedOutlets(getOutletRegistry(), renderedOutlets)
   consola.success(`KawaPress: prerendered ${paths.length} pages`)
 
   await rm(join(distDir, '.server'), { recursive: true })
   await rm(join(distDir, '.vite'), { recursive: true })
+}
+
+function reportUnconsumedOutlets(
+  registry: OutletRegistry,
+  renderedOutlets: Iterable<string>,
+): void {
+  const unconsumed = findUnconsumedOutletItems(registry, renderedOutlets)
+  for (const line of formatUnconsumedOutletWarnings(unconsumed)) {
+    consola.warn(line)
+  }
 }
 
 function pathToHtmlFile(path: string): string {

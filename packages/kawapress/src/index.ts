@@ -32,6 +32,13 @@ export { normalizeFrontmatterSource } from './core/frontmatter'
 export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
 export type { JsonOperationOptions } from './core/json'
 export { markdownPagePathToRoutePath } from './core/markdown-route'
+export { OUTLET_NAMES } from './core/outlet'
+export type {
+  OutletItem,
+  OutletItemInput,
+  OutletName,
+  OutletRegistry,
+} from './core/outlet'
 export { resolveDocumentTitle, resolvePageMetadata } from './core/page-metadata'
 export type { PageMetadata } from './core/page-metadata'
 export type {
@@ -44,3 +51,5 @@ export type {
   SiteConfig,
   SiteData,
 } from './core/site'
+export { KAWA_DEFAULT_TOKENS, KAWA_LAYER_ORDER, KAWA_TOKEN_NAMES } from './core/tokens'
+export type { KawaTokenName } from './core/tokens'

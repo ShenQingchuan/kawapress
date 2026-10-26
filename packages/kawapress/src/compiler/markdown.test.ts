@@ -212,6 +212,8 @@ titleTemplate: '%s · KawaPress'
         ],
         "template": "<template><h1 id="%E9%A1%B5%E9%9D%A2" tabindex="-1">页面 <a class="header-anchor" href="#%E9%A1%B5%E9%9D%A2">#</a></h1>
 
+      <KawaOutlet name="doc.header" />
+
       <KawaLlmsActions />
       <h2 id="%E5%BC%80%E5%A7%8B" tabindex="-1">开始 <a class="header-anchor" href="#%E5%BC%80%E5%A7%8B">#</a></h2>
       <div class="kawa-container kawa-container--tip"><p class="kawa-container__title"><em data-page-path="/guide/callouts"><a href="/guide">文档</a></em></p>
@@ -436,6 +438,47 @@ const focused = true
       '/',
     )
     expect(code).toContain('<span data-kawapress-empty-page hidden></span>')
+  })
+
+  it('places the doc.header outlet right after the first h1', async () => {
+    const { code } = await compileMarkdownToVue(
+      md,
+      '# First\n\n## Section\n\n# Second\n',
+      '/guide/doc-header',
+    )
+
+    expect(code.match(/<KawaOutlet name="doc\.header" \/>/g)).toHaveLength(1)
+    expect(code.indexOf('<KawaOutlet')).toBeGreaterThan(code.indexOf('</h1>'))
+    expect(code.indexOf('<KawaOutlet')).toBeLessThan(code.indexOf('<h2'))
+  })
+
+  it('skips the doc.header outlet on pages without an h1', async () => {
+    const { code } = await compileMarkdownToVue(
+      md,
+      '## Section only\n',
+      '/guide/no-h1',
+    )
+
+    expect(code).not.toContain('KawaOutlet')
+  })
+
+  it('places the doc.header outlet after the first h1 of a home page too', async () => {
+    const { code } = await compileMarkdownToVue(
+      md,
+      '---\nlayout: home\n---\n\n# Home\n',
+      '/',
+    )
+
+    expect(code).toContain('<KawaOutlet name="doc.header" />')
+  })
+
+  it('skips the doc.header outlet in the plain Markdown pass', async () => {
+    const env: Record<string, unknown> = { path: '/guide/doc-header', ssgMarkdown: true }
+
+    const html = await md.renderAsync('# First\n\n# Second\n', env)
+
+    expect(html).toContain('<h1')
+    expect(html).not.toContain('KawaOutlet')
   })
 
   it('keeps script setup blocks out of the template', async () => {
