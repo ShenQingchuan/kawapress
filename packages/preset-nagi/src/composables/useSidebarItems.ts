@@ -1,4 +1,4 @@
-import type { PageData } from 'kawapress'
+import type { PageRouteMeta } from 'kawapress'
 import type { ComputedRef } from 'vue'
 import type { NagiSidebarItem } from '../sidebar'
 import { useLocale, useRouter } from 'kawapress/client'
@@ -11,12 +11,12 @@ export function useSidebarItems(): ComputedRef<NagiSidebarItem[]> {
   const router = useRouter()
   const theme = useNagiThemeConfig()
   const { localeIndex, locales } = useLocale()
-  const pages: Record<string, PageData> = {}
+  const pages: Record<string, PageRouteMeta> = {}
 
   for (const route of router.getRoutes()) {
-    const pageData = route.meta.pageData as PageData | undefined
-    if (pageData) {
-      pages[pageData.path] = pageData
+    const page = route.meta.page
+    if (page) {
+      pages[page.path] = page
     }
   }
 

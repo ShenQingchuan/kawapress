@@ -61,6 +61,7 @@ export type {
   LocaleLink,
   PageData,
   PageHeader,
+  PageRouteMeta,
   ResolvedSiteData,
   SiteConfig,
   SiteData,

@@ -140,6 +140,8 @@ api.pageData((pageData, { file, sourcePath }) => {
 
 这两个值只在生成侧使用，不会发送到浏览器。需要在页面上显示时，像上面这样把需要的部分写进 `pageData`。
 
+需要注意，在 `pageData()` 中修改的 `title` 只影响该页面自己的数据，不会进入用于导航的路由摘要（`route.meta.page`）：路由摘要描述的是作者在 Frontmatter 或第一个一级标题里写下的标题。
+
 ### `pageArtifact()`：观察页面构建结果 {#page-artifact}
 
 `pageArtifact()` 在一个页面完成 Markdown 编译和全部 `pageData()` 之后调用。handler 只能读取结果，不能修改页面的源文件、数据或路由。

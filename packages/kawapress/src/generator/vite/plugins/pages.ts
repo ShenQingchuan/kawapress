@@ -1,10 +1,12 @@
 import type { Dirent } from 'node:fs'
 import type { Plugin } from 'vite'
 import type { MarkdownPageLoader } from '../../../compiler/page-loader'
-import type { PageData } from '../../../core/site'
+import type { PageSummaryReader } from '../../../compiler/page-summary'
+import type { PageRouteMeta } from '../../../core/site'
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { markdownFileToSourcePath } from '../../../compiler/page-loader'
+import { createPageSummaryReader } from '../../../compiler/page-summary'
 import { stringifyJsonForScript } from '../../../core/json'
 import { markdownPagePathToRoutePath } from '../../../core/markdown-route'
 
@@ -55,6 +57,7 @@ export async function listPageRoutes(
 }
 
 export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
+  const summaryReader = createPageSummaryReader()
   const isPage = (file: string) => isMarkdownFile(
     file,
     options.pageLoader.sourceRoot,
@@ -70,7 +73,7 @@ export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
     },
     async load(id) {
       if (id === RESOLVED_ID) {
-        return generatePagesModule(options)
+        return generatePagesModule(options, summaryReader)
       }
     },
     configureServer(server) {
@@ -100,6 +103,7 @@ export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
 
 async function generatePagesModule(
   options: VirtualPagesOptions,
+  summaryReader: PageSummaryReader,
 ): Promise<string> {
   const prefix = options.srcDir === '.' ? '' : `/${options.srcDir}`
   const publicPrefix = `${prefix}/${options.publicDir}`
@@ -110,10 +114,10 @@ async function generatePagesModule(
     '!**/dist/**',
     '!**/.*/**',
   ]
-  const pageData = await loadPageData(options)
-  const serializedPageData = stringifyJsonForScript(pageData, {
-    label: 'the page data index',
-    path: 'pages',
+  const pageRoutes = await loadPageRoutes(options, summaryReader)
+  const serializedPageRoutes = stringifyJsonForScript(pageRoutes, {
+    label: 'the page route summaries',
+    path: 'pageRoutes',
   })
 
   return `
@@ -128,21 +132,28 @@ export const pages = Object.fromEntries(
   ]),
 )
 
-export const pageData = ${serializedPageData}
+export const pageRoutes = ${serializedPageRoutes}
 `
 }
 
-async function loadPageData(
+/**
+ * Route summaries of every page on disk. Reading them never renders a page, so
+ * the first dev request does not compile the whole site.
+ */
+async function loadPageRoutes(
   options: VirtualPagesOptions,
-): Promise<Record<string, PageData>> {
+  summaryReader: PageSummaryReader,
+): Promise<Record<string, PageRouteMeta>> {
   const files = await findMarkdownFiles(
     options.pageLoader.sourceRoot,
     resolve(options.pageLoader.sourceRoot, options.publicDir),
   )
   const entries = await Promise.all(files.map(async (file) => {
     const source = await readFile(file, 'utf8')
-    const { pageData } = await options.pageLoader.load(source, file)
-    return [pageData.path, pageData] as const
+    const path = markdownPagePathToRoutePath(
+      markdownFileToSourcePath(file, options.pageLoader.sourceRoot),
+    )
+    return [path, { path, ...summaryReader.read(source, file) }] as const
   }))
 
   return Object.fromEntries(entries)

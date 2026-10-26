@@ -330,6 +330,26 @@ const layout = computed(() =>
 
 主题不应导入 KawaPress 内部文件，也不应自己维护另一套路由或语言状态。这样，服务端渲染、hydration 和站内跳转会使用同一份数据。
 
+### 列出全站页面做导航 {#list-pages-for-navigation}
+
+`usePageData()` 只返回当前页面。要列出其他页面，例如自动侧边栏、上一篇与下一篇，请读取每个路由的元数据 `route.meta.page`，它的类型是 `PageRouteMeta`：
+
+```ts
+import { useRouter } from 'kawapress/client'
+import { computed } from 'vue'
+
+const router = useRouter()
+const pages = computed(() =>
+  router.getRoutes()
+    .map(route => route.meta.page)
+    .filter(page => page !== undefined),
+)
+```
+
+每个 `PageRouteMeta` 只有三个字段：`path`（公开路由）、`title`（页面标题）和可选的 `layout`（Frontmatter 中的 `layout` 字符串）。这些摘要随路由清单一起进入浏览器，体积很小；页面的正文、其余 Frontmatter 字段和标题目录只在该页面被访问时才加载。
+
+路由摘要来自作者写下的 Frontmatter 和第一个一级标题，不经过 Markdown 渲染，也不执行插件的 `pageData()`。需要更多字段时，按 Generator Plugin 的方式用 `vite()` 发布自己的虚拟模块，例如 nagi 的 `_meta.json` 模块。
+
 ## 在 Runtime Plugin 中导入主题样式 {#import-theme-styles-from-the-runtime-plugin}
 
 主题的 Runtime Plugin 直接导入 CSS。KawaPress 会把它同时放进服务端和浏览器构建，不需要站点用户再手动导入主题样式。

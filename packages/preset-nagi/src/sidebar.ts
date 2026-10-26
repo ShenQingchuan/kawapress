@@ -1,4 +1,4 @@
-import type { PageData } from 'kawapress'
+import type { PageRouteMeta } from 'kawapress'
 
 export interface NagiSidebarItem {
   text: string
@@ -123,7 +123,7 @@ export function findSidebarNavigation(
 }
 
 export function createSidebar(
-  pages: Readonly<Record<string, PageData>>,
+  pages: Readonly<Record<string, PageRouteMeta>>,
   options: CreateSidebarOptions = {},
 ): SidebarItem[] {
   const rootPages: SidebarItem[] = []
@@ -269,12 +269,11 @@ function withSidebarBase(link: string, base: string): string {
   return normalizedBase === '/' ? `/${link}` : `${normalizedBase}/${link}`
 }
 
-function isDocumentPage(page: PageData): boolean {
-  const layout = page.frontmatter.layout
-  return layout !== 'home' && layout !== 'page'
+function isDocumentPage(page: PageRouteMeta): boolean {
+  return page.layout !== 'home' && page.layout !== 'page'
 }
 
-function comparePages(a: PageData, b: PageData): number {
+function comparePages(a: PageRouteMeta, b: PageRouteMeta): number {
   return a.path.localeCompare(b.path)
 }
 

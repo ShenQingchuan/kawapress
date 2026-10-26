@@ -131,9 +131,15 @@ async function serveDevArtifact(
 
   const bundle = await environment.runner.import(KAWAPRESS_ENTRY_SERVER_URL) as {
     render: Parameters<typeof renderMarkdownPages>[0]['render']
-    pages: Record<string, unknown>
+    pages: Record<string, () => Promise<unknown>>
   }
   const activeRoutes = new Set(Object.keys(bundle.pages))
+  // The dev endpoint owns the pages it serves: importing a page module runs the
+  // Markdown pipeline once and records the page artifact the artifacts need.
+  // Nothing else compiles pages in dev before a page is requested.
+  await Promise.all(
+    [...activeRoutes].map(route => bundle.pages[route]?.()),
+  )
   const pages = options.getPages()
   const rendered = await renderMarkdownPages(
     bundle,

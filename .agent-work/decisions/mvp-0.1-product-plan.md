@@ -532,7 +532,7 @@ interface PageData {
 
 Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAML 或花括号包围的 JSON 对象。它是开放的、严格 JSON 可序列化的数据对象：Core 保留所有键值，不建立通用 schema；字段 schema 与构建校验仍留到 0.3。Core 只赋予 `title`、`description` 与 `titleTemplate` 页面元数据语义：字符串 `title` 优先于第一个 h1，否则回退 h1；字符串 `description` 生成唯一的 description meta；`titleTemplate` 可以是字符串模板，其中的 `%s` 替换为页面标题，或为 `false` 以只使用页面标题。其他值保持原样供主题、插件或用户代码读取。Core 在 SSR 与浏览器导航中统一生成 title 与 description；页面级 `head`、`dir` 和 VitePress 的 `$frontmatter` 模板全局不进入 0.1，用户使用 `usePageData()` 读取当前页面数据。
 
-`PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与路由元数据，保证 Generator Plugin 的 `pageData()` 修改只执行一次且两份数据不漂移。`kawapress/client` 只公开当前页面数据：
+`PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与 pageData，保证 Generator Plugin 的 `pageData()` 修改只执行一次。进入浏览器的路由摘要 `PageRouteMeta` 另算一等：它只携带 `path`、`title` 与 `layout`，由 Frontmatter 与第一个 h1 直接读出，不执行 `pageData()`。`kawapress/client` 只公开当前页面数据：
 
 ```ts
 declare function usePageData(): ComputedRef<PageData | undefined>
@@ -557,7 +557,7 @@ Core 同时公开 `createContentLoader()`。它接收相对 `srcDir` 的一个�
 
 构建时 Data Loader 是显式导入的数据模块，不是全站 Content Layer。远程数据只能由站点 Loader 主动读取；0.1 不提供远程内容源适配、内容查询、动态路由、增量构建或 CMS 协议。
 
-核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据生成自动侧边栏，并读取各内容目录旁的 `_meta.json` 管理目录与页面的显示顺序和本地化名称，不使用 frontmatter `order`。`_meta.json` 使用按展示顺序排列的数组，字符串条目只声明文件或目录名，对象条目可以通过 `type`、`name` 与 `label` 区分文件、目录并覆盖显示名称；未列出的现有页面或目录继续按路径顺序追加。每个 locale 可以拥有自己目录下的 `_meta.json`，因此 Sidebar 结构与标签自然随路径语言切换。nagi 的 Generator Plugin 通过 JSON 虚拟模块把这些结构化内容元数据交给运行侧；该模块只传标准 JSON，不承载主题配置或生成侧对象。
+核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据 `route.meta.page`（`PageRouteMeta`）生成自动侧边栏，并读取各内容目录旁的 `_meta.json` 管理目录与页面的显示顺序和本地化名称，不使用 frontmatter `order`。`_meta.json` 使用按展示顺序排列的数组，字符串条目只声明文件或目录名，对象条目可以通过 `type`、`name` 与 `label` 区分文件、目录并覆盖显示名称；未列出的现有页面或目录继续按路径顺序追加。每个 locale 可以拥有自己目录下的 `_meta.json`，因此 Sidebar 结构与标签自然随路径语言切换。nagi 的 Generator Plugin 通过 JSON 虚拟模块把这些结构化内容元数据交给运行侧；该模块只传标准 JSON，不承载主题配置或生成侧对象。
 
 nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。
 
