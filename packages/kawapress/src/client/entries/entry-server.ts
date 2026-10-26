@@ -2,6 +2,7 @@ import type { OutletRegistry } from '../../core/outlet'
 import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import consola from 'consola'
+import { NOT_FOUND_ROUTE_NAME } from '../../core/not-found'
 import { createKawapressApp } from '../app'
 import { getRenderedOutlets } from '../outlet'
 
@@ -43,7 +44,7 @@ export async function render(url: string): Promise<RenderResult> {
 
   await router.push(url)
   await router.isReady()
-  const found = router.currentRoute.value.name !== 'not-found'
+  const found = router.currentRoute.value.name !== NOT_FOUND_ROUTE_NAME
   const ssrContext: Record<string, unknown> = {}
   const html = await renderToString(app, ssrContext)
   const { headTags, htmlAttrs } = await head.render()

@@ -224,4 +224,6 @@ KawaPress 选择使用 Vue 官方的 [Vue Router](https://router.vuejs.org/)。M
 
 当路径没有对应的 Markdown 文件时，开发服务器会返回 `404` 状态，默认界面会显示未找到页面。执行 `kawapress build` 时，KawaPress 也会生成 `dist/404.html`，供静态托管服务处理未知路径。
 
+`dist/404.html` 只在构建时为 `/404` 这一个路由渲染一次，静态托管却会用它回应任意未知路径。为了不让首屏与服务器 HTML 不一致，客户端先按 `/404` 完成 hydration，再把路由切换到地址栏里的真实路径；地址栏始终不变。因此依赖当前路由的输出（例如语言切换链接、未找到页面的文案）会在 hydration 完成后更新为真实路径对应的值。
+
 KawaPress 0.1 的路由由 Markdown 文件决定，暂不提供路由重写、动态路由或插件虚拟页面。需要新页面时，直接添加新的 Markdown 文件即可。

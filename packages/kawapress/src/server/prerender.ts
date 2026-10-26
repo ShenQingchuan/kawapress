@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url'
 import { consola } from 'consola'
 import { withBase } from '../core/base'
 import { parseJson } from '../core/json'
+import { NOT_FOUND_ROUTE_PATH } from '../core/not-found'
 import { findUnconsumedOutletItems, formatUnconsumedOutletWarnings } from '../core/outlet'
 import { collectPageAssets } from './page-assets'
 import { renderHtmlTemplate } from './template'
@@ -45,7 +46,7 @@ export async function prerenderPages(root: string): Promise<void> {
   const [entryKey, entryChunk] = entry
   const clientEntryUrl = withBase(entryChunk.file, site.base)
 
-  const paths = [...Object.keys(pages), '/404']
+  const paths = [...Object.keys(pages), NOT_FOUND_ROUTE_PATH]
   const renderedOutlets = new Set<string>()
   for (const path of paths) {
     const { html, head, htmlAttrs, outlets, modules } = await render(path)
@@ -62,6 +63,9 @@ export async function prerenderPages(root: string): Promise<void> {
       cssUrls: assets.css.map(css => withBase(css, site.base)),
       modulepreloadUrls: assets.modulepreload.map(js => withBase(js, site.base)),
       htmlAttrs,
+      // Only `404.html` is served for URLs that were never rendered, so only it
+      // tells the client to hydrate the route it was rendered with.
+      notFoundDocument: path === NOT_FOUND_ROUTE_PATH,
     }))
   }
   reportUnconsumedOutlets(getOutletRegistry(), renderedOutlets)

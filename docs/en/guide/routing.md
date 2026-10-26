@@ -224,4 +224,6 @@ The static build generates pages from Markdown files discovered at build time. U
 
 When no Markdown file matches a path, the development server returns a `404` status and the default interface displays its not-found page. `kawapress build` also generates `dist/404.html` for static hosts.
 
+`dist/404.html` is rendered once, for the `/404` route, while static hosts answer every unknown path with it. So that the first render matches the served HTML, the client hydrates `/404` first and only then switches the router to the path in the address bar, which never changes. Output that depends on the current route, such as language links and the not-found texts, therefore updates to the real path once hydration is done.
+
 KawaPress 0.1 routes come from Markdown files. Route rewrites, dynamic routes, and plugin-provided virtual pages are not included. Add a Markdown file whenever the site needs another page.

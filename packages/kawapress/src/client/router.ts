@@ -3,8 +3,20 @@ import { pageData, pages } from 'virtual:kawapress-pages'
 import { site } from 'virtual:kawapress-site'
 import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
 import { decodeUrlPathname, withoutBase } from '../core/base'
+import { NOT_FOUND_ROUTE_NAME } from '../core/not-found'
 import NotFoundRoute from './components/NotFoundRoute.vue'
+import { createClientHydration } from './hydration'
 import { wrapPageLoader } from './page-data'
+
+export interface AppRouter {
+  router: Router
+  /**
+   * Points the router at the URL in the address bar once the client is
+   * hydrated. A no-op on the server and whenever the client could hydrate the
+   * requested URL directly.
+   */
+  adoptRequestedUrl: () => Promise<void>
+}
 
 export function createRoutes(): RouteRecordRaw[] {
   return [
@@ -13,22 +25,31 @@ export function createRoutes(): RouteRecordRaw[] {
       component: wrapPageLoader(path, loader),
       meta: { pageData: pageData[path] },
     })),
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundRoute },
+    { path: '/:pathMatch(.*)*', name: NOT_FOUND_ROUTE_NAME, component: NotFoundRoute },
   ]
 }
 
-export function createAppRouter(): Router {
+export function createAppRouter(): AppRouter {
+  if (import.meta.env.SSR) {
+    const router = createRouter({
+      history: createMemoryHistory(site.base),
+      routes: createRoutes(),
+    })
+    return { router, adoptRequestedUrl: () => Promise.resolve() }
+  }
+
+  // The browser history has to know the router before the router exists: it
+  // resolves the hydration plan when the router reads its location.
+  let createdRouter: Router | undefined
+  const hydration = createClientHydration(createWebHistory(site.base), () => createdRouter)
   const router = createRouter({
-    history: import.meta.env.SSR
-      ? createMemoryHistory(site.base)
-      : createWebHistory(site.base),
+    history: hydration.history,
     routes: createRoutes(),
   })
-  if (!import.meta.env.SSR) {
-    installEncodedPagePathRedirect(router)
-    installLinkInterceptor(router)
-  }
-  return router
+  createdRouter = router
+  installEncodedPagePathRedirect(router)
+  installLinkInterceptor(router)
+  return { router, adoptRequestedUrl: hydration.adoptRequestedUrl }
 }
 
 const externalRE = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i
@@ -71,7 +92,7 @@ function installLinkInterceptor(router: Router): void {
     }
 
     const target = `${routePath}${url.search}${url.hash}`
-    if (router.resolve(target).name === 'not-found') {
+    if (router.resolve(target).name === NOT_FOUND_ROUTE_NAME) {
       return
     }
 
