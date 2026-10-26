@@ -1,4 +1,5 @@
 import process from 'node:process'
+import imageZoomPlugin from '@kawapress/plugin-image-zoom'
 import mathjaxPlugin from '@kawapress/plugin-mathjax'
 import { nagi } from 'kawapress/nagi'
 import { sidebars } from './sidebar'
@@ -7,6 +8,7 @@ export default nagi({
   title: 'KawaPress',
   base: process.env.KAWAPRESS_BASE,
   plugins: [
+    imageZoomPlugin(),
     mathjaxPlugin(),
   ],
   themeConfig: {

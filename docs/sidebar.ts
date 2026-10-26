@@ -78,6 +78,13 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '图片缩放',
+            en: 'Image Zoom',
+          },
+          link: '/guide/image-zoom',
+        },
+        {
+          text: {
             zhCN: 'Frontmatter',
             en: 'Frontmatter',
           },
