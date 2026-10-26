@@ -22,6 +22,10 @@ interface MarkdownEnv {
   frontmatter?: Record<string, unknown>
   headers?: PageHeader[]
   sfcBlocks?: MarkdownSfcBlocks
+  /** Set by the LLMS plugin when it compiles Markdown for plain-text output. */
+  ssgMarkdown?: boolean
+  /** Set once the `doc.header` outlet has been placed after the first H1. */
+  docHeaderOutletPlaced?: boolean
 }
 
 export interface CompiledPage {
@@ -57,6 +61,7 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   // include h1: page title inference reads it; outline rendering filters to h2+ itself
   useMarkdownItPlugin(md, headersPlugin, { level: [1, 2, 3] })
   installLinkRenderer(md, options.base ?? '/')
+  installDocHeaderOutlet(md)
 
   await options.pluginRunner?.runMarkdown(md)
   return md
@@ -88,6 +93,37 @@ function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {
       tagClose: '</template>',
     }
     return html
+  }
+}
+
+const DOC_HEADER_OUTLET = '<KawaOutlet name="doc.header" />'
+
+/**
+ * Renders the `doc.header` outlet right after the first H1 of every page, so
+ * plugins can place interface pieces inside the Markdown body without the
+ * theme reaching into compiled content. Pages without an H1 get no outlet.
+ */
+function installDocHeaderOutlet(md: MarkdownExit): void {
+  const original = md.renderer.rules.heading_close
+
+  md.renderer.rules.heading_close = (tokens, index, options, env, renderer) => {
+    const rendered = original
+      ? original(tokens, index, options, env, renderer)
+      : renderer.renderToken(tokens, index, options)
+    const renderEnv = env as MarkdownEnv
+
+    if (
+      tokens[index].tag !== 'h1'
+      || typeof env !== 'object'
+      || env === null
+      || renderEnv.ssgMarkdown
+      || renderEnv.docHeaderOutletPlaced
+    ) {
+      return rendered
+    }
+
+    renderEnv.docHeaderOutletPlaced = true
+    return `${rendered}\n${DOC_HEADER_OUTLET}\n`
   }
 }
 
