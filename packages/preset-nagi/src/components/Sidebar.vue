@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'kawapress/client'
-import { onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'vue'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import { useSidebarItems } from '../composables/useSidebarItems'
 import {
@@ -28,6 +28,7 @@ const emit = defineEmits<{
 const router = useRouter()
 const theme = useNagiThemeConfig()
 const items = useSidebarItems()
+const activePath = computed(() => router.currentRoute.value.path)
 const sidebar = useTemplateRef<HTMLElement>('sidebar')
 const width = shallowRef(NAGI_SIDEBAR_DEFAULT_WIDTH)
 let activePointerId: number | undefined
@@ -144,6 +145,7 @@ watch(() => router.currentRoute.value.path, () => {
             v-for="item in items"
             :key="item.link ?? item.text"
             :item="item"
+            :active-path="activePath"
             @navigate="emit('close')"
           />
         </ul>

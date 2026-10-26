@@ -27,6 +27,52 @@ test('a sidebar link navigates without a full page reload', async ({ page }) => 
   expect(
     await page.evaluate(() => (window as MarkerWindow).__kawapressE2eMarker),
   ).toBe('kept')
+
+  // The highlight follows the route; the sidebar only tracks the current path
+  // once instead of asking every link to resolve itself.
+  const active = page.locator('.nagi-sidebar--desktop .nagi-sidebar-item__link.is-active')
+  await expect(active).toHaveCount(1)
+  await expect(active).toHaveAttribute('href', sitePath('/guide/routing'))
+  await expect(active).toHaveAttribute('aria-current', 'page')
+})
+
+test('a same-origin anchor keeps its query and hash through the link interceptor', async ({ page }) => {
+  await page.goto(sitePath(gettingStarted))
+  await expect(page.locator('article h1')).toContainText('快速开始')
+
+  await page.evaluate(() => {
+    (window as MarkerWindow).__kawapressE2eMarker = 'kept'
+  })
+  // The sidebar renders plain anchors and depends on the global interceptor for
+  // client-side navigation, so query and hash have to survive it as well.
+  await page.evaluate((href) => {
+    const anchor = document.createElement('a')
+    anchor.id = 'e2e-intercepted-link'
+    anchor.href = href
+    anchor.textContent = 'intercepted'
+    document.body.append(anchor)
+  }, `${sitePath('/guide/routing')}?from=e2e#top`)
+  await page.locator('#e2e-intercepted-link').click()
+
+  await expect(page).toHaveURL(
+    `${previewOrigin}${sitePath('/guide/routing')}?from=e2e#top`,
+  )
+  expect(
+    await page.evaluate(() => (window as MarkerWindow).__kawapressE2eMarker),
+  ).toBe('kept')
+})
+
+test('the sidebar marks the current page and keeps the site base in its hrefs', async ({ page }) => {
+  await page.goto(sitePath(gettingStarted))
+  await expect(page.locator('article h1')).toContainText('快速开始')
+
+  const active = page.locator('.nagi-sidebar--desktop .nagi-sidebar-item__link.is-active')
+  await expect(active).toHaveCount(1)
+  await expect(active).toHaveAttribute('aria-current', 'page')
+  await expect(active).toHaveAttribute('href', sitePath(gettingStarted))
+  await expect(
+    page.locator('.nagi-sidebar--desktop .nagi-sidebar-item__link[aria-current]'),
+  ).toHaveCount(1)
 })
 
 test('previous and next links follow the sidebar order', async ({ page }) => {

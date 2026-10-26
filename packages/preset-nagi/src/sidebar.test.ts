@@ -4,6 +4,7 @@ import {
   createSidebar,
   defineLocalizedSidebars,
   findSidebarNavigation,
+  isSidebarLinkActive,
   resolveConfiguredSidebar,
 } from './sidebar'
 
@@ -118,6 +119,20 @@ describe('nagi sidebar metadata', () => {
     expect(resolveConfiguredSidebar({
       '/guide/': [],
     }, '/reference/api')).toBeUndefined()
+  })
+
+  it('matches the active link by route path only', () => {
+    expect(isSidebarLinkActive('/guide/routing', '/guide/routing')).toBe(true)
+    // Query, hash and a trailing slash do not change which page a link points at.
+    expect(isSidebarLinkActive('/guide/routing#top', '/guide/routing')).toBe(true)
+    expect(isSidebarLinkActive('/guide/routing?tab=1', '/guide/routing')).toBe(true)
+    expect(isSidebarLinkActive('/guide/routing', '/guide/routing/')).toBe(true)
+    expect(isSidebarLinkActive('/', '/')).toBe(true)
+    expect(isSidebarLinkActive('/guide/routing', '/guide/routing/nested')).toBe(false)
+    expect(isSidebarLinkActive('/guide/routing', '/guide')).toBe(false)
+    // Only page routes can be active, never external or hash-only links.
+    expect(isSidebarLinkActive('https://example.com/guide/routing', '/guide/routing')).toBe(false)
+    expect(isSidebarLinkActive('#top', '/guide/routing')).toBe(false)
   })
 
   it('uses locale-specific metadata below the locale root', () => {
