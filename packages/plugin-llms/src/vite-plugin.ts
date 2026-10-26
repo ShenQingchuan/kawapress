@@ -60,7 +60,7 @@ export function createSsgMarkdownVitePlugin(
     load(id) {
       if (id === RESOLVED_SSG_MD_ENTRY_ID) {
         return `
-export { render, pages, site } from ${JSON.stringify(KAWAPRESS_ENTRY_SERVER_PATH)}
+export { render, pageManifest, site } from ${JSON.stringify(KAWAPRESS_ENTRY_SERVER_PATH)}
 `
       }
       if (id === RESOLVED_SSG_MD_MARKERS_ID) {
@@ -131,14 +131,14 @@ async function serveDevArtifact(
 
   const bundle = await environment.runner.import(KAWAPRESS_ENTRY_SERVER_URL) as {
     render: Parameters<typeof renderMarkdownPages>[0]['render']
-    pages: Record<string, () => Promise<unknown>>
+    pageManifest: Record<string, { load: () => Promise<unknown> }>
   }
-  const activeRoutes = new Set(Object.keys(bundle.pages))
+  const activeRoutes = new Set(Object.keys(bundle.pageManifest))
   // The dev endpoint owns the pages it serves: importing a page module runs the
   // Markdown pipeline once and records the page artifact the artifacts need.
   // Nothing else compiles pages in dev before a page is requested.
   await Promise.all(
-    [...activeRoutes].map(route => bundle.pages[route]?.()),
+    [...activeRoutes].map(route => bundle.pageManifest[route]?.load()),
   )
   const pages = options.getPages()
   const rendered = await renderMarkdownPages(

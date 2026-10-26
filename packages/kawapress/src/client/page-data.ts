@@ -1,10 +1,6 @@
 import type { Component } from 'vue'
+import type { PageModule } from '../core/page-manifest'
 import type { PageData } from '../core/site'
-
-interface PageModule {
-  default: Component
-  __pageData?: PageData
-}
 
 // path-level cache: same content for every request, safe under SSR concurrency
 const cache = new Map<string, PageData>()

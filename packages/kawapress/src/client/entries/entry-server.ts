@@ -2,11 +2,12 @@ import type { OutletRegistry } from '../../core/outlet'
 import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import consola from 'consola'
+import { pageManifest } from 'virtual:kawapress-pages'
 import { NOT_FOUND_ROUTE_NAME } from '../../core/not-found'
 import { createKawapressApp } from '../app'
 import { getRenderedOutlets } from '../outlet'
 
-export { pages } from 'virtual:kawapress-pages'
+export { pageManifest }
 export { site } from 'virtual:kawapress-site'
 
 export interface RenderResult {
@@ -35,7 +36,7 @@ export function getOutletRegistry(): OutletRegistry {
 
 export async function render(url: string): Promise<RenderResult> {
   const head = createHead()
-  const { app, router, outlets } = await createKawapressApp({ head })
+  const { app, router, outlets } = await createKawapressApp({ head, pageManifest })
   latestOutletRegistry = outlets
 
   app.config.errorHandler = (error) => {

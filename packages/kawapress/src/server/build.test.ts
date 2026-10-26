@@ -25,12 +25,22 @@ const CONFIG = `export default {
 }
 `
 
-const PAGE = `---
+const HOME_PAGE = `---
 title: Home
 ---
 
 # Build Env Test
 `
+
+/** A guide page whose title the chunk test edits between two builds. */
+function guidePage(title: string): string {
+  return `---
+title: ${title}
+---
+
+# ${title}
+`
+}
 
 let siteDirectory: string
 
@@ -55,7 +65,9 @@ async function createSite(): Promise<void> {
     type: 'module',
   }, null, 2))
   await writeFile(join(siteDirectory, 'kawapress.config.ts'), CONFIG)
-  await writeFile(join(siteDirectory, 'index.md'), PAGE)
+  await writeFile(join(siteDirectory, 'index.md'), HOME_PAGE)
+  await mkdir(join(siteDirectory, 'guide'), { recursive: true })
+  await writeFile(join(siteDirectory, 'guide/one.md'), guidePage('One'))
   await mkdir(join(siteDirectory, 'node_modules'), { recursive: true })
   await symlink(
     kawapressPackageDirectory,
@@ -73,12 +85,24 @@ async function buildWithoutNodeEnv(): Promise<void> {
   })
 }
 
-async function readClientEntryChunk(): Promise<string> {
+async function listClientChunks(): Promise<string[]> {
+  return (await readdir(join(siteDirectory, 'dist/assets')))
+    .filter(file => file.endsWith('.js'))
+    .sort()
+}
+
+/** The client chunk whose file name starts with `prefix`, e.g. `app-`. */
+async function findClientChunk(prefix: string): Promise<string> {
+  const chunk = (await listClientChunks()).find(file => file.startsWith(prefix))
+  expect(chunk, `client chunk ${prefix}* in dist/assets`).toBeDefined()
+  return chunk!
+}
+
+async function readClientChunks(): Promise<string[]> {
   const assetsDirectory = join(siteDirectory, 'dist/assets')
-  const entryChunk = (await readdir(assetsDirectory))
-    .find(file => file.startsWith('entry-client-') && file.endsWith('.js'))
-  expect(entryChunk, 'client entry chunk in dist/assets').toBeDefined()
-  return readFile(join(assetsDirectory, entryChunk!), 'utf8')
+  return Promise.all((await listClientChunks()).map(
+    file => readFile(join(assetsDirectory, file), 'utf8'),
+  ))
 }
 
 describe('buildSite', () => {
@@ -86,12 +110,53 @@ describe('buildSite', () => {
     await createSite()
     await buildWithoutNodeEnv()
 
-    const chunk = await readClientEntryChunk()
+    const chunks = await readClientChunks()
 
     for (const marker of DEVELOPMENT_ONLY_MARKERS) {
-      expect(chunk, `${marker} must be tree-shaken out of the client bundle`)
-        .not
-        .toContain(marker)
+      for (const [index, chunk] of chunks.entries()) {
+        expect(chunk, `${marker} must be tree-shaken out of client chunk ${index}`)
+          .not
+          .toContain(marker)
+      }
+    }
+  }, 300_000)
+
+  it('keeps the app chunk cached when only a page title changes', async () => {
+    await createSite()
+    await buildWithoutNodeEnv()
+    const before = {
+      app: await findClientChunk('app-'),
+      manifest: await findClientChunk('page-manifest-'),
+      entry: await findClientChunk('entry-client-'),
+    }
+
+    await writeFile(join(siteDirectory, 'guide/one.md'), guidePage('One Renamed'))
+    await buildWithoutNodeEnv()
+    const after = {
+      app: await findClientChunk('app-'),
+      manifest: await findClientChunk('page-manifest-'),
+      entry: await findClientChunk('entry-client-'),
+    }
+
+    // The manifest carries the new title, so its name has to change. The app
+    // chunk holds the framework and the theme and must not: that is the whole
+    // point of the split. Only the tiny entry chunk names both chunks, so it
+    // changes too.
+    expect(after.manifest).not.toBe(before.manifest)
+    expect(after.app).toBe(before.app)
+    expect(after.entry).not.toBe(before.entry)
+  }, 300_000)
+
+  it('preloads the page manifest chunk in every prerendered page', async () => {
+    await createSite()
+    await buildWithoutNodeEnv()
+
+    const manifest = await findClientChunk('page-manifest-')
+    for (const htmlFile of ['index.html', 'guide/one.html']) {
+      const html = await readFile(join(siteDirectory, 'dist', htmlFile), 'utf8')
+      expect(html, `${htmlFile} must preload ${manifest}`).toContain(
+        `<link rel="modulepreload" href="/assets/${manifest}">`,
+      )
     }
   }, 300_000)
 })

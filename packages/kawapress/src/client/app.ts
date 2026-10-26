@@ -1,6 +1,7 @@
 import type { App, Plugin } from 'vue'
 import type { Router } from 'vue-router'
 import type { OutletRegistry } from '../core/outlet'
+import type { PageManifest } from '../core/page-manifest'
 import { runtimePlugins } from 'virtual:kawapress-runtime-plugins'
 import { createSSRApp } from 'vue'
 import { createRuntimePluginRunner } from '../plugin/runtime-runner'
@@ -11,6 +12,12 @@ import { createAppRouter } from './router'
 
 export interface CreateKawapressAppOptions {
   head: Plugin
+  /**
+   * Pages of the site. It is passed in rather than imported so the generated
+   * manifest stays in its own chunk: a content edit then never invalidates the
+   * chunk that holds the framework and the theme.
+   */
+  pageManifest: PageManifest
 }
 
 export interface KawapressApp {
@@ -22,9 +29,9 @@ export interface KawapressApp {
 }
 
 export async function createKawapressApp(
-  { head }: CreateKawapressAppOptions,
+  { head, pageManifest }: CreateKawapressAppOptions,
 ): Promise<KawapressApp> {
-  const { router, adoptRequestedUrl } = createAppRouter()
+  const { router, adoptRequestedUrl } = createAppRouter(pageManifest)
   const app = createSSRApp(Root)
   app.use(router)
   app.use(head)

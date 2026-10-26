@@ -149,3 +149,55 @@ describe('collectPageAssets', () => {
     })
   })
 })
+
+/**
+ * The entry chunk of a built site imports the app chunk and the page manifest
+ * chunk statically, so a page never waits for a second round trip to discover
+ * them. A site that keeps everything in the entry chunk has no such imports.
+ */
+const splitManifest = {
+  [ENTRY_KEY]: {
+    file: 'assets/entry-client.js',
+    isEntry: true,
+    css: ['assets/entry-client.css'],
+    imports: ['_app.js'],
+  },
+  '_app.js': {
+    file: 'assets/app.js',
+    css: ['assets/app.css'],
+    imports: ['_manifest.js'],
+  },
+  '_manifest.js': {
+    file: 'assets/page-manifest.js',
+  },
+  'index.md': {
+    file: 'assets/index.js',
+    isDynamicEntry: true,
+    imports: [ENTRY_KEY],
+  },
+}
+
+describe('collectPageAssets with a split entry chunk', () => {
+  it('preloads the chunks the entry imports statically, transitively', () => {
+    expect(collectPageAssets(splitManifest, [], ENTRY_KEY)).toEqual({
+      css: ['assets/entry-client.css', 'assets/app.css'],
+      modulepreload: ['assets/app.js', 'assets/page-manifest.js'],
+    })
+  })
+
+  it('lists the entry imports before the page chunks', () => {
+    const assets = collectPageAssets(splitManifest, ['index.md'], ENTRY_KEY)
+
+    expect(assets.modulepreload).toEqual([
+      'assets/app.js',
+      'assets/page-manifest.js',
+      'assets/index.js',
+    ])
+  })
+
+  it('keeps the entry chunk itself out of the preloads', () => {
+    expect(collectPageAssets(splitManifest, ['index.md'], ENTRY_KEY).modulepreload)
+      .not
+      .toContain('assets/entry-client.js')
+  })
+})
