@@ -13,6 +13,7 @@
     "lint": "eslint . --cache",
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",
+    "bench": "pnpm --filter @kawapress/bench bench",
     "release": "node scripts/release.mjs",
     "release:dry": "node scripts/release.mjs --dry-run"
   },
