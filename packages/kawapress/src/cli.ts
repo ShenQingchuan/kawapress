@@ -29,9 +29,16 @@ const build = defineCommand({
 
 const preview = defineCommand({
   meta: { name: 'preview', description: 'Preview the built site' },
-  async run() {
+  args: {
+    port: {
+      type: 'string',
+      description: 'Port to listen on',
+      default: '4173',
+    },
+  },
+  async run({ args }) {
     const { previewSite } = await import('./server/preview')
-    await previewSite(process.cwd())
+    await previewSite(process.cwd(), { port: parsePort(args.port) })
   },
 })
 
@@ -47,5 +54,15 @@ export const main = defineCommand({
     preview,
   },
 })
+
+function parsePort(port: string): number {
+  const parsed = Number(port)
+  if (!Number.isInteger(parsed)) {
+    throw new TypeError(
+      `KawaPress: --port must be an integer, got ${JSON.stringify(port)}.`,
+    )
+  }
+  return parsed
+}
 
 runMain(main)
