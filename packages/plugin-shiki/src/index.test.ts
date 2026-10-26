@@ -70,6 +70,31 @@ const answer = 42
     expect(ordinary).toContain('{{ answer }}')
   })
 
+  it('declares the popup component only on pages that render one', async () => {
+    const markdown = await createMarkdown({ twoslash: true })
+    const twoslashEnv: Record<string, unknown> = { path: '/guide/typed' }
+
+    markdown.render('```ts twoslash\nconst answer = 42\n```', twoslashEnv)
+
+    expect(twoslashEnv.pageComponents).toEqual([{
+      name: 'KawaTwoslashMenu',
+      from: expect.stringContaining('twoslash-menu'),
+    }])
+
+    const plainEnv: Record<string, unknown> = { path: '/guide/plain' }
+    markdown.render('```ts\nconst answer = 42\n```', plainEnv)
+    expect(plainEnv.pageComponents).toBeUndefined()
+  })
+
+  it('declares nothing when the plugin has no Twoslash transformer', async () => {
+    const markdown = await createMarkdown()
+    const env: Record<string, unknown> = { path: '/guide/plain' }
+
+    markdown.render('```ts twoslash\nconst answer = 42\n```', env)
+
+    expect(env.pageComponents).toBeUndefined()
+  })
+
   it('recognizes notation through each language grammar', async () => {
     const markdown = await createMarkdown()
 

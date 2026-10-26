@@ -24,6 +24,11 @@
       "import": "./src/runtime-plugin.ts",
       "default": "./src/runtime-plugin.ts"
     },
+    "./twoslash-menu": {
+      "types": "./src/twoslash-menu.ts",
+      "import": "./src/twoslash-menu.ts",
+      "default": "./src/twoslash-menu.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [

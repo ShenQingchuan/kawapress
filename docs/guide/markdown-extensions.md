@@ -300,6 +300,28 @@ throw new Error('配置无效') // [!code error]
 
 在标注后加上数字，例如 `[!code focus:2]`，可以从当前行开始连续标记两行。
 
+### 类型提示 {#type-hints}
+
+在语言名称后加上 `twoslash`，这个代码块就会像真实的 TypeScript 项目一样被检查。把鼠标移到变量或函数上，会弹出它的类型和说明；在下一行写上 `// ^?`，还能把某个值的类型直接显示出来：
+
+````md
+```ts twoslash
+const toCurrency = (value: number) => `¥${value.toFixed(2)}`
+const price = toCurrency(19.9)
+//    ^?
+```
+````
+
+实际效果如下，把鼠标移到 `toCurrency` 上试一下：
+
+```ts twoslash
+const toCurrency = (value: number) => `¥${value.toFixed(2)}`
+const price = toCurrency(19.9)
+//    ^?
+```
+
+只有带 `twoslash` 的代码块会被分析，其余代码块照常高亮。分析和浮层样式都只在用得上它们的页面出现：没有 Twoslash 代码块的页面不会为此多下载任何东西。
+
 ## 数学公式 {#math-equations}
 
 数学公式由可选的 `@kawapress/plugin-mathjax` 提供。它在构建时生成 SVG，不需要读者的浏览器再下载或运行 MathJax。

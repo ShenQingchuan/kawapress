@@ -17,7 +17,8 @@ type RenderMarkdownInline = NonNullable<RendererRichOptions['renderMarkdownInlin
 
 const JSDOC_LINK_RE = /\{@link ([^}]*)\}/g
 const PARAM_NAME_RE = /^([\w$-]+)/
-const TWOSLASH_MENU_TAG = 'kawa-twoslash-menu'
+/** Tag of the popup component in the page template. */
+export const TWOSLASH_MENU_TAG = 'kawa-twoslash-menu'
 
 const composePopup: PopupCompose = ({ popup, token }) => [
   {

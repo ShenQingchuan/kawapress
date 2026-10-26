@@ -1,8 +1,9 @@
 import type {
   TransformerTwoslashOptions,
 } from '@shikijs/twoslash'
-import type { KawaPressPlugin } from 'kawapress'
+import type { KawaPressPlugin, PageComponentEnv } from 'kawapress'
 import type { ShikiTransformer } from 'shiki'
+import { createRequire } from 'node:module'
 import {
   transformerMetaHighlight,
   transformerNotationDiff,
@@ -11,10 +12,10 @@ import {
   transformerNotationHighlight,
 } from '@shikijs/transformers'
 import { createTransformerFactory } from '@shikijs/twoslash'
-import { definePlugin } from 'kawapress'
+import { addPageComponent, definePlugin } from 'kawapress'
 import { createHighlighter } from 'shiki'
 import { createTwoslasher } from 'twoslash-vue'
-import { rendererFloatingVue } from './renderer-floating-vue'
+import { rendererFloatingVue, TWOSLASH_MENU_TAG } from './renderer-floating-vue'
 
 export type TwoslashOptions = Omit<
   TransformerTwoslashOptions,
@@ -37,8 +38,12 @@ export type ShikiPluginOptions = ShikiPluginBaseOptions & (
   | { theme?: never, themes: ShikiThemePair }
 )
 
+const require = createRequire(import.meta.url)
+
 const V_PRE_TRANSFORMER_NAME = 'kawapress:v-pre'
 const RUNTIME_DEPENDENCIES = ['floating-vue']
+const TWOSLASH_MENU_COMPONENT = 'KawaTwoslashMenu'
+const TWOSLASH_MENU_MODULE = resolveTwoslashMenuModule()
 const TWOSLASH_LANGS = ['ts', 'tsx', 'js', 'jsx', 'json', 'vue']
 const PRELOADED_LANGS = [
   'bash',
@@ -69,8 +74,8 @@ export function shikiPlugin(options: ShikiPluginOptions = {}): KawaPressPlugin {
           themes: themes ? Object.values(themes) : [theme],
           langs: options.langs ?? PRELOADED_LANGS,
         })
-        markdown.options.highlight = (str, lang, attrs) =>
-          highlightCode(highlighter, str, lang, attrs, {
+        markdown.options.highlight = (str, lang, attrs, env) =>
+          highlightCode(highlighter, str, lang, attrs, env, {
             theme,
             themes,
           }, transformers)
@@ -96,6 +101,23 @@ export function shikiPlugin(options: ShikiPluginOptions = {}): KawaPressPlugin {
 export default shikiPlugin
 
 type Highlighter = Awaited<ReturnType<typeof createHighlighter>>
+
+/**
+ * Absolute path of the module that default-exports the Twoslash menu.
+ *
+ * The page SFC imports it, and a page cannot resolve a package that only the
+ * preset depends on, so the export map is resolved from this package instead of
+ * relying on the package manager layout of the site.
+ */
+function resolveTwoslashMenuModule(): string {
+  const specifier = '@kawapress/plugin-shiki/twoslash-menu'
+  try {
+    return require.resolve(specifier)
+  }
+  catch {
+    return specifier
+  }
+}
 
 function createTransformers(
   options: ShikiPluginOptions,
@@ -213,6 +235,7 @@ function highlightCode(
   str: string,
   lang: string,
   attrs: string,
+  env: PageComponentEnv,
   themeOptions: {
     theme: string
     themes?: ShikiThemePair
@@ -228,8 +251,7 @@ function highlightCode(
   }
 
   const code = str.replace(/\r?\n$/, '')
-
-  return themeOptions.themes
+  const html = themeOptions.themes
     ? highlighter.codeToHtml(code, {
         ...commonOptions,
         themes: themeOptions.themes,
@@ -239,4 +261,21 @@ function highlightCode(
         ...commonOptions,
         theme: themeOptions.theme,
       })
+
+  declareTwoslashMenu(env, html)
+  return html
+}
+
+/**
+ * A page only imports the menu component when a code block really rendered one,
+ * so pages without Twoslash never download floating-vue.
+ */
+function declareTwoslashMenu(env: PageComponentEnv, html: string): void {
+  if (!html.includes(`<${TWOSLASH_MENU_TAG}`)) {
+    return
+  }
+  addPageComponent(env, {
+    name: TWOSLASH_MENU_COMPONENT,
+    from: TWOSLASH_MENU_MODULE,
+  })
 }
