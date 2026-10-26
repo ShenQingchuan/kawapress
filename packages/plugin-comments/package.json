@@ -1,0 +1,49 @@
+{
+  "name": "@kawapress/plugin-comments",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "GitHub Discussions comments for KawaPress, powered by Giscus",
+  "license": "MIT",
+  "homepage": "https://shenqingchuan.github.io/kawapress/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShenQingchuan/kawapress.git",
+    "directory": "packages/plugin-comments"
+  },
+  "bugs": {
+    "url": "https://github.com/ShenQingchuan/kawapress/issues"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./runtime-plugin": {
+      "types": "./src/runtime-plugin.ts",
+      "import": "./src/runtime-plugin.ts",
+      "default": "./src/runtime-plugin.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/**/!(*.test.*)"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "kawapress": "workspace:*",
+    "vue": "catalog:frontend"
+  },
+  "devDependencies": {
+    "happy-dom": "catalog:dev",
+    "kawapress": "workspace:*",
+    "vite": "catalog:node",
+    "vue": "catalog:frontend"
+  }
+}
