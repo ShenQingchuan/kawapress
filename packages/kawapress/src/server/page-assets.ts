@@ -28,6 +28,10 @@ export interface PageAssets {
  * theme components bundled into a shared chunk are not keys and are reached
  * through the chunk `imports` instead. Dynamic imports stay out on purpose so a
  * page does not pay for chunks it only loads on interaction.
+ *
+ * Chunks the entry chunk imports statically are preloaded as well: they are
+ * needed to start the app, and the browser would otherwise discover them only
+ * after downloading and parsing the entry chunk.
  */
 export function collectPageAssets(
   manifest: ClientManifest,
@@ -38,8 +42,10 @@ export function collectPageAssets(
     .filter(key => Object.hasOwn(manifest, key))
 
   const css: string[] = []
+  const entryFiles: string[] = []
   walkChunks(manifest, [entryKey], (chunk) => {
     css.push(...chunk.css ?? [])
+    entryFiles.push(chunk.file)
   })
 
   const pageFiles: string[] = []
@@ -50,7 +56,7 @@ export function collectPageAssets(
 
   // The entry script tag already loads the entry chunk.
   const entryFile = manifest[entryKey]?.file
-  const modulepreload = unique(pageFiles)
+  const modulepreload = unique([...entryFiles, ...pageFiles])
     .filter(file => file !== entryFile)
 
   return { css: unique(css), modulepreload }

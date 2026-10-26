@@ -91,6 +91,13 @@ async function listClientChunks(): Promise<string[]> {
     .sort()
 }
 
+/** The client chunk whose file name starts with `prefix`, e.g. `app-`. */
+async function findClientChunk(prefix: string): Promise<string> {
+  const chunk = (await listClientChunks()).find(file => file.startsWith(prefix))
+  expect(chunk, `client chunk ${prefix}* in dist/assets`).toBeDefined()
+  return chunk!
+}
+
 async function readClientChunks(): Promise<string[]> {
   const assetsDirectory = join(siteDirectory, 'dist/assets')
   return Promise.all((await listClientChunks()).map(
@@ -111,6 +118,45 @@ describe('buildSite', () => {
           .not
           .toContain(marker)
       }
+    }
+  }, 300_000)
+
+  it('keeps the app chunk cached when only a page title changes', async () => {
+    await createSite()
+    await buildWithoutNodeEnv()
+    const before = {
+      app: await findClientChunk('app-'),
+      manifest: await findClientChunk('page-manifest-'),
+      entry: await findClientChunk('entry-client-'),
+    }
+
+    await writeFile(join(siteDirectory, 'guide/one.md'), guidePage('One Renamed'))
+    await buildWithoutNodeEnv()
+    const after = {
+      app: await findClientChunk('app-'),
+      manifest: await findClientChunk('page-manifest-'),
+      entry: await findClientChunk('entry-client-'),
+    }
+
+    // The manifest carries the new title, so its name has to change. The app
+    // chunk holds the framework and the theme and must not: that is the whole
+    // point of the split. Only the tiny entry chunk names both chunks, so it
+    // changes too.
+    expect(after.manifest).not.toBe(before.manifest)
+    expect(after.app).toBe(before.app)
+    expect(after.entry).not.toBe(before.entry)
+  }, 300_000)
+
+  it('preloads the page manifest chunk in every prerendered page', async () => {
+    await createSite()
+    await buildWithoutNodeEnv()
+
+    const manifest = await findClientChunk('page-manifest-')
+    for (const htmlFile of ['index.html', 'guide/one.html']) {
+      const html = await readFile(join(siteDirectory, 'dist', htmlFile), 'utf8')
+      expect(html, `${htmlFile} must preload ${manifest}`).toContain(
+        `<link rel="modulepreload" href="/assets/${manifest}">`,
+      )
     }
   }, 300_000)
 })
