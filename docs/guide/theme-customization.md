@@ -87,6 +87,65 @@ const site = useSite()
 
 `NotFound` 仍然位于 `Layout` 里面，因此会继续使用主题的导航和整体样式。
 
+## Outlet：插件把界面挂进主题 {#outlets}
+
+插件不该知道是谁在渲染页面，主题也不该知道有哪些插件。两者通过 Outlet 对接：插件把一小块界面放进 Outlet，主题只决定这个 Outlet 出现在页面哪里。
+
+KawaPress 提供 `KawaOutlet` 组件，并且已经把它注册为全局组件，主题模板里直接写名字就能用：
+
+```vue
+<script setup lang="ts">
+import { RouterView } from 'kawapress/client'
+</script>
+
+<template>
+  <div class="my-theme">
+    <header>
+      <span>My Docs</span>
+      <KawaOutlet name="header.actions" />
+    </header>
+    <main>
+      <RouterView />
+      <KawaOutlet name="doc.after" />
+    </main>
+    <footer>
+      <KawaOutlet name="doc.footer" />
+    </footer>
+  </div>
+</template>
+```
+
+默认情况下，Outlet 按顺序渲染插件注册进来的组件，外面不会多包一层元素。如果主题需要筛选、排序或加外壳，就用作用域插槽：
+
+```vue
+<script setup lang="ts">
+import { KawaOutlet } from 'kawapress/client'
+</script>
+
+<template>
+  <KawaOutlet v-slot="{ items }" name="header.actions">
+    <div class="my-theme-actions">
+      <component :is="item.component" v-for="item in items" :key="item.id" />
+    </div>
+  </KawaOutlet>
+</template>
+```
+
+每一项包含三个字段：`id` 是完整标识 `插件名:插件内部 id`，`owner` 是插件名，`component` 是插件提供的组件。想只显示部分插件时，按 `owner` 或 `id` 过滤即可。
+
+首版有四个 Outlet：
+
+| Outlet | 由谁渲染 | 常见内容 |
+| --- | --- | --- |
+| `header.actions` | 主题 | 搜索按钮、源码链接等顶栏操作 |
+| `doc.header` | KawaPress | 复制页面、页面工具按钮 |
+| `doc.footer` | 主题 | 最后更新时间、编辑此页链接 |
+| `doc.after` | 主题 | 评论区、反馈表单 |
+
+`doc.header` 由 KawaPress 自动放在 Markdown 内容的第一个 H1 后面，主题不需要自己写。没有 H1 的页面不会出现这个位置。
+
+主题渲染了某个 Outlet，就表示支持它，不需要额外声明。两种诊断信息会帮你检查：同一个页面里重复渲染了同一个 Outlet 时，开发模式会打印一次警告；全站都没有渲染某个 Outlet，而插件已经往里放了内容时，`kawapress build` 会按插件各给一行警告。
+
 ## 最小主题包 {#a-minimal-theme-package}
 
 一个可以被 KawaPress 自动加载的主题包，可以使用下面的结构：
@@ -266,6 +325,7 @@ const layout = computed(() =>
 | `useLocale()` | 当前语言、语言列表和对应页面链接。 |
 | `useRouter()` | KawaPress 使用的 Vue Router 实例。 |
 | `RouterLink`、`RouterView` | 站内导航与当前路由内容。 |
+| `KawaOutlet` | 插件注册进当前 Outlet 的界面。 |
 | `withBase()` | 为动态的公共资源地址加上部署路径。 |
 
 主题不应导入 KawaPress 内部文件，也不应自己维护另一套路由或语言状态。这样，服务端渲染、hydration 和站内跳转会使用同一份数据。
@@ -287,3 +347,60 @@ const layout = computed(() =>
 主题样式应该使用自己的 class 前缀，并把 Markdown 排版限制在明确的正文容器内。不要让全局选择器意外改变用户写在 Markdown 中的 Vue 组件。
 
 明暗模式、响应式布局和交互视觉也由主题负责。KawaPress 会提供当前页面和语言数据，但不会替主题决定这些界面行为。
+
+## 公共 Token 与样式层级 {#shared-tokens-and-css-layers}
+
+主题和插件都需要颜色、字体和圆角。这类数值由 KawaPress 统一命名为 Token，统一提供默认值，主题只负责覆盖。每个页面的 `<head>` 最前面都有两层注入内容，开发环境和构建结果一致：
+
+```html
+<style id="kawa-layers">@layer kawa.base, kawa.plugin, kawa.theme;</style>
+<style id="kawa-tokens">@layer kawa.base { :root { --kawa-c-bg: light-dark(#ffffff, #1b1b1f); /* … */ } }</style>
+```
+
+三个层级的优先级由低到高排列：
+
+| 层 | 放什么 |
+| --- | --- |
+| `kawa.base` | KawaPress 的默认 Token |
+| `kawa.plugin` | 插件自带的默认样式 |
+| `kawa.theme` | 主题的全部样式 |
+| 不在任何层里的样式 | 站点使用者自己写的 CSS，优先级最高 |
+
+因此主题样式永远盖过插件样式，与 CSS 文件的加载顺序无关；站点使用者想改主题时，写普通 CSS 就够了，不需要 `!important`。
+
+默认 Token 使用 `light-dark()` 编写，`color-scheme: light dark` 也声明在 `kawa.base` 层里，所以不装主题也有可用的浅色和深色外观：
+
+| Token | 用途 |
+| --- | --- |
+| `--kawa-c-bg` | 页面背景 |
+| `--kawa-c-bg-soft` | 次级表面，例如代码块、悬停底色 |
+| `--kawa-c-bg-elv` | 浮起表面，例如对话框、弹出层 |
+| `--kawa-c-border` | 控件边框 |
+| `--kawa-c-divider` | 分隔线 |
+| `--kawa-c-text-1` | 主要文字 |
+| `--kawa-c-text-2` | 次要文字 |
+| `--kawa-c-text-3` | 三级文字、占位文字 |
+| `--kawa-c-brand` | 品牌色、链接、焦点环 |
+| `--kawa-c-info` / `--kawa-c-success` / `--kawa-c-warning` / `--kawa-c-danger` | 四种状态色 |
+| `--kawa-font-sans` / `--kawa-font-mono` | 正文字体、等宽字体 |
+| `--kawa-radius` | 控件默认圆角 |
+| `--kawa-shadow-overlay` | 浮层阴影 |
+
+主题覆盖 Token 时只需要重写变量，不用复制插件样式：
+
+```css
+@layer kawa.theme {
+  :root {
+    --kawa-c-brand: light-dark(#b3005c, #ff8ab8);
+    --kawa-radius: 10px;
+  }
+}
+```
+
+主题自己的样式请整体放进 `kawa.theme` 层，这样插件样式和主题样式谁更强一目了然。引入第三方 CSS 时也必须指定层，否则它会落在无层级样式里，反过来盖住主题：
+
+```css
+@import url('overlayscrollbars/styles/overlayscrollbars.css') layer(kawa.theme);
+```
+
+漏掉 `layer()` 的第三方 CSS 是主题里最常见的优先级事故，导入前先确认这一点。

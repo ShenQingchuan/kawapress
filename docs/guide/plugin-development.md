@@ -22,6 +22,7 @@ description: 按扩展位置编写 KawaPress 插件，使用生成侧与运行�
 | 添加或调整 Vite 能力 | Generator Plugin 的 `vite()` |
 | 构建结束后生成静态文件 | Generator Plugin 的 `buildArtifacts()` |
 | 安装 Vue 插件或全局组件 | Runtime Plugin 的 `vueApp()` |
+| 把界面放进主题预留的位置 | Runtime Plugin 的 `addToOutlet()` |
 | 添加导航守卫或运行时路由行为 | Runtime Plugin 的 `router()` |
 | 提供一套可以直接开始的完整体验 | Preset |
 
@@ -197,6 +198,64 @@ export default defineRuntimePlugin({
 ```
 
 `NotesBadge.vue` 是普通的 Vue 组件。注册后，页面中就可以按 `NotesBadge` 这个名称使用它。
+
+### `addToOutlet()`：把界面交给主题摆放 {#add-to-outlet}
+
+导航栏按钮、复制按钮、评论区这类界面，属于页面框架的某个位置，而不属于 Markdown 正文。这类界面应该通过 Outlet 交给主题：
+
+```ts
+// src/runtime-plugin.ts
+import { defineRuntimePlugin } from 'kawapress'
+import CopyPageButton from './CopyPageButton.vue'
+
+export default defineRuntimePlugin({
+  name: '@acme/kawapress-plugin-notes',
+  setup(api) {
+    api.addToOutlet('doc.header', {
+      id: 'copy-page',
+      component: CopyPageButton,
+    })
+  },
+})
+```
+
+主题只需在合适的位置写 `<KawaOutlet name="doc.header" />`，不需要知道这个插件的存在。
+
+首版有四个 Outlet：
+
+| Outlet | 渲染方 | 适合放什么 |
+| --- | --- | --- |
+| `header.actions` | 主题 | 搜索按钮、仓库链接等顶栏操作 |
+| `doc.header` | KawaPress（Markdown 首个 H1 之后） | 复制页面、页面工具 |
+| `doc.footer` | 主题 | 最后更新时间、编辑此页链接 |
+| `doc.after` | 主题 | 评论区、反馈表单 |
+
+规则很简单：
+
+- `id` 在同一个插件内必须唯一。完整标识是 `<插件名>:<id>`，插件名由 KawaPress 自动补上，插件无法伪造。
+- 渲染顺序先按插件在 `plugins` 数组中的顺序，再按同一个插件内调用 `addToOutlet()` 的先后顺序。不提供数字权重或相对位置设置。
+- 名字写错、`id` 为空、同一个插件里 `id` 重复，都会直接报错，错误信息会带插件名。
+- 全站都没有页面渲染你使用的 Outlet 时，`kawapress build` 会按插件名给出警告。看到警告时，先确认主题是否支持这个 Outlet。
+
+如果插件既会显示自己的界面，又希望主题可以完全接管，可以另外导出一个组合式函数（例如 `useCopyPage()`），主题就能用自己的组件套用同一套逻辑，然后在 Slot 中过滤掉默认组件。
+
+### 插件样式包进 `kawa.plugin` 层 {#plugin-styles}
+
+插件自带的默认样式请全部包在 `@layer kawa.plugin { ... }` 里，并且只读取 `--kawa-*` Token：
+
+```css
+@layer kawa.plugin {
+  .acme-notes-badge {
+    color: var(--kawa-c-text-2);
+    border: 1px solid var(--kawa-c-border);
+    border-radius: var(--kawa-radius);
+  }
+}
+```
+
+这样做有三个好处：主题样式不需要借助 `!important` 就能盖过插件样式；插件不写 fallback 颜色，所以任何主题下都能直接使用；更换主题时插件代码完全不用改。
+
+不要在插件里读取某个主题的私有变量（例如 `--nagi-*`），也不要自己再定义一套通用颜色变量。真正只属于插件自己的数值（例如搜索弹窗宽度）可以保留为插件私有变量。
 
 ### `router()`：调整运行时路由 {#router}
 

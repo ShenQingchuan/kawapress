@@ -87,6 +87,65 @@ const site = useSite()
 
 `NotFound` is still rendered inside `Layout`, so it keeps the theme's navigation and surrounding styles.
 
+## Outlets Connect Plugin Interfaces to the Theme {#outlets}
+
+A plugin should not know which theme draws the page, and a theme should not know which plugins exist. Outlets are the meeting point: a plugin puts a small piece of interface into an outlet, and the theme decides where that outlet appears.
+
+KawaPress provides the `KawaOutlet` component and registers it globally, so a theme template can use the name directly:
+
+```vue
+<script setup lang="ts">
+import { RouterView } from 'kawapress/client'
+</script>
+
+<template>
+  <div class="my-theme">
+    <header>
+      <span>My Docs</span>
+      <KawaOutlet name="header.actions" />
+    </header>
+    <main>
+      <RouterView />
+      <KawaOutlet name="doc.after" />
+    </main>
+    <footer>
+      <KawaOutlet name="doc.footer" />
+    </footer>
+  </div>
+</template>
+```
+
+By default an outlet renders the registered components in order and adds no wrapper element of its own. When the theme needs to filter, reorder, or wrap them, use the scoped slot:
+
+```vue
+<script setup lang="ts">
+import { KawaOutlet } from 'kawapress/client'
+</script>
+
+<template>
+  <KawaOutlet v-slot="{ items }" name="header.actions">
+    <div class="my-theme-actions">
+      <component :is="item.component" v-for="item in items" :key="item.id" />
+    </div>
+  </KawaOutlet>
+</template>
+```
+
+Every item has three fields: `id` is the full identifier `plugin-name:plugin-local-id`, `owner` is the plugin name, and `component` is the component the plugin registered. Filter on `owner` or `id` to show only part of them.
+
+The first release has four outlets:
+
+| Outlet | Rendered by | Typical content |
+| --- | --- | --- |
+| `header.actions` | Theme | Search trigger, repository link, top-bar actions |
+| `doc.header` | KawaPress | Copy-page button, page tools |
+| `doc.footer` | Theme | Last updated date, edit-this-page link |
+| `doc.after` | Theme | Comments, feedback form |
+
+KawaPress places `doc.header` right after the first H1 of the Markdown body, so the theme never writes it. Pages without an H1 get no such spot.
+
+Rendering an outlet is how a theme declares support for it; no extra declaration is needed. Two diagnostics keep that honest: rendering the same outlet twice on one page prints a single development warning, and on `kawapress build`, a plugin that placed items in an outlet no page ever rendered gets one warning line naming that plugin.
+
 ## A Minimal Theme Package {#a-minimal-theme-package}
 
 A theme package that KawaPress can load automatically can use this structure:
@@ -266,6 +325,7 @@ Theme components import public capabilities from `kawapress/client`:
 | `useLocale()` | Current locale, locale list, and matching page links. |
 | `useRouter()` | The Vue Router instance used by KawaPress. |
 | `RouterLink`, `RouterView` | Internal navigation and current route content. |
+| `KawaOutlet` | Interface pieces plugins placed in one outlet. |
 | `withBase()` | Deployment base for dynamic public asset URLs. |
 
 A theme does not import internal KawaPress files or maintain another router or locale state. Server rendering, hydration, and client navigation then use the same data.
@@ -287,3 +347,60 @@ Keep one theme CSS entry and let it organize variables, foundations, layout, con
 Use a theme-specific class prefix and limit Markdown typography to a clear content container. Broad global selectors should not unexpectedly change Vue components embedded in Markdown.
 
 Dark mode, responsive layout, and interaction styling also belong to the theme. KawaPress supplies page and locale data but does not choose these interface behaviors.
+
+## Shared Tokens and CSS Layers {#shared-tokens-and-css-layers}
+
+Themes and plugins both need colors, fonts, and corner radii. KawaPress names these values, ships defaults for them, and lets the theme override only the values. Every page starts its `<head>` with two inline blocks, identical in development and in the build output:
+
+```html
+<style id="kawa-layers">@layer kawa.base, kawa.plugin, kawa.theme;</style>
+<style id="kawa-tokens">@layer kawa.base { :root { --kawa-c-bg: light-dark(#ffffff, #1b1b1f); /* … */ } }</style>
+```
+
+The three layers, from lowest to highest priority:
+
+| Layer | Content |
+| --- | --- |
+| `kawa.base` | KawaPress default tokens |
+| `kawa.plugin` | Default styles shipped by plugins |
+| `kawa.theme` | All theme styles |
+| Styles outside any layer | CSS written by the site author, always the strongest |
+
+Theme styles therefore always beat plugin styles, no matter in which order stylesheets load. A site author can restyle a theme with plain CSS and does not need `!important`.
+
+The default tokens use `light-dark()`, and `color-scheme: light dark` is declared inside the `kawa.base` layer, so a site still has usable light and dark surfaces without a theme:
+
+| Token | Purpose |
+| --- | --- |
+| `--kawa-c-bg` | Page background |
+| `--kawa-c-bg-soft` | Subtle surface: code blocks, hover states |
+| `--kawa-c-bg-elv` | Elevated surface: dialogs, popovers |
+| `--kawa-c-border` | Control borders |
+| `--kawa-c-divider` | Separators |
+| `--kawa-c-text-1` | Primary text |
+| `--kawa-c-text-2` | Secondary text |
+| `--kawa-c-text-3` | Tertiary and placeholder text |
+| `--kawa-c-brand` | Accent, links, focus rings |
+| `--kawa-c-info` / `--kawa-c-success` / `--kawa-c-warning` / `--kawa-c-danger` | Four status colors |
+| `--kawa-font-sans` / `--kawa-font-mono` | Body font, monospace font |
+| `--kawa-radius` | Default control radius |
+| `--kawa-shadow-overlay` | Shadow for floating surfaces |
+
+To restyle a token, redeclare it; there is no need to copy plugin styles:
+
+```css
+@layer kawa.theme {
+  :root {
+    --kawa-c-brand: light-dark(#b3005c, #ff8ab8);
+    --kawa-radius: 10px;
+  }
+}
+```
+
+Put theme styles inside the `kawa.theme` layer so the competition between theme and plugin styles stays obvious. Third-party CSS must name a layer too, otherwise it lands outside every layer and overrides the theme:
+
+```css
+@import url('overlayscrollbars/styles/overlayscrollbars.css') layer(kawa.theme);
+```
+
+A missing `layer()` on an imported stylesheet is the most common priority accident in a theme. Check it before adding any third-party CSS.

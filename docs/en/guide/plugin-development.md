@@ -22,6 +22,7 @@ Before writing an extension, ask where the work happens:
 | Add or adjust Vite behavior | Generator Plugin `vite()` |
 | Generate static files after the build | Generator Plugin `buildArtifacts()` |
 | Install a Vue plugin or global component | Runtime Plugin `vueApp()` |
+| Place interface pieces where the theme wants them | Runtime Plugin `addToOutlet()` |
 | Add navigation guards or runtime route behavior | Runtime Plugin `router()` |
 | Provide a complete experience ready to use | Preset |
 
@@ -198,6 +199,64 @@ export default defineRuntimePlugin({
 ```
 
 `NotesBadge.vue` is an ordinary Vue component. After registration, pages can use it by the name `NotesBadge`.
+
+### `addToOutlet()`: Let the Theme Decide Where It Goes {#add-to-outlet}
+
+Top-bar buttons, copy-page buttons, and comment sections belong to a spot in the page frame, not to the Markdown body. Hand these interfaces to the theme through an outlet:
+
+```ts
+// src/runtime-plugin.ts
+import { defineRuntimePlugin } from 'kawapress'
+import CopyPageButton from './CopyPageButton.vue'
+
+export default defineRuntimePlugin({
+  name: '@acme/kawapress-plugin-notes',
+  setup(api) {
+    api.addToOutlet('doc.header', {
+      id: 'copy-page',
+      component: CopyPageButton,
+    })
+  },
+})
+```
+
+The theme only writes `<KawaOutlet name="doc.header" />` where it wants that spot, and never needs to know this plugin exists.
+
+The first release has four outlets:
+
+| Outlet | Rendered by | Good fit |
+| --- | --- | --- |
+| `header.actions` | Theme | Search trigger, repository link, top-bar actions |
+| `doc.header` | KawaPress, after the first Markdown H1 | Copy page, page tools |
+| `doc.footer` | Theme | Last updated date, edit-this-page link |
+| `doc.after` | Theme | Comments, feedback form |
+
+The rules are short:
+
+- `id` must be unique inside one plugin. The full identifier is `<plugin name>:<id>`, and KawaPress fills in the plugin name, so a plugin cannot impersonate another one.
+- Items render in the order of the `plugins` array first, then in the order of `addToOutlet()` calls inside one plugin. There are no numeric weights and no relative placement options.
+- An unknown outlet name, an empty `id`, or a repeated `id` inside one plugin throws immediately, and the error names the plugin.
+- When no page in the site renders an outlet you used, `kawapress build` warns once per plugin. Check whether the installed theme supports that outlet.
+
+If a plugin both renders its own interface and wants themes to take full control, export a composable next to it (for example `useCopyPage()`). A theme can then build its own component on the same logic and filter the default component out of the slot.
+
+### Wrap Plugin Styles in the `kawa.plugin` Layer {#plugin-styles}
+
+Wrap every default plugin style in `@layer kawa.plugin { ... }` and read only `--kawa-*` tokens:
+
+```css
+@layer kawa.plugin {
+  .acme-notes-badge {
+    color: var(--kawa-c-text-2);
+    border: 1px solid var(--kawa-c-border);
+    border-radius: var(--kawa-radius);
+  }
+}
+```
+
+Three things follow from this: theme styles beat plugin styles without `!important`, the plugin needs no fallback colors and therefore looks right in every theme, and switching themes never touches plugin code.
+
+Do not read another theme's private variables such as `--nagi-*`, and do not invent a second set of shared color variables. Values that really belong to one plugin, such as a search dialog width, can stay private to that plugin.
 
 ### `router()`: Adjust Runtime Routing {#router}
 
