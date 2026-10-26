@@ -28,6 +28,17 @@ export type {
 } from './api/plugin'
 export { useMarkdownItPlugin } from './compiler/markdown-it-compat'
 export type { MarkdownItPluginHost } from './compiler/markdown-it-compat'
+export { findDeadLinks, findPageDeadLinks, formatDeadLink } from './core/dead-links'
+export type {
+  DeadLink,
+  DeadLinkConfig,
+  DeadLinkIgnore,
+  DeadLinkReason,
+  DeadLinkSite,
+  LinkRecord,
+  PageLinks,
+  ResolvedDeadLinkConfig,
+} from './core/dead-links'
 export { normalizeFrontmatterSource } from './core/frontmatter'
 export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
 export type { JsonOperationOptions } from './core/json'
