@@ -16,6 +16,7 @@
     "packages/*/src/**/*.vue",
     "packages/*/src/**/*.d.ts",
     "packages/*/*.ts",
-    "packages/*/*.config.ts"
+    "packages/*/*.config.ts",
+    "e2e/**/*.ts"
   ]
 }

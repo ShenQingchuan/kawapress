@@ -38,6 +38,14 @@ yarn docs:preview
 
 预览服务默认运行在 `http://localhost:4173`。它读取已经生成的 `dist/`，因此看到的就是待部署版本，而不是开发服务器的结果。
 
+端口被占用时，用 `--port` 换一个：
+
+```sh
+kawapress preview --port 5000
+```
+
+预览服务也会读取配置里的 `base`，把 `dist/` 挂在同一个路径下。访问 `/` 时它会自动跳转到 `base`，所以子路径部署的效果可以提前在本地确认。
+
 ## 设置公开路径 {#set-the-public-base-path}
 
 站点部署在域名根路径时，无需设置 `base`。如果最终地址包含子路径，例如 `https://example.com/handbook/`，请把 `base` 设为 `/handbook/`：

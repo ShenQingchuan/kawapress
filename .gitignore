@@ -6,3 +6,5 @@ dist
 .DS_Store
 docs/.kawapress-*
 docs/kawapress-llms-*
+test-results
+playwright-report

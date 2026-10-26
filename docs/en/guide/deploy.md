@@ -38,6 +38,14 @@ yarn docs:preview
 
 The preview server runs at `http://localhost:4173` by default. It serves the generated `dist/` directory, so it reflects the deployable build rather than the development server.
 
+If that port is taken, pick another one with `--port`:
+
+```sh
+kawapress preview --port 5000
+```
+
+The preview server honours the configured `base` as well. It serves `dist/` under that path and redirects `/` to it, which lets you check how a subpath deployment behaves before you upload anything.
+
 ## Set the Public Base Path {#set-the-public-base-path}
 
 No `base` is needed when the site is deployed at the domain root. If the final URL includes a subpath such as `https://example.com/handbook/`, set `base` to `/handbook/`:
