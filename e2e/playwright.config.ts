@@ -2,6 +2,8 @@ import process from 'node:process'
 import { defineConfig } from '@playwright/test'
 import {
   devOrigin,
+  pluginsOrigin,
+  pluginsPort,
   previewOrigin,
   previewPort,
   sitePath,
@@ -44,6 +46,14 @@ export default defineConfig({
       reuseExistingServer: false,
       stderr: 'pipe',
     },
+    {
+      // Plugins that the docs site does not enable get their own small site.
+      command: `pnpm --dir ./fixtures/plugins-site build && pnpm --dir ./fixtures/plugins-site preview --port ${pluginsPort}`,
+      url: `${pluginsOrigin}${sitePath('/')}`,
+      timeout: 180_000,
+      reuseExistingServer: false,
+      stderr: 'pipe',
+    },
   ],
   use: {
     // The code copy spec reads the clipboard back from the page.
@@ -54,12 +64,17 @@ export default defineConfig({
     {
       name: 'preview',
       use: { baseURL: previewOrigin },
-      testIgnore: /dev-smoke\.spec\.ts/,
+      testIgnore: [/dev-smoke\.spec\.ts/, /comments\.spec\.ts/],
     },
     {
       name: 'dev-smoke',
       use: { baseURL: devOrigin },
       testMatch: /dev-smoke\.spec\.ts/,
+    },
+    {
+      name: 'plugins-site',
+      use: { baseURL: pluginsOrigin },
+      testMatch: /comments\.spec\.ts/,
     },
   ],
 })
