@@ -131,6 +131,16 @@ api.pageData((pageData) => {
 
 Use a string such as `'2026-10-08'` instead, and parse it where needed.
 
+The second argument of the handler tells you where the page comes from: `file` is the absolute path of the Markdown source, and `sourcePath` is the path relative to `srcDir`, such as `/guide/intro.md`. Use it when you need information about the file, like its last git commit. Do not guess the file from the route: `/guide` can come from either `guide.md` or `guide/index.md`.
+
+```ts
+api.pageData((pageData, { file, sourcePath }) => {
+  pageData.frontmatter.source = sourcePath
+})
+```
+
+Both values stay on the generator side and are never sent to the browser. Copy what the page needs into `pageData`, as above.
+
 ### `pageArtifact()`: Observe the Build Result of Each Page {#page-artifact}
 
 `pageArtifact()` runs after a page has been compiled from Markdown and all `pageData()` handlers have finished. The handler can read the result but cannot change the source file, data, or route of the page.

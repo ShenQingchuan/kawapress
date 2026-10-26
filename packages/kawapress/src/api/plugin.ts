@@ -26,10 +26,23 @@ export interface BuildArtifactsContext {
   importModule: <T = unknown>(path: string) => Promise<T>
 }
 
+/** Where the page being processed comes from. Generator-only; never sent to the browser. */
+export interface PageDataContext {
+  /** Absolute path of the Markdown source file. */
+  file: string
+  /** Source path relative to srcDir, for example `/guide/intro.md`. */
+  sourcePath: string
+}
+
+export type PageDataHandler = (
+  pageData: PageData,
+  context: Readonly<PageDataContext>,
+) => MaybePromise<void>
+
 export interface GeneratorPluginAPI {
   config: (handler: GeneratorPluginHandler<SiteConfig>) => void
   markdown: (handler: GeneratorPluginHandler<MarkdownExit>) => void
-  pageData: (handler: GeneratorPluginHandler<PageData>) => void
+  pageData: (handler: PageDataHandler) => void
   pageArtifact: (
     handler: GeneratorPluginHandler<Readonly<PageBuildArtifact>>,
   ) => void

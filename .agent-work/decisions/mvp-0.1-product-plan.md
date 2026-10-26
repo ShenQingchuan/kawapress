@@ -181,7 +181,7 @@ MVP 公开六个生成侧注册方法：
 |---|---|---|
 | `config(handler)` | 站点配置归一化时 | 可修改的 KawaPress Config |
 | `markdown(handler)` | Markdown 编译器创建时 | 真实 `MarkdownExit` 实例 |
-| `pageData(handler)` | 每个页面的 pageData 生成后 | 当前页面的可修改 pageData |
+| `pageData(handler)` | 每个页面的 pageData 生成后 | 当前页面的可修改 pageData，以及只读的来源 `{ file, sourcePath }` |
 | `pageArtifact(handler)` | 当前页面完成 Markdown 编译与全部 `pageData()` handler 后 | 当前源修订的只读页面构建材料 |
 | `vite(handler)` | Vite 配置完成基础组装后 | 完整、可修改的 Vite `UserConfig` |
 | `buildArtifacts(handler)` | 全部 Vite build environment 完成后、HTML 预渲染前 | 全部页面材料与受控文件发射器 |

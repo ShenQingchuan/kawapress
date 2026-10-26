@@ -43,6 +43,33 @@ describe('createGeneratorPluginRunner', () => {
     expect(config.title).toBe('Docs first second')
   })
 
+  it('passes the page source to pageData handlers', async () => {
+    const seen: unknown[] = []
+    const runner = await createGeneratorPluginRunner([
+      definePlugin({
+        name: 'source-reader',
+        setup(api) {
+          api.pageData((pageData, context) => {
+            seen.push({ path: pageData.path, ...context })
+          })
+        },
+      }),
+    ])
+
+    await runner.runPageData({
+      path: '/guide/',
+      title: 'Guide',
+      frontmatter: {},
+      headers: [],
+    }, { file: '/site/guide/index.md', sourcePath: '/guide/index.md' })
+
+    expect(seen).toEqual([{
+      path: '/guide/',
+      file: '/site/guide/index.md',
+      sourcePath: '/guide/index.md',
+    }])
+  })
+
   it('reports the plugin and invalid field when pageData is not serializable', async () => {
     const runner = await createGeneratorPluginRunner([
       definePlugin({
@@ -60,7 +87,7 @@ describe('createGeneratorPluginRunner', () => {
       title: 'Guide',
       frontmatter: {},
       headers: [],
-    })
+    }, { file: '/site/guide.md', sourcePath: '/guide.md' })
 
     await expect(run).rejects.toThrow(
       '[invalid-page-data / generator / pageData] Plugin execution failed.',

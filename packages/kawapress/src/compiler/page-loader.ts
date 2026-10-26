@@ -62,7 +62,7 @@ export function createMarkdownPageLoader(
           links: result.env.links ?? [],
         })
         assertPageDataSerializable(result.pageData)
-        await options.pluginRunner.runPageData(result.pageData)
+        await options.pluginRunner.runPageData(result.pageData, { file, sourcePath })
         assertPageDataSerializable(result.pageData)
         await options.pluginRunner.runPageArtifact({
           source,

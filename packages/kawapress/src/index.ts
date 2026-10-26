@@ -21,6 +21,8 @@ export type {
   KawaPressPlugin,
   MaybePromise,
   PageBuildArtifact,
+  PageDataContext,
+  PageDataHandler,
   RuntimePlugin,
   RuntimePluginAPI,
   RuntimePluginHandler,

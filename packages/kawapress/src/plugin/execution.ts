@@ -1,35 +1,39 @@
 import type { MaybePromise } from '../api/plugin'
 
 type PluginSurface = 'generator' | 'runtime'
-type PluginHandler<T> = (value: T) => MaybePromise<void>
+type PluginHandler<T, C = undefined> = (value: T, context: C) => MaybePromise<void>
 
-interface RegisteredPluginHandler<T> {
+interface RegisteredPluginHandler<T, C> {
   pluginName: string
-  handler: PluginHandler<T>
+  handler: PluginHandler<T, C>
 }
 
 interface PluginHandlerRegistryOptions<T> {
-  beforeEachHandle?: PluginHandler<T>
-  afterEachHandle?: PluginHandler<T>
+  beforeEachHandle?: (value: T) => MaybePromise<void>
+  afterEachHandle?: (value: T) => MaybePromise<void>
 }
 
-export interface PluginHandlerRegistry<T> {
-  add: (pluginName: string, handler: PluginHandler<T>) => void
-  run: (value: T) => Promise<void>
+/**
+ * Ordered handlers of one plugin capability. `C` is an optional read-only
+ * context passed next to the value, e.g. the source file of a page.
+ */
+export interface PluginHandlerRegistry<T, C = undefined> {
+  add: (pluginName: string, handler: PluginHandler<T, C>) => void
+  run: (...args: C extends undefined ? [value: T] : [value: T, context: C]) => Promise<void>
 }
 
-export function createPluginHandlerRegistry<T>(
+export function createPluginHandlerRegistry<T, C = undefined>(
   surface: PluginSurface,
   capability: string,
   options: PluginHandlerRegistryOptions<T> = {},
-): PluginHandlerRegistry<T> {
-  const handlers: RegisteredPluginHandler<T>[] = []
+): PluginHandlerRegistry<T, C> {
+  const handlers: RegisteredPluginHandler<T, C>[] = []
 
   return {
     add(pluginName, handler) {
       handlers.push({ pluginName, handler })
     },
-    async run(value) {
+    async run(...[value, context]) {
       for (const { pluginName, handler } of handlers) {
         await runPluginHook(
           surface,
@@ -37,7 +41,7 @@ export function createPluginHandlerRegistry<T>(
           capability,
           async () => {
             await options.beforeEachHandle?.(value)
-            await handler(value)
+            await handler(value, context as C)
             await options.afterEachHandle?.(value)
           },
         )

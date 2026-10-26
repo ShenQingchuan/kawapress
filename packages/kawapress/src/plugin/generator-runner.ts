@@ -5,6 +5,7 @@ import type {
   GeneratorPluginAPI,
   KawaPressPlugin,
   PageBuildArtifact,
+  PageDataContext,
 } from '../api/plugin'
 import type { PageData, SiteConfig } from '../core/site'
 import { assertPageDataSerializable } from '../core/site'
@@ -16,7 +17,10 @@ import {
 export interface GeneratorPluginRunner {
   runConfig: (config: SiteConfig) => Promise<void>
   runMarkdown: (markdown: MarkdownExit) => Promise<void>
-  runPageData: (pageData: PageData) => Promise<void>
+  runPageData: (
+    pageData: PageData,
+    context: Readonly<PageDataContext>,
+  ) => Promise<void>
   runPageArtifact: (
     artifact: Readonly<PageBuildArtifact>,
   ) => Promise<void>
@@ -32,7 +36,7 @@ export async function createGeneratorPluginRunner(
 ): Promise<GeneratorPluginRunner> {
   const configHandlers = createPluginHandlerRegistry<SiteConfig>('generator', 'config')
   const markdownHandlers = createPluginHandlerRegistry<MarkdownExit>('generator', 'markdown')
-  const pageDataHandlers = createPluginHandlerRegistry<PageData>('generator', 'pageData', {
+  const pageDataHandlers = createPluginHandlerRegistry<PageData, Readonly<PageDataContext>>('generator', 'pageData', {
     afterEachHandle: assertPageDataSerializable,
   })
   const pageArtifactHandlers = createPluginHandlerRegistry<Readonly<PageBuildArtifact>>(

@@ -130,6 +130,16 @@ api.pageData((pageData) => {
 
 请改用字符串，例如 `'2026-10-08'`，再在需要时自行解析。
 
+handler 的第二个参数告诉你当前页面来自哪个文件：`file` 是 Markdown 源文件的绝对路径，`sourcePath` 是相对 `srcDir` 的路径，例如 `/guide/intro.md`。需要读取文件信息（比如 git 提交时间）时使用它，不要从路由反推文件名，因为 `/guide` 既可能来自 `guide.md`，也可能来自 `guide/index.md`。
+
+```ts
+api.pageData((pageData, { file, sourcePath }) => {
+  pageData.frontmatter.source = sourcePath
+})
+```
+
+这两个值只在生成侧使用，不会发送到浏览器。需要在页面上显示时，像上面这样把需要的部分写进 `pageData`。
+
 ### `pageArtifact()`：观察页面构建结果 {#page-artifact}
 
 `pageArtifact()` 在一个页面完成 Markdown 编译和全部 `pageData()` 之后调用。handler 只能读取结果，不能修改页面的源文件、数据或路由。
