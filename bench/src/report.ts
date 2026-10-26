@@ -24,12 +24,24 @@ export interface Measurement {
   medianMs: number
 }
 
+export interface DevMeasurement {
+  /** Until a headless browser shows the home page heading. */
+  contentVisible: Measurement
+  /** Until the first HTML response for the home page. */
+  firstHtml: Measurement
+}
+
+export interface SizeAssets {
+  home: PageSizeResult
+  guide: PageSizeResult
+}
+
 export interface SizeResult {
   /** Number of guide pages; the home page is additional. */
   size: number
   build: Record<SiteKind, Measurement>
-  dev: Record<SiteKind, Measurement>
-  assets: Record<SiteKind, { home: PageSizeResult, guide: PageSizeResult }>
+  dev: Record<SiteKind, DevMeasurement>
+  assets: Record<SiteKind, SizeAssets>
   lighthouse?: Record<SiteKind, LighthouseScore>
 }
 
@@ -115,8 +127,43 @@ export function formatRuns(runsMs: readonly number[]): string {
   return runsMs.map(run => formatDuration(run)).join(', ')
 }
 
+/** Render a byte count, staying in bytes below 1 kB so a per-page cost stays readable. */
+export function formatByteCount(bytes: number): string {
+  return Math.abs(bytes) < 1024 ? `${bytes.toFixed(1)} B` : formatBytes(bytes)
+}
+
+/**
+ * Bytes one extra page adds: the difference between the largest and the smallest
+ * measured size, divided by the page difference. `undefined` when fewer than two
+ * distinct sizes were measured, because one size cannot show growth.
+ */
+export function perExtraPage(
+  values: readonly { size: number, bytes: number }[],
+): number | undefined {
+  const sorted = [...values].sort((left, right) => left.size - right.size)
+  const smallest = sorted[0]
+  const largest = sorted[sorted.length - 1]
+  if (sorted.length < 2 || !smallest || !largest) {
+    return undefined
+  }
+  const pages = largest.size - smallest.size
+  if (pages <= 0) {
+    return undefined
+  }
+  return (largest.bytes - smallest.bytes) / pages
+}
+
 function formatAssetSize(size: AssetSize): string {
   return `${formatBytes(size.raw)} / ${formatBytes(size.gzip)} / ${formatBytes(size.brotli)}`
+}
+
+/**
+ * HTML and JS of the guide page, the part of a page that grows with the page count:
+ * both generators ship a page manifest next to the page itself.
+ */
+function guideHtmlAndJsGzip(result: SizeResult, kind: SiteKind): number {
+  const { html, js } = result.assets[kind].guide
+  return html.gzip + js.gzip
 }
 
 function table(header: readonly string[], rows: readonly (readonly string[])[]): string[] {
@@ -155,10 +202,12 @@ export function formatReport(report: BenchReport): string {
     '## How to read the numbers',
     '',
     '- **Cold build**: build output and Vite caches are deleted before every run. The median of all runs is reported together with every single run.',
-    '- **Dev ready**: time from starting the dev server to the first HTML response for `/`. Caches are deleted before every run.',
-    '- **First paint size**: the built home page and one guide page are parsed; every module script, module preload and stylesheet is collected, and relative imports of those chunks are followed because the browser downloads them too. Raw, gzip (level 9) and brotli (quality 11) sizes are summed for JS and CSS separately.',
+    '- **Dev ready**: the dev server is started, then a headless Chromium opens `/` and the run ends once the home page heading is on screen. The page is retried until the server answers. VitePress dev answers with an empty shell and renders in the browser, so this is the time a reader actually waits. Caches are deleted before every run.',
+    '- **Dev first HTML response**: recorded on the same page load as `Dev ready`, at the moment the HTML document for `/` arrived. It is kept because older reports used it; on its own it flatters tools that send a shell and paint later, so compare `Dev ready`. Reports written before the browser measurement are not comparable with these numbers.',
+    '- **First paint size**: the built home page and one guide page are measured. The HTML document itself plus every module script, module preload and stylesheet it references are counted, and relative imports of those chunks are followed because the browser downloads them too. The document is included because both generators inline data into it, VitePress its page manifest for example. `HTML + JS + CSS` is everything one first paint downloads; the rows below it break that down. Raw, gzip (level 9) and brotli (quality 11).',
+    '- **Per extra page**: how many bytes one more page adds, taken from the smallest and the largest size of this run: the difference of the guide page\'s HTML and JS, divided by the page difference.',
     '- **Lighthouse**: desktop preset, performance and accessibility of the home page, served by each tool\'s own preview command. Runs only with `--lighthouse`.',
-    '- **Δ**: relative difference of KawaPress against VitePress. Negative means KawaPress is smaller or faster.',
+    '- **Δ**: relative difference of KawaPress against VitePress, of the median duration or of the gzip size for the size rows. Negative means KawaPress is smaller or faster.',
     '',
     '## What each side enables by default',
     '',
@@ -173,46 +222,20 @@ export function formatReport(report: BenchReport): string {
   for (const result of report.results) {
     const runs = report.settings.runs
     const rows: string[][] = [
-      [
-        `Cold build, median of ${runs} ${runs === 1 ? 'run' : 'runs'}`,
-        ...SITE_KINDS.map(kind => formatDuration(result.build[kind].medianMs)),
-        formatDelta(result.build.kawapress.medianMs, result.build.vitepress.medianMs),
-      ],
-      [
-        'Cold build, all runs',
-        ...SITE_KINDS.map(kind => formatRuns(result.build[kind].runsMs)),
-        '',
-      ],
-      [
-        `Dev ready, median of ${runs} ${runs === 1 ? 'run' : 'runs'}`,
-        ...SITE_KINDS.map(kind => formatDuration(result.dev[kind].medianMs)),
-        formatDelta(result.dev.kawapress.medianMs, result.dev.vitepress.medianMs),
-      ],
-      [
-        'Dev ready, all runs',
-        ...SITE_KINDS.map(kind => formatRuns(result.dev[kind].runsMs)),
-        '',
-      ],
-      [
-        'Home page JS, raw / gzip / brotli',
-        ...SITE_KINDS.map(kind => formatAssetSize(result.assets[kind].home.js)),
-        '',
-      ],
-      [
-        'Home page CSS, raw / gzip / brotli',
-        ...SITE_KINDS.map(kind => formatAssetSize(result.assets[kind].home.css)),
-        '',
-      ],
-      [
-        'Guide page JS, raw / gzip / brotli',
-        ...SITE_KINDS.map(kind => formatAssetSize(result.assets[kind].guide.js)),
-        '',
-      ],
-      [
-        'Guide page CSS, raw / gzip / brotli',
-        ...SITE_KINDS.map(kind => formatAssetSize(result.assets[kind].guide.css)),
-        '',
-      ],
+      medianRow('Cold build', result.build, runs),
+      allRunsRow('Cold build, all runs', result.build),
+      medianRow('Dev ready', pickDev(result.dev, 'contentVisible'), runs),
+      allRunsRow('Dev ready, all runs', pickDev(result.dev, 'contentVisible')),
+      medianRow('Dev first HTML response', pickDev(result.dev, 'firstHtml'), runs),
+      allRunsRow('Dev first HTML response, all runs', pickDev(result.dev, 'firstHtml')),
+      assetRow('Home page first paint, HTML + JS + CSS, raw / gzip / brotli', result.assets, 'home', size => size.firstPaint, true),
+      assetRow('Home page HTML, raw / gzip / brotli', result.assets, 'home', size => size.html),
+      assetRow('Home page JS, raw / gzip / brotli', result.assets, 'home', size => size.js),
+      assetRow('Home page CSS, raw / gzip / brotli', result.assets, 'home', size => size.css),
+      assetRow('Guide page first paint, HTML + JS + CSS, raw / gzip / brotli', result.assets, 'guide', size => size.firstPaint, true),
+      assetRow('Guide page HTML, raw / gzip / brotli', result.assets, 'guide', size => size.html),
+      assetRow('Guide page JS, raw / gzip / brotli', result.assets, 'guide', size => size.js),
+      assetRow('Guide page CSS, raw / gzip / brotli', result.assets, 'guide', size => size.css),
     ]
 
     if (result.lighthouse) {
@@ -241,7 +264,86 @@ export function formatReport(report: BenchReport): string {
     )
   }
 
+  const growth = perExtraPageSection(report.results)
+  if (growth.length > 0) {
+    lines.push(
+      '## Per extra page',
+      '',
+      'How many bytes one more page adds to a guide page load, measured between the smallest and the largest size above.',
+      '',
+      ...growth,
+      '',
+    )
+  }
+
   return `${lines.join('\n').trimEnd()}\n`
+}
+
+function medianRow(label: string, values: Record<SiteKind, Measurement>, runs: number): string[] {
+  return [
+    `${label}, median of ${runs} ${runs === 1 ? 'run' : 'runs'}`,
+    formatDuration(values.kawapress.medianMs),
+    formatDuration(values.vitepress.medianMs),
+    formatDelta(values.kawapress.medianMs, values.vitepress.medianMs),
+  ]
+}
+
+function allRunsRow(label: string, values: Record<SiteKind, Measurement>): string[] {
+  return [
+    label,
+    formatRuns(values.kawapress.runsMs),
+    formatRuns(values.vitepress.runsMs),
+    '',
+  ]
+}
+
+function pickDev(
+  dev: Record<SiteKind, DevMeasurement>,
+  metric: keyof DevMeasurement,
+): Record<SiteKind, Measurement> {
+  return { kawapress: dev.kawapress[metric], vitepress: dev.vitepress[metric] }
+}
+
+/** One size row; the delta compares gzip, the number a visitor actually downloads. */
+function assetRow(
+  label: string,
+  assets: Record<SiteKind, SizeAssets>,
+  page: keyof SizeAssets,
+  pick: (size: PageSizeResult) => AssetSize,
+  withDelta = false,
+): string[] {
+  const kawapress = pick(assets.kawapress[page])
+  const vitepress = pick(assets.vitepress[page])
+  return [
+    label,
+    formatAssetSize(kawapress),
+    formatAssetSize(vitepress),
+    withDelta ? formatDelta(kawapress.gzip, vitepress.gzip) : '',
+  ]
+}
+
+function perExtraPageSection(results: readonly SizeResult[]): string[] {
+  const kawapress = perExtraPage(results.map(result => ({
+    size: result.size,
+    bytes: guideHtmlAndJsGzip(result, 'kawapress'),
+  })))
+  const vitepress = perExtraPage(results.map(result => ({
+    size: result.size,
+    bytes: guideHtmlAndJsGzip(result, 'vitepress'),
+  })))
+  if (kawapress === undefined || vitepress === undefined) {
+    return []
+  }
+
+  const sizes = results.map(result => result.size).sort((left, right) => left - right)
+  return table(['Metric', SITE_LABELS.kawapress, SITE_LABELS.vitepress, 'Δ (KawaPress vs VitePress)'], [
+    [
+      `Guide page HTML + JS, gzip, per extra page (${sizes[0]} → ${sizes[sizes.length - 1]} pages)`,
+      formatByteCount(kawapress),
+      formatByteCount(vitepress),
+      formatDelta(kawapress, vitepress),
+    ],
+  ])
 }
 
 export function formatReportJson(report: BenchReport): string {

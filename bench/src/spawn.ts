@@ -182,6 +182,34 @@ export function loopbackUrls(port: number, path = '/'): string[] {
   return LOOPBACK_HOSTS.map(host => localUrl(port, host, path))
 }
 
+/**
+ * Poll the loopback addresses of `port` until one of them accepts a connection.
+ *
+ * A plain TCP connection is used instead of an HTTP request: the dev server therefore
+ * renders no page for the check, and a browser can be pointed at a host that is known
+ * to be listening. Navigating to a refused host costs a Chromium error page, which
+ * interrupts the following navigation.
+ *
+ * @returns the URL of the first address that accepted a connection.
+ */
+export async function waitForListeningUrl(
+  port: number,
+  options: { timeoutMs: number },
+): Promise<string> {
+  const deadline = performance.now() + options.timeoutMs
+  while (performance.now() < deadline) {
+    for (const host of LOOPBACK_HOSTS) {
+      if (!(await isHostPortFree(port, host))) {
+        return localUrl(port, host)
+      }
+    }
+    await delay(DEFAULT_POLL_INTERVAL_MS)
+  }
+  throw new Error(
+    `Benchmark: nothing accepted a connection on ${loopbackUrls(port).join(', ')} within ${options.timeoutMs}ms.`,
+  )
+}
+
 async function respondsWithHtml(url: string, lastAttempt: { value: string }): Promise<boolean> {
   try {
     const response = await fetch(url, {

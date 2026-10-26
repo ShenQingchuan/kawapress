@@ -22,8 +22,14 @@ export interface AssetSize {
 export interface PageSizeResult {
   /** Route of the measured page. */
   page: string
+  /** The HTML document itself. */
+  html: AssetSize
+  /** First paint scripts: module scripts, module preloads and the chunks they import. */
   js: AssetSize
+  /** Stylesheets referenced by the HTML. */
   css: AssetSize
+  /** HTML, JS and CSS together: everything one first paint downloads. */
+  firstPaint: AssetSize
 }
 
 /** Matches one `<script>` or `<link>` tag and captures name and attributes. */
@@ -91,16 +97,38 @@ export function summarizeAssets(
   }
 
   for (const asset of assets) {
-    const size = totals[asset.kind]
-    size.files += 1
-    size.raw += asset.content.byteLength
-    size.gzip += gzipSync(asset.content, { level: GZIP_LEVEL }).byteLength
-    size.brotli += brotliCompressSync(asset.content, {
-      params: { [constants.BROTLI_PARAM_QUALITY]: BROTLI_QUALITY },
-    }).byteLength
+    addSize(totals[asset.kind], measureAsset(asset.content))
   }
 
   return totals
+}
+
+/** Add up several size summaries, for example the three kinds of one page. */
+export function combineAssetSizes(sizes: readonly AssetSize[]): AssetSize {
+  const total = emptySize()
+  for (const size of sizes) {
+    addSize(total, size)
+  }
+  return total
+}
+
+/** Raw, gzip and brotli size of one file. */
+export function measureAsset(content: Buffer): AssetSize {
+  return {
+    files: 1,
+    raw: content.byteLength,
+    gzip: gzipSync(content, { level: GZIP_LEVEL }).byteLength,
+    brotli: brotliCompressSync(content, {
+      params: { [constants.BROTLI_PARAM_QUALITY]: BROTLI_QUALITY },
+    }).byteLength,
+  }
+}
+
+function addSize(total: AssetSize, size: AssetSize): void {
+  total.files += size.files
+  total.raw += size.raw
+  total.gzip += size.gzip
+  total.brotli += size.brotli
 }
 
 export interface MeasurePageSizeOptions {
@@ -115,16 +143,27 @@ export interface MeasurePageSizeOptions {
 }
 
 /**
- * Measure the first-paint JS and CSS size of a built page.
+ * Measure what one first paint of a built page downloads.
  *
- * Module imports of the referenced chunks are followed as well, because the browser
- * downloads them for the first paint even when the HTML has no preload hint for them.
+ * The HTML document is measured as well, because both generators inline data into it:
+ * VitePress ships its page manifest as `__VP_HASH_MAP__` and `__VP_SITE_DATA__` inside
+ * the document, so counting only external files would understate it. Module imports of
+ * the referenced chunks are followed too, because the browser downloads them for the
+ * first paint even when the HTML has no preload hint for them.
  */
 export async function measurePageSize(options: MeasurePageSizeOptions): Promise<PageSizeResult> {
-  const html = await readFile(join(options.distDir, options.htmlFile), 'utf-8')
-  const references = findFirstPaintAssets(html, options.base)
+  const html = await readFile(join(options.distDir, options.htmlFile))
+  const references = findFirstPaintAssets(html.toString('utf-8'), options.base)
   const assets = await collectAssets(options.distDir, references)
-  return { page: options.page, ...summarizeAssets(assets) }
+  const { js, css } = summarizeAssets(assets)
+  const document = measureAsset(html)
+  return {
+    page: options.page,
+    html: document,
+    js,
+    css,
+    firstPaint: combineAssetSizes([document, js, css]),
+  }
 }
 
 async function collectAssets(
