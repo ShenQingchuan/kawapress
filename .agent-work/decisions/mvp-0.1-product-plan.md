@@ -213,7 +213,9 @@ interface BuildArtifactsContext {
 - `buildArtifacts()` 只在 `kawapress build` 执行。`pages` 按 `sourcePath` 稳定排序，`emitFile()` 与 `importModule()` 只接受构建输出目录内的相对路径；绝对路径、`..` 越界和与 public 或其他插件产物冲突都直接报错。`importModule()` 由 Core 在正常 Node 构建上下文执行，插件不得用 `eval`、`new Function` 或私有 Vite runner 绕过模块边界。
 - `vite()` 允许修改完整 Vite 配置；KawaPress 只保留维持渲染闭环所需的最小不变量并在最终创建 Vite 前校验。
 - `pageArtifact()` 与 `buildArtifacts()` 是生成静态产物的只读边界，不增加页面、路由或 Runtime render hook；0.1 仍不提供 `addPage()`。
-- `GeneratorPluginAPI` 不提供组件、CSS、Vue plugin 或 client/SSR 分支能力。
+- `GeneratorPluginAPI` 不提供全局组件、CSS、Vue plugin 或 client/SSR 分支能力。唯一的组件衔接是 `addPageComponent()`，它只把导入合并进正在渲染那一页的 SFC，不建立全局组件。
+
+页面组件声明使用 `addPageComponent(env, { name, from })`：`env` 是 markdown-it 规则、围栏渲染器或 Shiki 高亮回调收到的 Markdown env，`name` 是模板标签名与导入绑定名，`from` 是默认导出该组件的包名或绝对路径。写 Markdown 的用户不做任何声明；同名组件只能来自一个模块，冲突时报错指出页面与两个模块。导入合并进页面 SFC：作者已有 `<script setup>` 时追加到该块并保留 `lang`，只有普通 `<script>` 或没有脚本时补一个 `lang` 相同的 `<script setup>`。开发、构建、SSR 与 SSG-MD 共用同一份页面 SFC，导入集合每次编译重新计算，因此 HMR 与 LLMS 输出不需要额外分支。
 
 ### 4.4 Runtime Plugin API
 
@@ -385,7 +387,8 @@ GitHub 风格表格由 Markdown 引擎的默认规则直接提供，是 Core 基
 ```text
 @kawapress/plugin-shiki
 ├─ 默认入口：Shiki 高亮与可选 Twoslash transformer
-└─ ./runtime-plugin：TwoslashFloatingVue 与浮层样式
+├─ ./runtime-plugin：浮层样式与 Shiki 样式
+└─ ./twoslash-menu：KawaTwoslashMenu 页面组件
 ```
 
 公开配置使用同一个 `shikiPlugin()` 工厂：
@@ -403,12 +406,12 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 - 对象形式使用 KawaPress 导出的 `TwoslashOptions`，它基于通用 `TransformerTwoslashOptions`，不暴露自定义 renderer 与 twoslasher；其中的函数、缓存和 TypeScript 对象只留在生成侧，不传入 Runtime graph。
 - nagi 明确组合 `shikiPlugin({ twoslash: true })`，不在 Preset 内实现私有 Twoslash 逻辑。
 - KawaPress 自己维护 Floating Vue renderer、Runtime Plugin 和 CSS，不依赖 `@shikijs/vitepress-twoslash` 或 VitePress 运行时。
-- Runtime Plugin 在 SSR 与 client 创建 Vue App 时都直接安装 `floating-vue`，并导入通用 Twoslash 样式及 KawaPress 自有适配样式，保证两侧组件树一致。
+- Runtime Plugin 不再安装 `floating-vue`，只静态导入通用 Twoslash 样式及 KawaPress 自有适配样式。`KawaTwoslashMenu` 与 `floating-vue` 由 `addPageComponent()` 按页面导入，只有真正渲染出浮层的页面加载它们，SSR 与 client 使用同一个页面组件，hydration 保持一致。
 - 当前 Runtime Plugin 协议不传递生成侧选项，因此只要安装 `@kawapress/plugin-shiki` 就会加载其 Runtime Plugin；`twoslash: false` 只关闭生成侧分析，不作为运行侧裁剪开关。
 - Shiki Plugin 默认依次安装官方 `transformerMetaHighlight()`、`transformerNotationDiff()`、`transformerNotationFocus()`、`transformerNotationHighlight()` 与 `transformerNotationErrorLevel()`，支持 fence meta `{1,3-5}` 以及语言感知的 `[!code highlight]`、`[!code focus]`、`[!code ++]`、`[!code --]`、`[!code warning]`、`[!code error]` 注释。默认数组顺序为官方标注、KawaPress 语义补充、`v-pre`、Twoslash、用户 transformers 和最终可见行计数；用户仍可使用 Shiki 原生 `enforce` 显式调整自己的执行阶段。控制注释不进入最终可见代码；高亮与聚焦行使用语义 `mark`，新增与删除行使用 `ins`/`del`，同时保留官方稳定 class。Shiki 把最终可见行数写入稳定的 `data-kawa-line-count`，Code Block Plugin 优先使用它生成行号，避免独占控制注释删除整行后数字与代码错位。nagi 只解释这些结构和 class，不增加浏览器 Runtime 行为。
 - 生成侧与运行侧之间只通过生成后的 Vue template 标记、class 和 CSS 约定衔接，不共享 transformer、TypeScript Program、闭包或模块实例。
 - 普通代码块使用 KawaPress 自有的 `v-pre` Shiki transformer 保护 Vue 插值；活跃 Twoslash 代码块由 KawaPress transformer 移除 `v-pre` 并完成花括号转义，不再使用高亮后恢复 `{{ }}` 的方案。
-- Twoslash 的浮层 UI 使用 Floating Vue；本阶段不自制 Tooltip/Popover 组件，也不开放 Floating Vue 运行侧配置。KawaPress 只提供一层透明的 `KawaTwoslashMenu` 适配组件，用 Vue `useId()` 向 Floating Vue 传入 SSR/client 稳定一致的 `ariaId`，避免其随机 ID 造成 hydration mismatch。
+- Twoslash 的浮层 UI 使用 Floating Vue；本阶段不自制 Tooltip/Popover 组件，也不开放 Floating Vue 运行侧配置。KawaPress 只提供一层透明的 `KawaTwoslashMenu` 适配组件，用 Vue `useId()` 向 Floating Vue 传入 SSR/client 稳定一致的 `ariaId`，避免其随机 ID 造成 hydration mismatch。`floating-vue` 的主题是模块级全局配置，`twoslash`、`twoslash-query`、`twoslash-completion` 三个主题与 `strategy: 'fixed'` 由菜单模块在求值时写入，不经过 `app.use()`。
 
 ### 7.3 Code Group
 

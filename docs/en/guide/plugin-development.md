@@ -111,6 +111,29 @@ api.markdown((markdown) => {
 })
 ```
 
+#### Bring Your Own Component into the Page {#page-components}
+
+Some plugins render their own components, such as charts or interactive examples. `addPageComponent()` tells KawaPress that this page uses a component, and KawaPress writes the matching import into the SFC of that page, so Vue resolves the tag in the template:
+
+```ts
+import { addPageComponent } from 'kawapress'
+
+api.markdown((markdown) => {
+  const renderFence = markdown.renderer.rules.fence
+  markdown.renderer.rules.fence = (tokens, index, options, env, renderer) => {
+    if (tokens[index].info.trim() !== 'acme-chart') {
+      return renderFence(tokens, index, options, env, renderer)
+    }
+    addPageComponent(env, { name: 'AcmeChart', from: '@acme/chart' })
+    return '<AcmeChart />'
+  }
+})
+```
+
+`env` is the environment object of the page being rendered. Rules, fence renderers and Shiki highlight callbacks all receive it, so pass the one you get. `name` is the tag used in the template and also the generated import binding; `from` is the module that default-exports the component, either a package name or an absolute path.
+
+Markdown authors declare nothing. The component loads only on the pages that use it, and a page without that fence downloads nothing extra for it. A `<script setup>` the author wrote is kept, and the import is added to the same block. A page with only a plain `<script>`, or with no script at all, gets a `<script setup>` with the same `lang`.
+
 ### `pageData()`: Change Data for Each Page {#page-data}
 
 `pageData()` runs after the `pageData` of each page has been generated. The handler receives the editable data for the current page:

@@ -300,6 +300,28 @@ throw new Error('Invalid configuration') // [!code error]
 
 Append a count, such as `[!code focus:2]`, to annotate consecutive lines starting with the current line.
 
+### Type Hints {#type-hints}
+
+Add `twoslash` after the language name and the block is checked like a real TypeScript project. Hover a variable or a function to see its type and docs; write `// ^?` on the next line to print the type of a value right in the code:
+
+````md
+```ts twoslash
+const toCurrency = (value: number) => `¥${value.toFixed(2)}`
+const price = toCurrency(19.9)
+//    ^?
+```
+````
+
+Here is the result. Try hovering `toCurrency`:
+
+```ts twoslash
+const toCurrency = (value: number) => `¥${value.toFixed(2)}`
+const price = toCurrency(19.9)
+//    ^?
+```
+
+Only blocks marked with `twoslash` are analysed; every other block is highlighted as usual. The analysis happens at build time, and the popup styles load only on the pages that use them, so pages without Twoslash code blocks download nothing extra.
+
 ## Math Equations {#math-equations}
 
 Math equations are provided by the optional `@kawapress/plugin-mathjax` package. It generates SVG during the build, so the reader's browser does not need to download or run MathJax.

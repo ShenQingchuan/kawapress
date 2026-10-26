@@ -30,6 +30,8 @@ export type {
 } from './api/plugin'
 export { useMarkdownItPlugin } from './compiler/markdown-it-compat'
 export type { MarkdownItPluginHost } from './compiler/markdown-it-compat'
+export { addPageComponent } from './compiler/page-components'
+export type { PageComponent, PageComponentEnv } from './compiler/page-components'
 export { findDeadLinks, findPageDeadLinks, formatDeadLink } from './core/dead-links'
 export type {
   DeadLink,

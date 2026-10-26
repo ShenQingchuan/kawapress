@@ -1,41 +1,15 @@
-import FloatingVue from 'floating-vue'
 import { defineRuntimePlugin } from 'kawapress'
-import TwoslashMenu from './TwoslashMenu.vue'
 import './vendor.css'
 import './shiki.css'
 import './twoslash.css'
 
+/**
+ * The Twoslash popups render through `KawaTwoslashMenu`, which the Markdown
+ * plugin imports into the pages that contain a Twoslash code block. That
+ * component brings its own floating-vue dependency, so this runtime plugin only
+ * contributes the styles both sides need from the first paint.
+ */
 export default defineRuntimePlugin({
   name: '@kawapress/plugin-shiki',
-  setup(api) {
-    api.vueApp((app) => {
-      app.use(FloatingVue, {
-        strategy: 'fixed',
-        themes: {
-          'twoslash': {
-            $extend: 'dropdown',
-            triggers: ['hover', 'touch'],
-            popperTriggers: ['hover', 'touch'],
-            placement: 'bottom-start',
-            delay: { show: 0, hide: 100 },
-            autoHide: true,
-            instantMove: true,
-            flip: false,
-          },
-          'twoslash-query': {
-            $extend: 'twoslash',
-            triggers: ['click'],
-            popperTriggers: ['click'],
-            autoHide: false,
-          },
-          'twoslash-completion': {
-            $extend: 'twoslash-query',
-            distance: 0,
-            arrowOverflow: false,
-          },
-        },
-      })
-      app.component('KawaTwoslashMenu', TwoslashMenu)
-    })
-  },
+  setup() {},
 })
