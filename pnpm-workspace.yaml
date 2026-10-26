@@ -78,6 +78,7 @@ catalogs:
     vite: ^8.2.2
   test:
     '@playwright/test': ^1.63.0
+    playwright: ^1.63.0
 
 # VitePress 通过 vite 5 拉入 esbuild，其安装脚本只做二进制自检。
 allowBuilds:

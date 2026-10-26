@@ -158,6 +158,9 @@ catalogs:
     '@playwright/test':
       specifier: ^1.63.0
       version: 1.64.1
+    playwright:
+      specifier: ^1.63.0
+      version: 1.64.1
 
 overrides:
   '@xmldom/xmldom@0.9.10': 0.9.12
@@ -208,6 +211,9 @@ importers:
       lighthouse:
         specifier: catalog:bench
         version: 12.8.2
+      playwright:
+        specifier: catalog:test
+        version: 1.64.1
       vitepress:
         specifier: catalog:bench
         version: 1.6.4(@algolia/client-search@5.60.0)(@types/node@26.2.0)(change-case@5.4.4)(lightningcss@1.33.0)(postcss@8.5.26)(search-insights@2.17.3)(typescript@6.0.3)
