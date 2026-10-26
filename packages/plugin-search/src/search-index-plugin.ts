@@ -12,6 +12,7 @@ import { container as containerPlugin } from '@mdit/plugin-container'
 import {
   markdownPagePathToRoutePath,
   normalizeFrontmatterSource,
+  resolveLocaleIndex,
   resolvePageMetadata,
   stringifyJson,
   useMarkdownItPlugin,
@@ -230,7 +231,7 @@ export async function loadSearchIndexes(
   for (const file of files) {
     const source = await readFile(file, 'utf8')
     const route = markdownPagePathToRoutePath(relative(sourceRoot, file))
-    const locale = getLocaleIndex(route, locales)
+    const locale = resolveLocaleIndex(route, locales)
     const index = localeIndexes[locale]
     if (index) {
       index.addAll(createSearchDocuments(
@@ -453,17 +454,6 @@ async function findMarkdownFiles(directory: string): Promise<string[]> {
       return entry.isFile() && entry.name.endsWith('.md') ? [path] : []
     }))
   return files.flat()
-}
-
-function getLocaleIndex(route: string, locales: string[]): string {
-  const locale = locales
-    .filter(item => item !== 'root')
-    .sort((left, right) => right.length - left.length)
-    .find((item) => {
-      const prefix = `/${item}`
-      return route === prefix || route.startsWith(`${prefix}/`)
-    })
-  return locale ?? 'root'
 }
 
 function isMarkdownFile(file: string, sourceRoot: string): boolean {

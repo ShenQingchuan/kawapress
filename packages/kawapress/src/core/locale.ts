@@ -4,19 +4,27 @@ import { withBase } from './base'
 const EXTERNAL_URL_RE = /^(?:[a-z][a-z\d+.-]*:)?\/\//i
 const PATH_SUFFIX_RE = /([?#].*)$/
 
+/**
+ * Locale key that a route path belongs to. `root` owns every path outside the
+ * other locale prefixes; the longest matching prefix wins.
+ */
+export function resolveLocaleIndex(path: string, localeKeys: Iterable<string>): string {
+  const pathname = path.replace(PATH_SUFFIX_RE, '')
+  const candidates = [...localeKeys]
+    .filter(localeKey => localeKey !== 'root')
+    .sort((left, right) => right.length - left.length)
+
+  return candidates.find((localeKey) => {
+    const prefix = `/${localeKey}`
+    return pathname === prefix || pathname.startsWith(`${prefix}/`)
+  }) ?? 'root'
+}
+
 export function getLocaleIndex<ThemeConfig extends object>(
   site: SiteData<ThemeConfig>,
   path: string,
 ): string {
-  const pathname = path.replace(PATH_SUFFIX_RE, '')
-  const localeKeys = Object.keys(site.locales)
-    .filter(locale => locale !== 'root')
-    .sort((left, right) => right.length - left.length)
-
-  return localeKeys.find((locale) => {
-    const prefix = `/${locale}`
-    return pathname === prefix || pathname.startsWith(`${prefix}/`)
-  }) ?? 'root'
+  return resolveLocaleIndex(path, Object.keys(site.locales))
 }
 
 export function getLocaleHome<ThemeConfig extends object>(

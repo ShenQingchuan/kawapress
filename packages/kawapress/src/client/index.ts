@@ -1,4 +1,5 @@
 export { withBase } from '../core/base'
+export { resolveLocaleIndex } from '../core/locale'
 export { OUTLET_NAMES } from '../core/outlet'
 export type { OutletItem, OutletName, OutletRegistry } from '../core/outlet'
 export { default as KawaOutlet } from './components/KawaOutlet.vue'

@@ -16,21 +16,3 @@ export function resolveLocaleLanguages(
     )),
   )
 }
-
-/**
- * Locale key a route belongs to. `root` serves everything outside the other
- * locale prefixes, the same rule KawaPress uses for the site itself.
- */
-export function resolveLocaleIndex(
-  path: string,
-  localeIndexes: Iterable<string>,
-): string {
-  const pathname = path.replace(/([?#].*)$/, '')
-  return [...localeIndexes]
-    .filter(localeIndex => localeIndex !== 'root')
-    .sort((left, right) => right.length - left.length)
-    .find((localeIndex) => {
-      const prefix = `/${localeIndex}`
-      return pathname === prefix || pathname.startsWith(`${prefix}/`)
-    }) ?? 'root'
-}

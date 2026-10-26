@@ -45,6 +45,7 @@ export { normalizeFrontmatterSource } from './core/frontmatter'
 export type { HeadAttrs, HeadConfig, HeadTag } from './core/head'
 export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
 export type { JsonOperationOptions } from './core/json'
+export { resolveLocaleIndex } from './core/locale'
 export { markdownPagePathToRoutePath } from './core/markdown-route'
 export { OUTLET_NAMES } from './core/outlet'
 export type {

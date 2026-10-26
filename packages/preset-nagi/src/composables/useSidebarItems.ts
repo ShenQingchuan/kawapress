@@ -1,7 +1,7 @@
 import type { PageData } from 'kawapress'
 import type { ComputedRef } from 'vue'
 import type { NagiSidebarItem } from '../sidebar'
-import { useLocale, useRouter } from 'kawapress/client'
+import { resolveLocaleIndex, useLocale, useRouter } from 'kawapress/client'
 import { sidebarMeta } from 'virtual:kawapress-nagi-sidebar-meta'
 import { computed } from 'vue'
 import { createSidebar, resolveConfiguredSidebar } from '../sidebar'
@@ -30,20 +30,12 @@ export function useSidebarItems(): ComputedRef<NagiSidebarItem[]> {
     }
 
     const currentLocale = localeIndex.value
-    const localePrefixes = locales.value
-      .map(locale => locale.localeIndex)
-      .filter(locale => locale !== 'root')
-      .map(locale => `/${locale}`)
+    const localeKeys = locales.value.map(locale => locale.localeIndex)
     const currentPrefix = currentLocale === 'root' ? '' : `/${currentLocale}`
     const localePages = Object.fromEntries(
-      Object.entries(pages).filter(([path]) => {
-        if (currentLocale === 'root') {
-          return !localePrefixes.some(
-            prefix => path === prefix || path.startsWith(`${prefix}/`),
-          )
-        }
-        return path === currentPrefix || path.startsWith(`${currentPrefix}/`)
-      }),
+      Object.entries(pages).filter(([path]) => (
+        resolveLocaleIndex(path, localeKeys) === currentLocale
+      )),
     )
 
     return createSidebar(localePages, {

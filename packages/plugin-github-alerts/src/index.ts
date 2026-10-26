@@ -5,7 +5,7 @@ import type {
 } from 'kawapress'
 import type { MarkdownExit } from 'markdown-exit'
 import { alert } from '@mdit/plugin-alert'
-import { definePlugin, useMarkdownItPlugin } from 'kawapress'
+import { definePlugin, resolveLocaleIndex, useMarkdownItPlugin } from 'kawapress'
 
 export const GITHUB_ALERT_TYPES = [
   'note',
@@ -117,7 +117,7 @@ function resolveDefaultTitle(
   locales: Record<string, LocaleConfig>,
   options: GitHubAlertsPluginOptions,
 ): string {
-  const localeIndex = resolveLocaleIndex(path, locales)
+  const localeIndex = resolveLocaleIndex(path, Object.keys(locales))
   const language = locales[localeIndex]?.lang
   const builtInLabels = language?.toLowerCase().startsWith('zh')
     ? CHINESE_LABELS
@@ -126,20 +126,6 @@ function resolveDefaultTitle(
   return options.localeLabels?.[localeIndex]?.[type]
     ?? options.labels?.[type]
     ?? builtInLabels[type]
-}
-
-function resolveLocaleIndex(
-  path: string,
-  locales: Record<string, LocaleConfig>,
-): string {
-  const pathname = path.replace(/([?#].*)$/, '')
-  return Object.keys(locales)
-    .filter(locale => locale !== 'root')
-    .sort((left, right) => right.length - left.length)
-    .find((locale) => {
-      const prefix = `/${locale}`
-      return pathname === prefix || pathname.startsWith(`${prefix}/`)
-    }) ?? 'root'
 }
 
 function createInlineRenderEnv(env: unknown): Record<string, unknown> {

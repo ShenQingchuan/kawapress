@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createImageZoomLabelResolver, formatImageZoomLabel } from './labels'
-import { resolveLocaleIndex, resolveLocaleLanguages } from './locale'
+import { resolveLocaleLanguages } from './locale'
 
 describe('image zoom labels', () => {
   it('picks built-in labels from the locale language', () => {
@@ -36,17 +36,7 @@ describe('image zoom labels', () => {
   })
 })
 
-describe('image zoom locale resolution', () => {
-  it('matches the longest locale prefix and falls back to root', () => {
-    const locales = ['root', 'en', 'en-gb']
-
-    expect(resolveLocaleIndex('/', locales)).toBe('root')
-    expect(resolveLocaleIndex('/en/guide/routing', locales)).toBe('en')
-    expect(resolveLocaleIndex('/en-gb/guide/routing', locales)).toBe('en-gb')
-    expect(resolveLocaleIndex('/en/guide#section', locales)).toBe('en')
-    expect(resolveLocaleIndex('/english', locales)).toBe('root')
-  })
-
+describe('image zoom locale languages', () => {
   it('reads the language of every locale key from the site config', () => {
     expect(resolveLocaleLanguages({
       root: { label: '简体中文', lang: 'zh-CN' },
