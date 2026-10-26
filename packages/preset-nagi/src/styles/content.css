@@ -1,3 +1,5 @@
+/* Every rule in this file lives in the theme layer, so site CSS still wins. */
+@layer kawa.theme {
 /* Typography values are adapted from the VitePress default theme (MIT). */
 
 .nagi-doc [id] {
@@ -107,159 +109,6 @@
 
 .nagi-doc .nagi-doc-note > .nagi-doc-note__title + p {
   margin-top: 0.5rem;
-}
-
-.nagi-doc .kawa-container {
-  --kawa-container-accent: var(--nagi-c-brand-1);
-
-  margin: 1.25rem 0;
-  padding: 1rem 1.25rem;
-  color: var(--nagi-c-text-2);
-  border: 1px solid color-mix(
-    in oklab,
-    var(--kawa-container-accent) 24%,
-    var(--nagi-c-divider)
-  );
-  border-radius: 0.75rem;
-  background: color-mix(
-    in oklab,
-    var(--kawa-container-accent) 7%,
-    var(--nagi-c-bg)
-  );
-}
-
-.nagi-doc .kawa-container--tip {
-  --kawa-container-accent: var(--nagi-c-success-1);
-}
-
-.nagi-doc .kawa-container--warning {
-  --kawa-container-accent: var(--nagi-c-warning-1);
-}
-
-.nagi-doc .kawa-container--danger {
-  --kawa-container-accent: var(--nagi-c-danger-1);
-}
-
-.nagi-doc .kawa-container--details {
-  --kawa-container-accent: var(--nagi-c-text-2);
-
-  background: var(--nagi-c-bg-soft);
-}
-
-.nagi-doc .kawa-container > .kawa-container__title {
-  margin: 0;
-  color: var(--kawa-container-accent);
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.nagi-doc .kawa-container > :last-child {
-  margin-bottom: 0;
-}
-
-.nagi-doc .kawa-container > .kawa-container__title + :where(p, ul, ol, pre) {
-  margin-top: 0.625rem;
-}
-
-.nagi-doc details.kawa-container > summary.kawa-container__title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  list-style: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.nagi-doc details.kawa-container > summary.kawa-container__title::-webkit-details-marker {
-  display: none;
-}
-
-.nagi-doc details.kawa-container > summary.kawa-container__title::after {
-  width: 0.45rem;
-  height: 0.45rem;
-  margin-left: auto;
-  border-right: 1.5px solid currentcolor;
-  border-bottom: 1.5px solid currentcolor;
-  content: '';
-  transform: rotate(45deg) translate(-0.1rem, 0.1rem);
-  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.nagi-doc details.kawa-container[open] > summary.kawa-container__title::after {
-  transform: rotate(225deg) translate(-0.1rem, 0.1rem);
-}
-
-.nagi-doc details.kawa-container > summary.kawa-container__title:focus-visible {
-  outline: 2px solid var(--nagi-c-brand-1);
-  outline-offset: 0.25rem;
-}
-
-.nagi-doc .kawa-alert {
-  --kawa-alert-accent: var(--nagi-c-info-1);
-
-  margin: 1.25rem 0;
-  padding: 1rem 1.25rem;
-  color: var(--nagi-c-text-2);
-  border: 1px solid color-mix(
-    in oklab,
-    var(--kawa-alert-accent) 26%,
-    var(--nagi-c-divider)
-  );
-  border-radius: 0.75rem;
-  background: color-mix(
-    in oklab,
-    var(--kawa-alert-accent) 7%,
-    var(--nagi-c-bg)
-  );
-}
-
-.nagi-doc .kawa-alert--tip {
-  --kawa-alert-accent: var(--nagi-c-success-1);
-}
-
-.nagi-doc .kawa-alert--important {
-  --kawa-alert-accent: var(--nagi-c-brand-1);
-}
-
-.nagi-doc .kawa-alert--warning {
-  --kawa-alert-accent: var(--nagi-c-warning-1);
-}
-
-.nagi-doc .kawa-alert--caution {
-  --kawa-alert-accent: var(--nagi-c-danger-1);
-}
-
-.nagi-doc .kawa-alert > .kawa-alert__title {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  margin: 0;
-  color: var(--kawa-alert-accent);
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.nagi-doc .kawa-alert > .kawa-alert__title::before {
-  width: 0.5rem;
-  height: 0.5rem;
-  flex: none;
-  border-radius: 999px;
-  background: currentcolor;
-  box-shadow: 0 0 0 0.1875rem color-mix(
-    in oklab,
-    currentcolor 16%,
-    transparent
-  );
-  content: '';
-}
-
-.nagi-doc .kawa-alert > .kawa-alert__title + :where(p, ul, ol, pre) {
-  margin-top: 0.625rem;
-}
-
-.nagi-doc .kawa-alert > :last-child {
-  margin-bottom: 0;
 }
 
 .nagi-doc a {
@@ -380,384 +229,42 @@
   font-size: 0.9em;
 }
 
-.nagi-doc pre.shiki {
+/*
+ * Standalone Shiki blocks. Inside `.kawa-code-block` the plugin draws the frame
+ * and its own padding, so this theme rule stays out of that context.
+ */
+.nagi-doc pre.shiki:not(.kawa-code-block pre) {
   width: 100%;
   margin: 1rem 0;
   padding: var(--nagi-code-block-padding);
-  overflow-x: auto;
   border: 1px solid var(--nagi-c-divider);
   border-radius: var(--nagi-code-block-radius);
   text-align: left;
-  tab-size: 4;
 }
 
 .nagi-doc pre.shiki > code {
-  display: block;
-  width: fit-content;
-  min-width: 100%;
   color: var(--nagi-c-text-2);
   font-size: var(--nagi-code-font-size);
   line-height: var(--nagi-code-line-height);
 }
 
-.nagi-doc .kawa-code-block {
-  position: relative;
-  margin: 1rem 0;
-  overflow: hidden;
-  border: 1px solid var(--nagi-c-divider);
-  border-radius: var(--nagi-code-block-radius);
-  background: var(--nagi-code-bg);
-}
-
-.nagi-doc .kawa-code-block__body {
-  position: relative;
-}
-
-.nagi-doc .kawa-code-block pre {
-  width: 100%;
+/*
+ * Plugin content: the theme's paragraph rhythm (1rem around every `p`) is wider
+ * than the gaps plugins draw under their own titles, so keep those tight.
+ */
+.nagi-doc .kawa-container > .kawa-container__title,
+.nagi-doc .kawa-alert > .kawa-alert__title {
   margin: 0;
-  padding: 2.875rem 1.5rem 1.25rem;
-  overflow-x: auto;
-  border: 0;
-  border-radius: 0;
-  text-align: left;
-  tab-size: 4;
 }
 
-.nagi-doc .kawa-code-block pre > code {
-  display: block;
-  width: fit-content;
-  min-width: 100%;
-  color: var(--nagi-c-text-2);
-  font-size: var(--nagi-code-font-size);
-  line-height: var(--nagi-code-line-height);
+.nagi-doc .kawa-container > :last-child,
+.nagi-doc .kawa-alert > :last-child {
+  margin-bottom: 0;
 }
 
-.nagi-doc .kawa-code-block code :is(mark.line, ins.line, del.line) {
-  color: inherit;
-  text-decoration: none;
-  background: transparent;
-}
-
-.nagi-doc .kawa-code-block code .line:is(.highlighted, .diff) {
-  position: relative;
-  display: inline-block;
-  width: calc(100% + 3rem);
-  margin: 0 -1.5rem;
-  padding: 0 1.5rem;
-  transition: background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.nagi-doc .kawa-code-block code .line.highlighted {
-  background: var(--nagi-code-line-highlight-bg);
-}
-
-.nagi-doc .kawa-code-block code .line.highlighted.info {
-  background: var(--nagi-code-line-info-bg);
-}
-
-.nagi-doc .kawa-code-block code .line.highlighted.warning {
-  background: var(--nagi-code-line-warning-bg);
-}
-
-.nagi-doc .kawa-code-block code .line.highlighted.warning::before {
-  position: absolute;
-  left: 0.625rem;
-  color: var(--nagi-c-warning-1);
-  font-weight: 700;
-  content: '!';
-}
-
-.nagi-doc .kawa-code-block code .line.highlighted.error {
-  background: var(--nagi-code-line-error-bg);
-}
-
-.nagi-doc .kawa-code-block code .line.highlighted.error::before {
-  position: absolute;
-  left: 0.625rem;
-  color: var(--nagi-c-danger-1);
-  font-weight: 700;
-  content: '×';
-}
-
-.nagi-doc .kawa-code-block code .line.diff::before {
-  position: absolute;
-  left: 0.625rem;
-  font-weight: 600;
-}
-
-.nagi-doc .kawa-code-block code .line.diff.add {
-  background: var(--nagi-code-line-diff-add-bg);
-}
-
-.nagi-doc .kawa-code-block code .line.diff.add::before {
-  color: var(--nagi-c-success-1);
-  content: '+';
-}
-
-.nagi-doc .kawa-code-block code .line.diff.remove {
-  background: var(--nagi-code-line-diff-remove-bg);
-  opacity: 0.72;
-}
-
-.nagi-doc .kawa-code-block code .line.diff.remove::before {
-  color: var(--nagi-c-danger-1);
-  content: '-';
-}
-
-.nagi-doc .kawa-code-block .has-focused-lines .line:not(.has-focus) {
-  filter: blur(0.095rem);
-  opacity: 0.45;
-  transition:
-    filter 200ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.nagi-doc .kawa-code-block:is(:hover, :focus-within)
-  .has-focused-lines .line:not(.has-focus) {
-  filter: blur(0);
-  opacity: 1;
-}
-
-.nagi-doc .kawa-code-block__language {
-  position: absolute;
-  z-index: 1;
-  top: 0.625rem;
-  left: 1.5rem;
-  max-width: calc(100% - 5rem);
-  overflow: hidden;
-  color: var(--nagi-c-text-3);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 2rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.nagi-doc .kawa-code-block__copy {
-  position: absolute;
-  z-index: 2;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: 2rem;
-  height: 2rem;
-  color: var(--nagi-c-text-3);
-  border: 1px solid transparent;
-  border-radius: 0.375rem;
-  background: transparent;
-  transition:
-    color 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.nagi-doc .kawa-code-block__copy:hover {
-  color: var(--nagi-c-text-1);
-  border-color: var(--nagi-c-divider);
-  background: var(--nagi-c-bg-soft);
-}
-
-.nagi-doc .kawa-code-block__copy:focus-visible {
-  outline: 2px solid var(--nagi-c-brand-1);
-  outline-offset: 0.125rem;
-}
-
-.nagi-doc .kawa-code-block__copy::before,
-.nagi-doc .kawa-code-block__copy::after {
-  position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
-  width: 1rem;
-  height: 1rem;
-  background-color: currentcolor;
-  content: '';
-  mask-position: center;
-  mask-repeat: no-repeat;
-  mask-size: contain;
-  transition:
-    opacity 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.nagi-doc .kawa-code-block__copy::before {
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216 32H88a8 8 0 0 0-8 8v40H40a8 8 0 0 0-8 8v128a8 8 0 0 0 8 8h128a8 8 0 0 0 8-8v-40h40a8 8 0 0 0 8-8V40a8 8 0 0 0-8-8m-56 176H48V96h112Zm48-48h-32V88a8 8 0 0 0-8-8H96V48h112Z'/%3E%3C/svg%3E");
-}
-
-.nagi-doc .kawa-code-block__copy::after {
-  opacity: 0.2;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M216 40v128h-48V88H88V40Z'/%3E%3C/svg%3E");
-}
-
-.nagi-doc .kawa-code-block__copy[data-copied='true'] {
-  color: var(--nagi-c-success-1);
-}
-
-.nagi-doc .kawa-code-block__copy[data-copied='true']::before {
-  top: 0.5rem;
-  left: 0.75rem;
-  width: 0.4375rem;
-  height: 0.75rem;
-  border: solid currentcolor;
-  border-width: 0 1.5px 1.5px 0;
-  background-color: transparent;
-  mask-image: none;
-  transform: rotate(45deg);
-}
-
-.nagi-doc .kawa-code-block__copy[data-copied='true']::after {
-  opacity: 0;
-  transform: scale(0.7);
-}
-
-.nagi-doc .kawa-code-block__copy-status {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.nagi-doc .kawa-code-block__line-numbers {
-  --kawa-code-block-line-number-width: max(
-    3rem,
-    calc(var(--kawa-code-block-line-number-digits, 1) * 0.625em + 1.5rem)
-  );
-
-  position: absolute;
-  top: 2.875rem;
-  bottom: 1.25rem;
-  left: 0;
-  width: var(--kawa-code-block-line-number-width);
-  color: var(--nagi-c-text-3);
-  font-family: var(--nagi-font-family-mono);
-  font-size: var(--nagi-code-font-size);
-  line-height: var(--nagi-code-line-height);
-  text-align: right;
-  pointer-events: none;
-  user-select: none;
-}
-
-.nagi-doc .kawa-code-block__line-number {
-  display: block;
-  padding-right: 0.75rem;
-}
-
-.nagi-doc .kawa-code-block--line-numbers pre {
-  padding-left: calc(
-    max(
-      3rem,
-      calc(var(--kawa-code-block-line-number-digits, 1) * 0.625em + 1.5rem)
-    ) + 1rem
-  );
-}
-
-.nagi-doc mjx-container[data-kawa-math] {
-  max-width: 100%;
-}
-
-.nagi-doc mjx-container[data-kawa-math='inline'] {
-  display: inline-block;
-  overflow-x: auto;
-  overflow-y: hidden;
-  vertical-align: -0.15em;
-}
-
-.nagi-doc mjx-container[data-kawa-math='block'] {
-  padding: 0.375rem 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* Keep the left edge reachable when MathJax emits an oversized formula. */
-  text-align: left !important;
-  overscroll-behavior-x: contain;
-}
-
-.nagi-doc mjx-container[data-kawa-math='block']:focus-visible {
-  border-radius: 0.25rem;
-  outline: 2px solid var(--nagi-c-brand-1);
-  outline-offset: 0.125rem;
-}
-
-.nagi-doc mjx-container[data-kawa-math='inline'] > svg {
-  display: inline-block;
-}
-
-.nagi-doc mjx-container[data-kawa-math='block'] > svg {
-  display: block;
-  margin-inline: auto;
-}
-
-.nagi-doc .kawa-code-group {
-  margin: 1rem 0;
-  overflow: hidden;
-  background: var(--nagi-c-bg-soft);
-  border: 1px solid var(--nagi-c-divider);
-  border-radius: var(--nagi-code-block-radius);
-}
-
-.nagi-doc .kawa-code-group__tabs {
-  display: flex;
-  gap: 1rem;
-  padding: 0 1rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  border-bottom: 1px solid var(--nagi-c-divider);
-  overscroll-behavior-inline: contain;
-  scrollbar-width: none;
-}
-
-.nagi-doc .kawa-code-group__tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.nagi-doc .kawa-code-group__tab {
-  position: relative;
-  flex: none;
-  padding: 0.75rem 0.25rem 0.625rem;
-  color: var(--nagi-c-text-2);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.5;
-  transition: color 180ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.nagi-doc .kawa-code-group__tab::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--nagi-c-brand-1);
-  content: '';
-  opacity: 0;
-  transform: scaleX(0.6);
-  transition:
-    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.nagi-doc .kawa-code-group__tab:hover,
-.nagi-doc .kawa-code-group__tab[aria-selected='true'] {
-  color: var(--nagi-c-text-1);
-}
-
-.nagi-doc .kawa-code-group__tab[aria-selected='true']::after {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
-.nagi-doc .kawa-code-group__panel > .kawa-code-block {
-  width: 100%;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-}
-
-.nagi-doc .kawa-code-group__panel .kawa-code-block__language {
-  display: none;
+.nagi-doc .kawa-container > .kawa-container__title + :where(p, ul, ol, pre),
+.nagi-doc .kawa-alert > .kawa-alert__title + :where(p, ul, ol, pre) {
+  margin-top: 0.625rem;
 }
 
 .nagi-doc > :first-child {
@@ -773,4 +280,5 @@
     font-size: 2rem;
     line-height: 1.25;
   }
+}
 }

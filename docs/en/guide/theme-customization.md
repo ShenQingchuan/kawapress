@@ -361,12 +361,24 @@ The three layers, from lowest to highest priority:
 
 | Layer | Content |
 | --- | --- |
-| `kawa.base` | KawaPress default tokens |
+| `kawa.base` | KawaPress default tokens and a theme's global reset |
 | `kawa.plugin` | Default styles shipped by plugins |
 | `kawa.theme` | All theme styles |
 | Styles outside any layer | CSS written by the site author, always the strongest |
 
 Theme styles therefore always beat plugin styles, no matter in which order stylesheets load. A site author can restyle a theme with plain CSS and does not need `!important`.
+
+The official content plugins — code blocks, code groups, custom containers, GitHub alerts, math — each ship their own default styles in the `kawa.plugin` layer and read only the shared tokens. They work in a site with no theme at all, and a theme normally only adjusts spacing, corners, or colors in `kawa.theme` instead of redrawing the plugin from scratch.
+
+One thing to watch: a layer outranks selector specificity, so a theme's global reset (`margin: 0`, `padding: 0`, `border: 0`) must not live in `kawa.theme`, or it wipes the plugin padding too. Keep the reset in its own file and import it into `kawa.base`:
+
+```css
+/* theme.css */
+@import './styles/preflight.css' layer(kawa.base);
+@import './styles/theme.css';
+```
+
+The reset still reaches the whole page, yet plugin styles win over it, so plugins never have to fight the theme's normalization.
 
 The default tokens use `light-dark()`, and `color-scheme: light dark` is declared inside the `kawa.base` layer, so a site still has usable light and dark surfaces without a theme:
 

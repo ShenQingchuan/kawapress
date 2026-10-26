@@ -1,3 +1,5 @@
+/* Every rule in this file lives in the theme layer, so site CSS still wins. */
+@layer kawa.theme {
 .nagi {
   display: flex;
   flex-direction: column;
@@ -448,6 +450,26 @@
   border-left: 1px solid var(--nagi-c-divider);
 }
 
+/* Outlet wrappers: empty when no plugin placed anything, so they must not take space. */
+.nagi-doc-footer:empty,
+.nagi-doc-after:empty {
+  display: none;
+}
+
+.nagi-doc-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--nagi-c-divider);
+}
+
+.nagi-doc-after {
+  margin-top: 3rem;
+}
+
+.nagi-doc-footer + .nagi-doc-navigation {
+  margin-top: 3rem;
+}
+
 .nagi-doc-navigation {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -853,4 +875,5 @@
   .nagi-home-features__items {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
 }

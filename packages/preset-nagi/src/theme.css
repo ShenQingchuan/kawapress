@@ -1,3 +1,6 @@
+/* Third-party CSS must name a layer, otherwise it outranks the theme. */
+@import url('overlayscrollbars/styles/overlayscrollbars.css') layer(kawa.theme);
+@import './styles/preflight.css';
 @import './styles/vars.css';
 @import './styles/base.css';
 @import './styles/layout.css';

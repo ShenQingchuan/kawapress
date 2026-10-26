@@ -1,4 +1,5 @@
 import { defineRuntimePlugin } from 'kawapress'
+import './code-block.css'
 
 const COPY_BUTTON_SELECTOR = '.kawa-code-block__copy'
 const COPY_IGNORE_SELECTOR = '.kawa-code-block__copy-ignore, .diff.remove'

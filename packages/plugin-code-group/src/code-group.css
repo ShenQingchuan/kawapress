@@ -1,0 +1,90 @@
+@layer kawa.plugin {
+  .kawa-code-group {
+    margin: 1rem 0;
+    overflow: hidden;
+    background: var(--kawa-c-bg-soft);
+    border: 1px solid var(--kawa-c-divider);
+    border-radius: var(--kawa-radius);
+  }
+
+  .kawa-code-group__tabs {
+    display: flex;
+    gap: 1rem;
+    padding: 0 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-bottom: 1px solid var(--kawa-c-divider);
+    overscroll-behavior-inline: contain;
+    /* The tab strip scrolls by touch or trackpad; a native bar would double the border. */
+    scrollbar-width: none;
+  }
+
+  .kawa-code-group__tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .kawa-code-group__tab {
+    position: relative;
+    flex: none;
+    padding: 0.75rem 0.25rem 0.625rem;
+    color: var(--kawa-c-text-2);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.5;
+    transition: color 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .kawa-code-group__tab::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--kawa-c-brand);
+    content: '';
+    opacity: 0;
+    transform: scaleX(0.6);
+    transition:
+      opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .kawa-code-group__tab:hover,
+  .kawa-code-group__tab[aria-selected='true'] {
+    color: var(--kawa-c-text-1);
+  }
+
+  .kawa-code-group__tab[aria-selected='true']::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .kawa-code-group__tab:focus-visible {
+    outline: 2px solid var(--kawa-c-brand);
+    outline-offset: -2px;
+  }
+
+  .kawa-code-group__panel[hidden] {
+    display: none;
+  }
+
+  /* The group already draws the frame, so the code block inside drops its own. */
+  .kawa-code-group__panel > .kawa-code-block {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  /* The tab strip already names the language. */
+  .kawa-code-group__panel .kawa-code-block__language {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kawa-code-group__tab,
+    .kawa-code-group__tab::after {
+      transition: none;
+    }
+  }
+}

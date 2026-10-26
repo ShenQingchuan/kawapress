@@ -268,6 +268,8 @@ Three things follow from this: theme styles beat plugin styles without `!importa
 
 Do not read another theme's private variables such as `--nagi-*`, and do not invent a second set of shared color variables. Values that really belong to one plugin, such as a search dialog width, can stay private to that plugin.
 
+Do not scope plugin styles to one theme's content container either, such as `.nagi-doc .kawa-container`. Build selectors from the plugin's own `.kawa-*` classes plus ARIA and native attributes, so the styles keep working under any theme.
+
 ### `router()`: Adjust Runtime Routing {#router}
 
 `router()` receives the real vue-router `Router`. It is the right place to add navigation guards:

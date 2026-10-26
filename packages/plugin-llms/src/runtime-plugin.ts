@@ -12,6 +12,7 @@ import './styles.css'
 export default defineRuntimePlugin({
   name: '@kawapress/plugin-llms',
   setup(api) {
+    api.addToOutlet('doc.header', { id: 'page-actions', component: LlmsActions })
     api.vueApp((app) => {
       app.component(LLMS_ACTIONS_COMPONENT, LlmsActions)
       app.component(SSG_MD_RAW_COMPONENT, SsgMarkdown)

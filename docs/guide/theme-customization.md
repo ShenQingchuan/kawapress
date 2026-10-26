@@ -361,12 +361,24 @@ const layout = computed(() =>
 
 | 层 | 放什么 |
 | --- | --- |
-| `kawa.base` | KawaPress 的默认 Token |
+| `kawa.base` | KawaPress 的默认 Token，以及主题的全局重置 |
 | `kawa.plugin` | 插件自带的默认样式 |
 | `kawa.theme` | 主题的全部样式 |
 | 不在任何层里的样式 | 站点使用者自己写的 CSS，优先级最高 |
 
 因此主题样式永远盖过插件样式，与 CSS 文件的加载顺序无关；站点使用者想改主题时，写普通 CSS 就够了，不需要 `!important`。
+
+官方内容插件（代码块、代码组、自定义容器、GitHub 警报、数学公式）都自带一套默认样式，放在 `kawa.plugin` 层里，只读取公共 Token。它们不依赖任何主题就能使用；主题通常只需要在 `kawa.theme` 层里微调间距、圆角或颜色，不用从零重写插件外观。
+
+需要注意的是，`@layer` 的优先级高于选择器权重，所以主题的全局重置（`margin: 0`、`padding: 0`、`border: 0` 这类）不能写进 `kawa.theme`，否则会连插件的内边距一起清掉。把重置单独放一个文件，用 `layer(kawa.base)` 导入即可：
+
+```css
+/* theme.css */
+@import './styles/preflight.css' layer(kawa.base);
+@import './styles/theme.css';
+```
+
+这样重置仍然作用于整个页面，插件样式却能盖过它，插件不需要和主题的重置搏斗。
 
 默认 Token 使用 `light-dark()` 编写，`color-scheme: light dark` 也声明在 `kawa.base` 层里，所以不装主题也有可用的浅色和深色外观：
 
