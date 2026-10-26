@@ -1,4 +1,5 @@
 import process from 'node:process'
+import lastUpdatedPlugin from '@kawapress/plugin-last-updated'
 import mathjaxPlugin from '@kawapress/plugin-mathjax'
 import { nagi } from 'kawapress/nagi'
 import { sidebars } from './sidebar'
@@ -8,6 +9,11 @@ export default nagi({
   base: process.env.KAWAPRESS_BASE,
   plugins: [
     mathjaxPlugin(),
+    lastUpdatedPlugin({
+      editLink: {
+        pattern: 'https://github.com/ShenQingchuan/kawapress/edit/main/:path',
+      },
+    }),
   ],
   themeConfig: {
     logo: {

@@ -14,8 +14,11 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      # The docs show the last commit time of each page, which needs full history.
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -50,8 +53,11 @@ jobs:
     env:
       KAWAPRESS_BASE: ${{ matrix.base }}
     steps:
+      # The docs show the last commit time of each page, which needs full history.
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
