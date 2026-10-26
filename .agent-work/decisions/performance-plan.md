@@ -111,7 +111,21 @@ overlayscrollbars 约 9 KB gzip，每页都加载。
 
 第一轮（2.1 至 2.3）已完成：docs 首页 `entry-client` 从 155 KB 降到 98 KB gzip，dev 首个页面请求从 1.4 s 降到约 0.7 s。
 
-第二轮（2.4 至 2.8）：
+第二轮（2.4 至 2.8）结果（`bench/results/2026-10-26-9337622.md`，新口径，3 次中位数）：
+
+| 指标 | KawaPress | VitePress |
+|---|---|---|
+| 50 页冷构建 | 1.90 s | 2.17 s |
+| 500 页冷构建 | 11.74 s | 12.01 s |
+| 50 页 dev 就绪（浏览器中可见） | 1.28 s | 1.41 s |
+| 500 页 dev 就绪（浏览器中可见） | 1.34 s | 2.42 s |
+| 50 页首页首屏 HTML+JS+CSS gzip | 81.2 KB | 83.2 KB |
+| 500 页首页首屏 HTML+JS+CSS gzip | 97.9 KB | 91.0 KB |
+| 每多一页（指南页 HTML+JS gzip） | 47.3 B | 26.6 B |
+
+docs 首页首屏 JS 为 68.8 KB gzip（`app` 66.3 KB、页面清单 1.8 KB、入口 0.2 KB）。“每多一页”一项尚未达标：剩余差距来自页面清单中每页的加载函数与 Vite 动态导入的预加载依赖表（500 页时约 4.8 KB gzip，每页都重复列出启动时早已加载的 `app` chunk 与其 CSS）。
+
+第二轮目标：
 
 - 500 页冷构建不超过 VitePress 的 1.5 倍。
 - 每多一页增加的首屏字节数（HTML 与 JS 一起计算）不超过 VitePress。
