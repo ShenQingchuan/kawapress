@@ -23,6 +23,8 @@ const manifestDependencyFields = [
   'devDependencies',
 ]
 const readmeFiles = ['README.md', 'README.zh-CN.md']
+// Unscoped public packages. Scoped packages are matched by the @kawapress/ prefix.
+const unscopedPackageNames = new Set(['kawapress', 'create-kawapress'])
 const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Z-]+(?:\.[0-9A-Z-]+)*))?$/i
 const testFilePattern = /(?:^|\/)(?:__tests__|tests?)(?:\/|$)|\.(?:spec|test)\.[cm]?[jt]sx?$|\.snap$/i
 const sensitiveFilePattern = /(?:^|\/)(?:\.env(?:\..*)?|\.npmrc|id_rsa|id_ed25519)$|\.(?:key|pem|p12)$/i
@@ -328,7 +330,7 @@ async function discoverPackages() {
       throw new Error(`${relativeDirectory}/package.json needs name and version.`)
     if (names.has(manifest.name))
       throw new Error(`Duplicate package name: ${manifest.name}`)
-    if (manifest.name !== 'kawapress' && !manifest.name.startsWith('@kawapress/'))
+    if (!unscopedPackageNames.has(manifest.name) && !manifest.name.startsWith('@kawapress/'))
       throw new Error(`Unexpected public package name: ${manifest.name}`)
     if (manifest.license !== 'MIT')
       throw new Error(`${manifest.name} must declare the MIT license.`)
