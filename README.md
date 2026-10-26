@@ -46,6 +46,18 @@ KawaPress is an independent project. It is not a VitePress fork or a drop-in rep
 
 You need [Node.js](https://nodejs.org/) 22.12 or newer.
 
+Create a new site with the scaffolder:
+
+```sh
+npm create kawapress@latest my-kawapress-site
+cd my-kawapress-site
+npm run dev
+```
+
+`pnpm create kawapress my-kawapress-site` and `yarn create kawapress my-kawapress-site` do the same thing. The scaffolder asks for a site title and a default language, and can install dependencies for you.
+
+If you would rather see every file from the start, set the site up by hand:
+
 ```sh
 mkdir my-kawapress-site
 cd my-kawapress-site

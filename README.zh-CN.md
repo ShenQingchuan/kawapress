@@ -46,6 +46,18 @@ KawaPress 是一个独立项目，不是 VitePress 的分支或配置兼容层�
 
 请先准备 [Node.js](https://nodejs.org/) 22.12 或更高版本。
 
+用脚手架创建新站点：
+
+```sh
+npm create kawapress@latest my-kawapress-site
+cd my-kawapress-site
+npm run dev
+```
+
+`pnpm create kawapress my-kawapress-site` 和 `yarn create kawapress my-kawapress-site` 的作用完全一样。脚手架会询问站点标题和默认语言，也可以顺便帮你安装依赖。
+
+如果你更想从零看清每个文件，可以手动创建：
+
 ```sh
 mkdir my-kawapress-site
 cd my-kawapress-site

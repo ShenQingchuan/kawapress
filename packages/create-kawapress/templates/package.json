@@ -1,0 +1,13 @@
+{
+  "name": "{{projectName}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "kawapress dev",
+    "build": "kawapress build",
+    "preview": "kawapress preview"
+  },
+  "devDependencies": {
+    "kawapress": "^{{kawapressVersion}}"
+  }
+}

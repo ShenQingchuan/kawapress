@@ -4,7 +4,7 @@ description: Install KawaPress and create, run, and build your first documentati
 
 # Getting Started
 
-This guide creates a small but complete KawaPress site from an empty directory. By the end, you will have Markdown pages, a default documentation interface, a local development server, and static files ready to deploy.
+This guide creates a small but complete KawaPress site. By the end, you will have Markdown pages, a default documentation interface, a local development server, and static files ready to deploy.
 
 ## Prerequisites {#prerequisites}
 
@@ -13,6 +13,53 @@ You need:
 - [Node.js](https://nodejs.org/) 22.12 or later;
 - npm, pnpm, or Yarn;
 - an editor with Markdown support.
+
+## Create with the Scaffolder {#create-with-scaffolder}
+
+The fastest way to start is the `create-kawapress` scaffolder. It prepares the configuration file, a home page, and one example page in the directory you name, so the site runs right away.
+
+::: code-group
+```sh [npm]
+npm create kawapress@latest my-kawapress-site
+```
+
+```sh [pnpm]
+pnpm create kawapress my-kawapress-site
+```
+
+```sh [Yarn]
+yarn create kawapress my-kawapress-site
+```
+:::
+
+While it runs, it asks for the site title, the default language, and whether to install dependencies. Add `--yes` to accept every default without any questions:
+
+```sh
+npm create kawapress@latest my-kawapress-site --yes
+```
+
+The other flags are `--title`, `--lang`, `--second-lang`, `--pm`, and `--install` / `--no-install`. Run the command with `--help` to see them all.
+
+Once it finishes, enter the directory and start the development server:
+
+::: code-group
+```sh [npm]
+cd my-kawapress-site
+npm run dev
+```
+
+```sh [pnpm]
+cd my-kawapress-site
+pnpm run dev
+```
+
+```sh [Yarn]
+cd my-kawapress-site
+yarn dev
+```
+:::
+
+The sections below build the same site by hand, starting from an empty directory. Follow them if you want to know what each file does, or if you are adding KawaPress to a project you already have.
 
 ## Create a Project {#create-a-project}
 
