@@ -3,6 +3,7 @@ import type { MarkdownPageLoader } from '../../compiler/page-loader'
 import type { ResolvedSiteConfig } from '../config'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
+import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
 import { createMarkdownPageLoader } from '../../compiler/page-loader'
 import { createDataLoaderContext } from '../data/context'
@@ -33,6 +34,7 @@ export function createBaseViteConfig(
     publicDir: resolve(root, siteConfig.srcDir, siteConfig.publicDir),
     clearScreen: false,
     appType: 'custom',
+    ...createDefineOverrides(),
     resolve: {
       alias: resolveVueAliases(root),
       dedupe: ['vue', 'vue-router'],
@@ -45,6 +47,22 @@ export function createBaseViteConfig(
     },
     plugins: createBasePlugins(root, siteConfig, pageLoader),
   }
+}
+
+/**
+ * Compile-time flags for this site's bundles.
+ *
+ * The repository's E2E suite fails a test whenever Vue reports a hydration
+ * mismatch, and Vue only prints the detailed message of a production build when
+ * `__VUE_PROD_HYDRATION_MISMATCH_DETAILS__` is on. `KAWAPRESS_E2E=1` is set by
+ * the Playwright servers only, so this stays an internal switch: user builds
+ * keep Vue's default and behave exactly as before. Vite merges these entries
+ * with the `define` values that plugins add later.
+ */
+function createDefineOverrides(): Pick<InlineConfig, 'define'> {
+  return process.env.KAWAPRESS_E2E === '1'
+    ? { define: { __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'true' } }
+    : {}
 }
 
 /** Page loader shared by the Vite plugins and, during a build, the link checker. */
