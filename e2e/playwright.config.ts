@@ -1,0 +1,65 @@
+import process from 'node:process'
+import { defineConfig } from '@playwright/test'
+import {
+  devOrigin,
+  previewOrigin,
+  previewPort,
+  sitePath,
+} from './support/site'
+
+/**
+ * The main suite runs against the production build served by `kawapress
+ * preview`; a small smoke suite runs against `kawapress dev`. Both read
+ * `KAWAPRESS_BASE`, so the same specs pass with and without a site base.
+ */
+export default defineConfig({
+  testDir: './specs',
+  fullyParallel: true,
+  forbidOnly: Boolean(process.env.CI),
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI
+    ? [['list'], ['html', { open: 'never' }]]
+    : [['list']],
+  timeout: 30_000,
+  // The production build and the dev server run side by side: the main suite
+  // needs the build, the dev smoke suite needs the dev server.
+  webServer: [
+    {
+      command: `pnpm --dir ../docs build && pnpm --dir ../docs preview --port ${previewPort}`,
+      url: `${previewOrigin}${sitePath('/')}`,
+      // The build runs before the preview server starts.
+      timeout: 180_000,
+      // Always start a fresh server: a leftover server may serve another
+      // checkout or another base.
+      reuseExistingServer: false,
+      stderr: 'pipe',
+    },
+    {
+      // `kawapress dev` always listens on its default port.
+      command: 'pnpm --dir ../docs dev',
+      // A public asset is served by Vite itself, so it stays reachable even
+      // while the page requests are still being inspected.
+      url: `${devOrigin}${sitePath('/kawapress-logo.png')}`,
+      timeout: 120_000,
+      reuseExistingServer: false,
+      stderr: 'pipe',
+    },
+  ],
+  use: {
+    // The code copy spec reads the clipboard back from the page.
+    permissions: ['clipboard-read', 'clipboard-write'],
+    trace: 'retain-on-failure',
+  },
+  projects: [
+    {
+      name: 'preview',
+      use: { baseURL: previewOrigin },
+      testIgnore: /dev-smoke\.spec\.ts/,
+    },
+    {
+      name: 'dev-smoke',
+      use: { baseURL: devOrigin },
+      testMatch: /dev-smoke\.spec\.ts/,
+    },
+  ],
+})

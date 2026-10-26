@@ -10,6 +10,7 @@ trustPolicy: no-downgrade
 packages:
   - packages/*
   - docs
+  - e2e
 
 overrides:
   '@xmldom/xmldom@0.9.10': 0.9.12
@@ -63,3 +64,5 @@ catalogs:
     tinyglobby: ^0.2.17
     unocss: ^66.8.1
     vite: ^8.2.2
+  test:
+    '@playwright/test': ^1.63.0
