@@ -1,871 +1,206 @@
 # KawaPress UI 主题体系方案
 
-## 文档状态
+本文档是 KawaPress 0.1 之后的 UI 主题体系方案，开发进度由 GitHub issue `#10` 跟踪。它不改变 0.1 的交付范围。本方案正式纳入某个版本计划时，第七节列出的两处 0.1 决策同步修订。
 
-本方案面向 KawaPress 0.1 之后的主题体系演进，不改变 `.agent-work/decisions/mvp-0.1-product-plan.md` 已确定的 0.1 范围。
-
-已经确定的方向：
-
-- 第一目标是让陌生的 UI Plugin 在兼容主题中即装即用。
-- Theme 是 UI Host，UI Plugin 是 UI Guest。
-- 采用可选兼容等级。普通 Theme 仍然只需要实现 `Layout` 与 `NotFound`；只有主动声明兼容的 Theme 才需要实现完整 UI 契约。
-- 不采用 `api.ui()` 这种范围过大的入口名称。
-- 本体系建立在现有 Plugin、Runtime Plugin 和显式插件顺序之上，不增加独立主题加载器。
-
-仍需确认的内容统一列在文末。在确认前，示例 API 名称和 Outlet 清单都不构成公开承诺。
+---
 
 ## 一、要解决的问题
 
-KawaPress 0.1 已经允许 Theme 和 UI Plugin 使用同一套公开 Runtime Plugin 能力，但双方仍然需要提前认识彼此。
+KawaPress Core 本身没有内置任何 UI。主题在本质上就是一个普通插件。目前主题的最小约定只有两条：注册全局组件 `Layout` 和 `NotFound`，并在 `Layout` 内部放置 `RouterView`。这一最小约定保持不变。
 
-例如：
+目前的运行时插件 API（Runtime Plugin API）如下：
 
-- nagi 的导航栏需要直接导入 Search 组件。
-- 新 Theme 想支持 Search，也要知道它的组件入口和放置位置。
-- LLMS 页面操作依靠 Markdown 生成阶段插入组件，而不是交给 Theme 的“标题操作区”承载。
-- Search、LLMS、Code Group 等插件各自形成 CSS class 和变量，Theme 要逐个适配。
-- `.kawa-*` 结构已经可以被样式命中，却没有明确区分稳定 Part 与内部 DOM。
+使用 `defineRuntimePlugin({ name, setup(api) })` 定义插件，通过 `api.vueApp(handler)` 和 `api.router(handler)` 注册逻辑。所有运行时插件的 `setup()` 都会在第一次页面导航之前、在 SSR 渲染或浏览器挂载之前执行完毕。主题作者从 `kawapress/client` 导入公开的客户端 API。
 
-继续增加 Layout Slot 只能改善“修改一个已知 Theme”的体验，不能解决下面这个生态问题：
+在当前的 0.0.1 代码中，存在 6 个具体问题：
 
-> 一个从未见过 nagi 的 UI Plugin，安装进 nagi 后也能出现在正确的位置并继承 nagi 的视觉；更换为另一个兼容 Theme 后，Plugin 不需要重新接线。
+1. nagi 的 `NavBar.vue` 直接导入了 `@kawapress/plugin-search/client` 里的 `Search` 组件。这导致主题必须提前知道每一个 UI 插件的存在。
+2. LLMS 插件在 Markdown 编译期间，自己把复制页面组件 `KawaLlmsActions` 插到第一个 H1 标题后面。主题无法决定它的位置。
+3. LLMS 插件的 CSS 直接读取了 nagi 主题的私有变量，比如 `--nagi-c-text-2`。
+4. nagi 的 `vars.css` 逐个映射了每个插件自己的变量，比如映射了 10 个 `--kawa-search-c-*` 变量和许多 `--twoslash-*` 变量。
+5. Search 插件的 CSS 多次重复书写相同的 `light-dark(...)` 降级备用颜色。
+6. nagi 的 `styles/content.css` 中大约有 78 条样式规则专门用来修饰插件输出的内容，例如 `.kawa-code*`、`.kawa-container*`、`.kawa-alert*`。一旦脱离 nagi 主题，这些插件就完全没有可用外观。
 
-## 二、成功标准
+---
 
-主题体系达到以下结果，才算完成目标：
+## 二、目标与成功标准
 
-1. Theme 不直接导入陌生 UI Plugin，也能承载其默认 UI。
-2. UI Plugin 不读取 nagi 等具体 Theme 的私有变量。
-3. Theme 只映射一套公共视觉 Token，所有兼容 UI Plugin 都能获得协调的基础外观。
-4. Plugin 的默认组件保留状态、键盘、焦点、ARIA 和 SSR 行为，Theme 换肤时不需要重写这些能力。
-5. Theme 可以通过稳定 Part 和 State 精细调整已知 Plugin，而不依赖内部 DOM 层级。
-6. 需要完全不同结构时，Theme 可以使用明确的深度替换契约，而不是复制内部组件或使用 Vite alias。
-7. 兼容声明由自动测试验证，不依赖作者主观判断。
-8. 同一个 Plugin 在 nagi 和最小参考 Theme 中通过相同的 SSR、hydration、键盘和无障碍测试。
+本方案的目标是：一个未知的 UI 插件，放进任何一个遵循这套体系的主题中，不需要写任何胶水代码就能直接运行，并自动继承主题的外观风格。更换主题时，不需要改动插件代码。
 
-## 三、非目标
+成功标准包含三条：
 
-本方案不做以下事情：
+1. nagi 不再直接导入任何插件组件。
+2. 没有任何插件 CSS 读取 `--nagi-*` 变量。
+3. 评论插件、图片缩放插件、最后更新时间插件，不需要编写任何针对主题的适配代码，就能同时在 nagi 和最小参考主题中正常工作。
 
-- 不强迫所有 KawaPress Theme 变成文档 Theme。
-- 不让 Core 提供默认导航栏、侧边栏、搜索框或视觉样式。
-- 不把任意 Vue Slot 都提升为跨主题公共协议。
-- 不稳定化 Theme 或 Plugin 的全部 DOM、class 和内部组件。
-- 不让 Theme 接管 Plugin 的数据、状态机和无障碍行为。
-- 不引入数字优先级、`before`、`after` 或插件依赖图。
-- 不通过生成侧与浏览器 RPC 传递 UI。
-- 不修改 KawaPress 0.1 的 Runtime Plugin API 和交付范围。
+---
 
-## 四、与现有方案的关系
+## 三、核心思路：插件界面分三种，只需解决“放在哪”和“长什么样”
 
-### 4.1 Theme 仍然是普通 Plugin
+插件要展示的界面可以分为三种类型：
 
-Theme 继续使用默认 Generator Plugin 和可选 Runtime Plugin。它没有单独的加载器，也没有只对 Theme 开放的生命周期。
+| 类型 | 包含示例 | 是否需要解决“放在哪” | 是否需要解决“长什么样” |
+|---|---|---|---|
+| 挂在页面框架上的界面 | 搜索按钮、LLMS 复制按钮、最后更新时间、评论区 | 是 | 是 |
+| Markdown 正文内部的界面 | 代码块、代码组、自定义容器、GitHub 提示框、数学公式 | 否（作者在 Markdown 中写在哪就在哪） | 是 |
+| 浮在最上层的弹出界面 | 搜索弹窗、图片缩放、Twoslash 浮窗 | 否（使用原生的 `<dialog>` 或 popover） | 是 |
 
-普通 Theme 的最小契约保持不变：
+因此，整套体系只需要解决两个基本问题：
 
-- 注册 `Layout`。
-- 注册 `NotFound`。
-- 在 `Layout` 中放置 `RouterView`。
+- “放在哪”：只针对第一种界面。
+- “长什么样”：针对全部三种界面。
 
-UI 兼容体系是在这份最小契约之上的可选能力。
+系统只使用三个核心概念：
 
-### 4.2 Core 只提供非视觉编排
+- Outlet：解决“放在哪”。
+- Token：解决“长什么样”的数值统一。
+- Layer：解决“长什么样”的样式优先级。
 
-Core 可以负责：
+---
 
-- 收集 Theme Host 声明。
-- 收集 UI Contribution。
-- 按 Plugin 数组顺序排列 Contribution。
-- 校验 Compatibility Profile 与 Outlet。
-- 向 Vue App 提供响应式 Registry。
-- 提供不带样式的 `KawaOutlet` 渲染组件。
+## 四、Outlet（放在哪）
 
-Core 不负责：
+Outlet 的作用就像墙上的电源插座。主题负责在页面的合适位置留出插座，插件带着自己的组件插头接入。后文统一使用术语 Outlet。
 
-- Theme 的颜色和布局。
-- Plugin 的按钮外观。
-- 选择某种导航栏结构。
-- 把缺失的 Contribution 擅自移动到其他位置。
+### 1. 插件侧
 
-## 五、术语
-
-### Theme Host
-
-主动声明某个 Compatibility Profile，并提供其规定的 Outlet、公共 Token 和页面语义的 Theme。
-
-### UI Guest
-
-带有可见界面的 Runtime Plugin。它可以向 Theme Host 提交 Contribution，也可以在 Markdown 正文中提供独立交互组件。
-
-### Compatibility Profile
-
-一组可以被版本化和测试的 UI 兼容规则。它规定：
-
-- 必需和可选 Outlet。
-- 必需公共 Token。
-- SSR 与 hydration 要求。
-- 页面 landmark、skip link 和焦点要求。
-- RTL、缩放、键盘和无障碍要求。
-
-本文暂用 `docs-ui@1` 表示首个文档站 Profile，名称仍待确认。
-
-### Outlet
-
-由 Theme Host 放置的语义承载点。Outlet 表达“这里承载哪类能力”，不表达具体 DOM 方位。
-
-例如 `site.header.actions` 表示站点 Header 的操作区，而不是“右上角”。Theme 可以根据语言方向和布局把它放在不同视觉位置。
-
-### Contribution
-
-UI Guest 提交给某个 Outlet 的组件及其兼容元数据。Plugin 只声明希望进入哪个语义位置，Theme 决定这个 Outlet 在页面中的实际结构和外观。
-
-### Token
-
-跨 Theme 和 Plugin 共用的语义视觉值，例如正文颜色、浮层背景、焦点环和控件圆角。
-
-### Part
-
-Plugin 明确承诺可以被 Theme 样式化的结构节点，例如 Search 的 `trigger`、`panel` 和 `result`。
-
-### State
-
-Plugin 映射到公开节点上的交互状态，例如 `open`、`loading`、`empty` 和 `error`。State 只提供稳定样式钩子，不能替代原生语义、ARIA、键盘和焦点逻辑。
-
-### Default UI
-
-UI Guest 自带的最低可用界面。它拥有完整行为、语义和基础样式，陌生 Theme 不需要先为它写专用组件。
-
-### UI Adapter
-
-Theme 针对已知 UI Guest 提供的深度替换实现。Adapter 可以改变视觉 DOM，但必须遵守 Guest 的行为与无障碍绑定契约。
-
-## 六、总体结构
-
-```text
-KawaPress Runtime
-├─ UI Registry
-│  ├─ Theme Host
-│  ├─ Outlet instances
-│  └─ Contributions in Plugin order
-│
-├─ Compatible Theme
-│  ├─ Layout / NotFound
-│  ├─ KawaOutlet
-│  ├─ shared --kawa-ui-* tokens
-│  └─ theme styling layer
-│
-└─ UI Plugin
-   ├─ behavior and data
-   ├─ accessible Default UI
-   ├─ Outlet Contribution
-   ├─ stable Parts and States
-   ├─ guest styling layer
-   └─ optional deep Adapter contract
-```
-
-这套结构提供三个定制层级：
-
-1. **Token 换肤**：Theme 定义一次视觉语言，陌生 Plugin 自动继承。
-2. **Part / State 精调**：Theme 精细调整已知 Plugin 的外观，但不重写行为。
-3. **UI Adapter 深度替换**：Theme 改变组件结构，同时显式承担绑定转发和契约测试。
-
-## 七、Theme 兼容声明
-
-普通 Theme 不声明 Compatibility Profile，继续只承担 `Layout` 与 `NotFound`。
-
-兼容 Theme 需要声明自己实现的 Profile 和版本。推荐方向如下，具体 API 待确认：
+Runtime API 新增 `addToOutlet` 方法：
 
 ```ts
-api.declareThemeHost({
-  profile: 'docs-ui',
-  version: '1.0.0',
-  outlets: [
-    'site.header.actions',
-    'document.title.actions',
-    'document.content.before',
-    'document.content.after',
-  ],
+defineRuntimePlugin({
+  name: 'kawa-comments',
+  setup(api) {
+    api.addToOutlet('doc.after', { id: 'comments', component: Comments })
+  },
 })
 ```
 
-规则：
+- 插件传入的 `id` 在该插件内部必须唯一。该项目的全局完整标识符是 `<插件名>:<id>`，例如 `@kawapress/plugin-search:trigger`。插件名由 Core 自动补全，插件无法伪造。
+- 排序规则：在同一个 Outlet 内部，组件首先按照插件在插件配置数组中的顺序渲染，其次按照同一个插件内部调用 `addToOutlet` 的先后顺序渲染。不提供数字权重，不提供 before/after 相对位置设置。
 
-- 同一个 Vue App 只能有一个 Theme Host。
-- 两个 Runtime Plugin 同时声明 Theme Host 时直接报错，并显示双方 Plugin 身份。
-- 声明 Profile 就代表 Theme 承诺实现该 Profile 的全部必需规则。
-- 声明的 Outlet 与 Layout 中实际渲染的 Outlet 必须一致。
-- Compatibility Profile 版本与 Theme npm 包版本分别管理。
-- Theme 未声明兼容时，KawaPress 不保证陌生 UI Guest 自动出现。
+### 2. 主题侧
 
-Theme Host 声明使用 Runtime API，还是作为 `defineRuntimePlugin()` 的静态元数据，仍需确认。静态元数据更利于渲染前校验；Runtime API 更符合当前按需注册方法的风格。
-
-## 八、Outlet 设计
-
-### 8.1 命名规则
-
-Outlet 使用稳定的语义名称：
-
-```text
-<范围>.<区域>.<用途>
-```
-
-名称描述内容职责，不描述：
-
-- 左、右、上、下等视觉方向。
-- 桌面或移动端。
-- nagi 的组件名。
-- 当前 DOM 层级。
-
-### 8.2 首版候选清单
-
-首个 `docs-ui` Profile 建议从较小清单开始。
-
-#### 必需 Outlet
-
-| Outlet | 用途 | 典型 Guest |
-| --- | --- | --- |
-| `site.header.actions` | 全站 Header 操作 | Search、语言工具、账号入口 |
-| `document.title.actions` | 当前文档的页面操作 | 复制 Markdown、版本操作 |
-| `document.content.before` | 正文开始前的文档信息 | 版本警告、阅读提示 |
-| `document.content.after` | 正文结束后的扩展内容 | 反馈、相关文章 |
-
-#### 可选 Outlet
-
-| Outlet | 用途 |
-| --- | --- |
-| `document.aside` | 与当前文档有关的辅助面板 |
-| `site.footer.before` | Footer 前的全站扩展内容 |
-| `shell.overlay` | 不属于正文流的全局浮层宿主 |
-
-`document.aside` 和 `shell.overlay` 是否进入首版，应在真实 Plugin 用例验证后决定。
-
-### 8.3 Contribution 顺序
-
-同一个多值 Outlet 中：
-
-- Contribution 按 Plugin 数组顺序渲染。
-- 同一个 Plugin 提交多个 Contribution 时，按该 Plugin 的声明顺序渲染。
-- 不提供数字优先级。
-- 不提供 `before`、`after` 或依赖关系。
-
-这与 KawaPress 现有显式 Plugin 顺序保持一致。
-
-### 8.4 不允许响应式重复挂载
-
-同一个必需 Outlet 在一个 Layout 中只挂载一次。
-
-Theme 不应为了桌面版和移动版分别渲染两个相同 Outlet，再用 CSS 隐藏其中一个。否则同一个 Guest 可能：
-
-- 注册两次全局快捷键。
-- 产生重复 ID。
-- 重复请求数据。
-- 让屏幕阅读器读到重复控件。
-
-响应式变化优先使用 CSS Grid、Flex、container query 和视觉重排，不复制 Guest 实例。
-
-### 8.5 缺失与错误
-
-- Theme 声明兼容 Profile，却缺少必需 Outlet：开发和构建直接报错。
-- Guest 要求的 Profile 版本与 Theme 不兼容：直接报错，并列出 Guest、Host 和版本要求。
-- Guest 使用 Profile 中不存在的 Outlet：直接报错。
-- 普通 Theme 没有声明兼容，却安装了 Outlet Guest：开发期警告并跳过自动渲染，同时提示 Theme 可以手动导入 Guest 的公开组件。
-- 可选 Outlet 缺失：开发期警告并跳过；不自动移动到语义不同的 Outlet。
-
-### 8.6 单值 Outlet
-
-首版只提供按顺序追加的多值 Outlet。
-
-如果以后出现只能有一个实现的 Outlet，需要单独决定冲突规则。默认不采用静默的“后者覆盖前者”，因为它会让一个 Plugin 的 UI 消失且难以发现。
-
-## 九、UI Contribution Runtime API
-
-### 9.1 命名原则
-
-入口名称必须直接说明：
-
-- Plugin 不是在控制整个 UI。
-- Plugin 不是注册全局 Vue 组件。
-- Plugin 只是向 Theme 已存在的 Outlet 提交一项内容。
-- 调用发生在注册阶段，不是立即 mount。
-
-因此不采用：
-
-- `api.ui()`：范围过大，容易成为万能入口。
-- `api.component()`：容易与全局组件注册混淆。
-- `api.render()`：容易被理解为渲染生命周期。
-- `api.outlet()`：Plugin 没有创建 Outlet。
-- `api.mountToOutlet()`：实际行为不是立即 mount。
-
-### 9.2 推荐名称
-
-当前推荐 `contributeToOutlet()`：
-
-```ts
-api.contributeToOutlet('site.header.actions', {
-  id: 'search-trigger',
-  component: Search,
-  profile: 'docs-ui',
-  version: '^1.0.0',
-})
-```
-
-Plugin owner 由当前 Runtime Plugin 身份自动附加，调用方不能伪造。
-
-`id` 只需要在当前 Plugin 内唯一。完整身份由 KawaPress 组合：
-
-```text
-<plugin-name>/<contribution-id>
-```
-
-### 9.3 其他候选
-
-| 名称 | 结论 |
-| --- | --- |
-| `contributeToOutlet()` | 最明确，当前推荐。 |
-| `outlet(name).contribute()` | 便于扩展，但会引入含义不清的链式对象。 |
-| `registerOutletContribution()` | 精确，但调用处过长。 |
-| `contributeUI()` | 仍然过宽，不能体现只能进入 Outlet。 |
-
-### 9.4 Contribution 内容边界
-
-首版 Contribution 只包含：
-
-- Plugin 内唯一 `id`。
-- 目标 Outlet。
-- Vue Component。
-- 所需 Compatibility Profile 和版本范围。
-
-首版不包含：
-
-- 数字排序。
-- 任意 HTML 字符串。
-- Theme 私有 DOM selector。
-- 生成侧函数或状态。
-- 远程组件地址。
-- 运行时位置计算函数。
-
-Contribution 组件已经位于 Runtime Vite module graph，继续遵守 KawaPress 的 SSR 规则。
-
-## 十、公共视觉 Token
-
-### 10.1 目标
-
-公共 Token 让 Theme 定义一次视觉语言，而不是逐个适配：
-
-```css
---kawa-search-c-text-2: var(--nagi-c-text-2);
---kawa-llms-c-text-2: var(--nagi-c-text-2);
---kawa-another-c-text-2: var(--nagi-c-text-2);
-```
-
-兼容 Theme 改为提供：
-
-```css
---kawa-ui-text-muted: var(--nagi-c-text-2);
-```
-
-所有兼容 Guest 直接读取 `--kawa-ui-text-muted`。
-
-### 10.2 Token 分层
-
-#### 公共语义 Token
-
-由 Compatibility Profile 定义，由 Theme Host 提供：
-
-```css
---kawa-ui-background
---kawa-ui-surface
---kawa-ui-surface-muted
---kawa-ui-border
---kawa-ui-divider
-
---kawa-ui-text
---kawa-ui-text-muted
---kawa-ui-text-subtle
---kawa-ui-accent
---kawa-ui-success
---kawa-ui-warning
---kawa-ui-danger
-
---kawa-ui-font-sans
---kawa-ui-font-mono
-
---kawa-ui-radius-control
---kawa-ui-radius-panel
---kawa-ui-shadow-overlay
---kawa-ui-focus-ring
-
---kawa-ui-duration-fast
---kawa-ui-ease-out
-```
-
-首版最终清单应保持很小，只放多个 Guest 都会使用的语义。布局宽度、导航栏高度等 Theme 私有决定不进入公共 Token。
-
-#### Guest 专用 Token
-
-Guest 可以提供少量专用 Token，例如：
-
-```css
---kawa-search-panel-width
---kawa-search-result-gap
-```
-
-专用 Token 默认引用公共 Token，并保留可用 fallback：
-
-```css
---kawa-search-panel-background:
-  var(--kawa-ui-surface, Canvas);
-```
-
-规则：
-
-- Guest 不得读取 `--nagi-*` 等 Host 私有 Token。
-- Theme 不需要覆盖每个 Guest 专用 Token。
-- 新增可选 Token 必须带 fallback。
-- Token 名称是公开样式 API，改名或改变语义按契约版本管理。
-
-### 10.3 Token 不等于 Design Token 文件格式
-
-浏览器运行时契约使用 CSS Custom Properties。
-
-未来可以额外提供 DTCG 格式作为设计工具交换或生成来源，但它不是浏览器 API，也不是实现 UI 兼容的前提。
-
-## 十一、Part 与 State
-
-### 11.1 稳定 Part
-
-新契约使用显式 data attribute 标记公开 Part：
-
-```html
-<button
-  data-kawa-scope="search"
-  data-kawa-part="trigger"
-  data-kawa-state="closed"
->
-  Search
-</button>
-```
-
-每个公开 Part 节点同时携带：
-
-- `data-kawa-scope`：Guest 能力名称。
-- `data-kawa-part`：该能力内的结构名称。
-- 可选 `data-kawa-state`：当前公开状态。
-
-Theme 使用单节点选择器，不依赖内部 wrapper：
-
-```css
-[data-kawa-scope="search"][data-kawa-part="trigger"] {
-  /* Theme styling */
-}
-```
-
-### 11.2 State 规则
-
-- State 名称由 Guest 的公开契约列出。
-- State 只能镜像真实状态，不能自己驱动行为。
-- 原生 `disabled`、`hidden`、`open` 和 `aria-*` 仍然承担语义。
-- Theme 不能只靠颜色表达 loading、error 或 selected。
-- 新增 State 值只有在旧 Theme 可以安全忽略时，才属于兼容新增。
-
-### 11.3 class 边界
-
-- `.kawa-*` class 可以继续用于 Guest 自己的基础样式和现有兼容迁移。
-- 只有文档明确列出的 Part、State、Token 和 class 才是公开契约。
-- 内部 wrapper、后代层级、元素顺序和构建生成 class 不构成兼容承诺。
-- 现有官方 Plugin 迁移时先增加 Part 和 State，不直接删除已有 `.kawa-*` class。
-
-## 十二、CSS Cascade Layers
-
-建议统一声明以下层序：
-
-```css
-@layer kawa.reset, kawa.guest, kawa.theme, kawa.user;
-```
-
-职责：
-
-| Layer | 内容 |
-| --- | --- |
-| `kawa.reset` | 只作用于 Kawa UI 边界内的最小归一化。 |
-| `kawa.guest` | UI Guest 的默认可用样式。 |
-| `kawa.theme` | Theme 对公共 Token、Part 和 State 的视觉适配。 |
-| `kawa.user` | 站点作者显式选择加入的最终覆盖。 |
-
-规则：
-
-- KawaPress 必须确保层序在 Guest 和 Theme 样式之前声明。
-- Guest 默认 CSS 不使用 `!important`。
-- Theme 不依赖不断提高 selector specificity 来覆盖 Guest。
-- 文档要明确说明：未分层的普通作者样式会压过正常的显式 layer。
-- Markdown 正文样式继续限制在 Theme 自己的内容边界内，不能污染 Guest。
-
-Layer 只解决覆盖顺序，不替代 Token、Part 和 State。
-
-## 十三、Default UI 与深度替换
-
-### 13.1 Default UI 的责任
-
-Default UI 由 Guest 持有，并负责：
-
-- 状态机与异步状态。
-- 原生语义元素。
-- ARIA 属性与 ID 关系。
-- 键盘操作。
-- 焦点进入、移动和返回。
-- 路由切换后的清理。
-- SSR 与 hydration 稳定初始状态。
-- loading、empty、error 和 disabled 状态。
-- 最低可用的响应式与 reduced-motion 样式。
-
-Theme 只使用 Token、Part 和 State 时，不需要重新实现这些行为。
-
-### 13.2 UI Adapter
-
-完全替换视觉结构属于高级能力，应晚于 Default UI、Outlet 和样式契约稳定后设计。
-
-UI Adapter 必须：
-
-- 针对明确的 Guest capability 和契约 major 注册。
-- 接受 Guest 提供的 state、bindings、events 和 refs。
-- 把必要 attrs、ARIA 和 ref 转发到正确且可聚焦的元素。
-- 通过 Guest 提供的 conformance tests。
-- 在版本不兼容时回退 Default UI 或给出明确错误。
-
-UI Adapter 不通过下面的方式实现：
-
-- 导入 Guest 私有组件。
-- Vite alias 覆盖内部文件。
-- 复制 Guest 源码。
-- 依赖内部 DOM 顺序。
-
-首阶段不确定 Adapter 的注册 API，避免过早固定错误的行为绑定结构。
-
-## 十四、SSR、无障碍与响应式规范
-
-### 14.1 SSR 与 hydration
-
-- Theme Host、Outlet 和 Contribution 集合必须在 SSR 与 client 初始执行中一致。
-- Contribution 的初始 DOM 不能根据 `window`、视口宽度或媒体查询条件分叉。
-- 浏览器专属依赖继续使用非 SSR 分支动态导入。
-- 组件 ID 使用 `useId()` 或等价的 SSR 稳定机制。
-- 同一个 Outlet 不重复渲染同一 Contribution。
-- Theme 和 Guest 都必须在真实开发 SSR 中通过测试。
-
-### 14.2 无障碍
-
-兼容文档 Theme 必须提供：
-
-- 正确的 `header`、`nav`、`main`、`aside`、`footer` landmark。
-- Skip link。
-- 主内容焦点目标。
-- 当前页面对应的 `lang` 与 `dir`。
-- 可见的键盘焦点。
-- 200% 缩放下不丢失内容与操作。
-
-UI Guest 必须提供：
-
-- 键盘交互表。
-- Escape 与焦点返回规则。
-- 正确的 name、role、value。
-- loading、empty、error 与 live region。
-- 路由变化时的状态和异步任务清理。
-- 不只依赖颜色的状态表达。
-
-Theme 改样式不能删除这些语义。
-
-### 14.3 响应式
-
-- Guest 优先根据自身容器宽度适配，不假设所在位置一定是桌面导航栏。
-- Theme 使用 container query 和 CSS 布局表达紧凑状态，首版不向 Guest 传递 `desktop`、`mobile` 或 `compact` JavaScript 状态。
-- 支持 RTL、触控、窄屏、forced colors 和 `prefers-reduced-motion`。
-- Guest 的浮层优先使用原生 top layer 能力；需要 Teleport 时必须保证公共 Token 和方向信息仍然可继承。
-
-## 十五、版本兼容
-
-UI Compatibility Profile 使用独立的契约版本：
-
-```text
-Theme package version: 2.4.0
-Supported profile: docs-ui@^1.0.0
-
-Plugin package version: 3.1.0
-Required profile: docs-ui@^1.1.0
-```
-
-版本规则：
-
-- 新增带 fallback 的可选 Token：minor。
-- 新增可选 Part 或 Outlet：minor。
-- 新增旧 Theme 可以安全忽略的 State：minor。
-- 删除或改名 Token、Part、State、Outlet：major。
-- 改变 Outlet 语义：major。
-- 改变键盘和焦点契约：major。
-- 修改 Adapter 必须转发的 bindings：major。
-
-迁移期可以：
-
-- 同时提供新旧 Token alias。
-- 同时写入新旧 Part。
-- 输出带 Plugin 身份的弃用提示。
-
-KawaPress 处于 `0.x` 期间，Profile 不能对外宣称已经稳定。首个稳定窗口和支持几个 Profile major 仍需确认。
-
-## 十六、测试与开发工具
-
-### 16.1 最小参考 Theme
-
-除了 nagi，还需要一个只实现 Profile 最低要求的参考 Theme。它不追求品牌外观，只用于证明 Guest 没有偷偷依赖 nagi。
-
-每个官方 UI Guest 至少在以下 Host 中测试：
-
-- nagi。
-- 最小参考 Theme。
-
-### 16.2 Conformance Test
-
-Theme 兼容测试至少覆盖：
-
-- Theme Host 声明。
-- 必需 Outlet 是否存在且只存在一次。
-- 公共 Token 是否完整。
-- landmark 和 skip link。
-- SSR HTML 与 hydration。
-- RTL、窄屏、200% 缩放、reduced motion。
-- Theme 与官方 Guest 的组合。
-
-Guest 兼容测试至少覆盖：
-
-- Contribution 顺序与身份。
-- 缺失 Host 和版本不匹配诊断。
-- Part 与 State catalog。
-- 完整键盘流程。
-- 焦点恢复。
-- loading、empty、error。
-- 多实例稳定 ID。
-- 默认 Token fallback。
-- axe 等自动无障碍检查。
-
-### 16.3 开发诊断
-
-建议提供 UI Inspector 或等价调试信息，显示：
-
-- 当前 Theme Host。
-- 当前 Compatibility Profile。
-- 已挂载 Outlet。
-- 每个 Outlet 的 Contribution owner 和顺序。
-- 未消费 Contribution。
-- 缺失 Outlet。
-- Profile 版本不匹配。
-
-是否提供 `kawapress theme check` CLI，等契约测试 API 稳定后决定。
-
-### 16.4 CSS 检查
-
-官方 Plugin CI 应检查：
-
-- Guest 是否读取 Host 私有 Token。
-- 是否存在依赖内部 wrapper 的脆弱长选择器。
-- 稳定 Part 是否进入 catalog。
-- Guest 默认 CSS 是否位于正确 layer。
-- 是否使用 `!important` 绕过层序。
-
-## 十七、真实能力示例
-
-### 17.1 Search
-
-当前关系：nagi 导航栏直接导入 Search。
-
-目标关系：
-
-```ts
-api.contributeToOutlet('site.header.actions', {
-  id: 'search-trigger',
-  component: Search,
-  profile: 'docs-ui',
-  version: '^1.0.0',
-})
-```
-
-Theme：
+Core 在 `kawapress/client` 中导出新组件 `KawaOutlet`。主题可以采用两种方式使用：
 
 ```vue
-<header>
-  <SiteTitle />
-  <KawaOutlet name="site.header.actions" />
-</header>
+<!-- 简单模式：按顺序渲染该插座内的所有组件 -->
+<KawaOutlet name="header.actions" />
+
+<!-- 完全控制模式：使用常规 Vue 作用域插槽，可自由过滤、包裹或替换组件 -->
+<KawaOutlet name="header.actions" v-slot="{ items }">
+  <template v-for="item in items" :key="item.id">
+    <MySearch v-if="item.id === '@kawapress/plugin-search:trigger'" />
+    <component :is="item.component" v-else />
+  </template>
+</KawaOutlet>
 ```
 
-边界：
+作用域插槽是 Vue 本身提供的能力。通过作用域插槽，主题可以直接完成排序、筛选、响应式外层包裹。因此不需要另外设计调整顺序或替换界面的机制。
 
-- Search Plugin 继续拥有快捷键、dialog、索引状态、结果导航和焦点返回。
-- Theme 通过公共 Token 改颜色、字体、圆角和浮层阴影。
-- Theme 通过 Search Part 调整 trigger、panel 和 result。
-- nagi 不再直接导入 Search。
-- 固定 DOM ID 迁移为实例级 SSR 稳定 ID。
+### 3. 深度替换
 
-### 17.2 LLMS 页面操作
+插件可以导出组合式函数（例如 `useSearch()`）。主题可以使用这些函数构建自己的专属界面，保持原有业务逻辑不变，并在插槽中将插件默认注册的组件过滤掉。
 
-当前关系：Generator Plugin 在首个文档 H1 后插入操作组件。
+### 4. 首版 4 个 Outlet
 
-目标关系：
+首版只设立 4 个 Outlet。设立规则是：每一个 Outlet 必须至少有一个真实的使用者。
 
-```ts
-api.contributeToOutlet('document.title.actions', {
-  id: 'page-markdown-actions',
-  component: LlmsActions,
-  profile: 'docs-ui',
-  version: '^1.0.0',
-})
+| Outlet 名称 | 渲染方 | 首个使用者 |
+|---|---|---|
+| `header.actions` | 主题 | Search 搜索按钮 |
+| `doc.header` | Core（自动插入在 Markdown 内容的首个 H1 后面） | LLMS 复制页面按钮 |
+| `doc.footer` | 主题 | 最后更新时间、编辑此页链接 |
+| `doc.after` | 主题 | 评论区 |
+
+### 5. `doc.header` 为何由 Core 渲染
+
+Markdown 内容中的 H1 位于编译生成的组件内部，主题模板无法直接伸入其结构之中。所以由 Core 在这个位置提供统一的 `doc.header` Outlet，任何插件都可以使用。
+
+### 6. 三种诊断机制
+
+诊断机制只保留以下三种：
+
+1. 使用了未知的 Outlet 名称：TypeScript 抛出类型错误，同时运行时抛出错误。
+2. 同一个页面上重复渲染了同一个 Outlet：开发模式下给出警告。这可以防止桌面端和移动端各自渲染一份，导致快捷键重复注册或 DOM ID 重复。
+3. 构建结束时，有插件向某个 Outlet 添加了内容，但全站没有页面渲染该 Outlet：构建过程发出警告并标明该插件名称。
+
+---
+
+## 五、Token（长什么样之一）
+
+Token 的作用就像一套标准颜料色号。系统提供统一的变量名，主题负责调配数值，插件直接取用。后文统一使用术语 Token。
+
+Core 提供一套中立的默认 Token。
+
+如果 Core 不提供默认值，每个插件都要自己重复书写一遍备用颜色，违反 DRY 原则。Token 只是样式变量值，不是 UI 组件，所以 Core 提供默认 Token 仍然符合“Core 不内置 UI”的原则。
+
+- Core 在 HTML 最开头注入约 17 个变量。这些变量使用 `light-dark()` 编写，自动适配浅色和深色模式。变量示例包括：`--kawa-c-bg`、`--kawa-c-text-1`、`--kawa-c-brand`、`--kawa-c-warning`、`--kawa-font-mono`、`--kawa-radius`。具体完整列表在开发落地时确定，选入规则为“至少有两个插件会用到该变量”。
+- 主题只需覆盖这些变量，就能调整全局外观。nagi 主题只需要约 17 行代码来映射自己的调色板。
+- 插件只读取 `--kawa-*` 变量。插件自身的 CSS 中不再书写 fallback 默认备用值。只有真正属于某个插件私有的属性（例如搜索弹窗的宽度），才保留插件私有变量。
+
+---
+
+## 六、Layer（长什么样之二）与样式钩子
+
+Layer 是 CSS 提供的样式叠放顺序机制，用来确定当样式冲突时谁说了算。后文统一使用术语 Layer。
+
+Core 在 `<head>` 标签的最开头写入一行代码，开发环境与构建输出保持一致：
+
+```css
+@layer kawa.base, kawa.plugin, kawa.theme;
 ```
 
-边界：
+这三个 Layer 的分工如下：
 
-- `.md`、`llms.txt`、`llms-full.txt` 和 SSG-MD 继续属于 LLMS Plugin。
-- `frontmatter.llms: false` 继续决定当前页面是否显示该 Contribution。
-- LLMS 默认 CSS 改用公共 Token 和自己的专用 Token，不再读取 `--nagi-*`。
-- 迁移版本不能同时保留 H1 注入和 Outlet 渲染，避免重复 UI。
+| Layer 名称 | 包含内容 |
+|---|---|
+| `kawa.base` | Core 默认的 Token |
+| `kawa.plugin` | 各个插件自身的完整默认样式 |
+| `kawa.theme` | 主题的所有样式 |
+| 不在 layer 中的样式 | 网站使用者自己写的 CSS，优先级永远最高 |
 
-这项迁移会修改 0.1 已确定的承载方式，只能进入后续版本决策。
+这套机制带来两个效果：无论 CSS 文件的加载顺序如何，主题样式永远盖过插件样式；网站使用者覆盖 nagi 主题时使用普通 CSS 即可，无需加 `!important`。
 
-### 17.3 Code Group
+样式钩子规则：
 
-Code Group 位于 Markdown 正文中，不需要页面 Outlet。
+- 不引入新的 `data-kawa-part` 属性。
+- 结构钩子使用现有的、已记录在文档中的 `.kawa-xxx__yyy` 类名。
+- 状态钩子使用 ARIA 属性或原生属性，例如 `[aria-selected="true"]` 和 `[open]`。这些属性为了可访问性本来就必须存在，这样可以保证样式与真实状态永远一致，不产生分歧。
 
-它仍然属于 UI Guest，因为它需要跨 Theme 视觉兼容：
+---
 
-- Plugin 保留 Tab 状态、ARIA、方向键、Home、End 和稳定 ID。
-- Plugin 提供最低可用默认 CSS。
-- Plugin 公开 `root`、`tabList`、`tab`、`panel` Parts。
-- `tab` 公开 `selected` State。
-- Theme 使用公共 Token 和 Part 精调视觉。
-- nagi 的 Code Group 样式进入 Theme layer，不再是该组件唯一可用的外观。
+## 七、对 0.1 决策的修订
 
-这项变化会修订 0.1“Plugin 只负责结构和状态，nagi 负责视觉”的边界，需要在后续版本单独确认。
+本方案纳入版本计划时，同步修订以下两处 0.1 决策：
 
-## 十八、相比现有 SSG 主题体系的改进点
+1. 内容插件样式的归属修订：0.1 决策曾规定内容类插件（代码块、代码组、自定义容器、提示框）只输出 HTML 结构，外观样式完全交由 nagi 负责。这与通用插件目标冲突。新决策将这些插件的样式迁回各个插件自身，包裹在 `kawa.plugin` 层中，只读取公共 Token。nagi 只负责在 `kawa.theme` 中进行细节微调。
+2. LLMS 按钮注入方式修订：LLMS 复制页面按钮从“插件自行在 Markdown 编译期插入到 H1 后面”，改为插入到 Core 提供的 `doc.header` Outlet 中。
 
-### VitePress
+---
 
-VitePress 支持完整 Theme、继承默认 Theme 和 Default Theme Layout Slots；深层组件替换通常需要包装默认 Layout 或 alias 内部组件。其扩展入口没有形成“Plugin 自动贡献到 Theme 语义区域”的统一协议。
+## 八、明确不做的事
 
-KawaPress 的目标不是提供更多默认 Theme Slot，而是让 UI Guest 通过 Profile、Outlet 和 Contribution 与未知 Theme 协作。
+1. 主题不需要声明自己兼容这套体系。主题在模板里渲染了某个 Outlet，就代表支持这个 Outlet。
+2. 不设独立的契约版本号。Outlet 清单和 Token 清单都是 `kawapress` 包的公开 API，跟随 `kawapress` 的版本号。
+3. 首版不提供 `aside`、`overlay` Outlet，也不允许主题自建私有 Outlet。浮层界面使用原生 `<dialog>` 或 popover。
+4. 不引入 `data-kawa-part` 一类的新样式属性，不提供界面替换适配器。替换界面使用作用域插槽和插件导出的组合式函数。
+5. 暂不对外发布兼容性测试库。仓库内用最小参考主题和 E2E 测试矩阵验证官方插件。
 
-参考：
+---
 
-- <https://vitepress.dev/guide/custom-theme>
-- <https://vitepress.dev/guide/extending-default-theme#layout-slots>
+## 九、落地顺序
 
-### Rspress
+1. Core 改造：接入默认 Token、写入 Layer 顺序声明、提供 `api.addToOutlet`、导出 `KawaOutlet`、在首个 H1 后渲染 `doc.header` Outlet、实现三种诊断机制。
+2. 官方插件改造：将默认样式迁回各个插件内部，改为只读取公共 Token，移除对 `--nagi-*` 变量的读取，移除插件独立的颜色变量。
+3. nagi 主题改造：渲染首版 4 个 Outlet，移除对 Search 组件的直接导入，将整个 `theme.css` 放进 `kawa.theme` 层。
+4. 最小参考主题与 E2E 矩阵：在仓库内建设最小参考主题，保证所有官方 UI 插件在 nagi 和最小参考主题下都能正常通过 E2E 测试。
 
-Rspress 的 `globalUIComponents` 可以让 Plugin UI 自动进入 Root，但精确进入 Header、Sidebar 等区域仍需要 Layout Slot、Theme 重导出或组件替换。
+本任务跟踪 GitHub issue `#10`。依赖该体系的后续插件有：`#9`（最后更新时间）、`#11`（评论系统）、`#12`（图片缩放）。
 
-KawaPress 的 Outlet 进一步规定语义位置、顺序、版本、缺失诊断和 Host 兼容承诺。
+---
 
-参考：
+## 十、风险
 
-- <https://rspress.rs/plugin/system/plugin-api#globaluicomponents>
-- <https://rspress.rs/ui/layout-components/layout>
-
-### Astro Starlight
-
-Starlight 使用固定组件覆盖键和 Plugin 配置更新；多个能力争用同一个覆盖键时需要冲突处理。
-
-KawaPress 首版 Outlet 只提供可追加 Contribution，避免多个 Guest 争夺整个组件所有权。
-
-参考：
-
-- <https://starlight.astro.build/reference/overrides/>
-- <https://starlight.astro.build/reference/plugins/#configsetup>
-
-### Docusaurus
-
-Docusaurus 通过 Theme alias、wrap 和 eject 提供深层替换，并明确区分 safe 与 unsafe swizzle。复制组件会冻结上游实现。
-
-KawaPress 使用 Default UI 保留上游行为，通过 Token、Part 和 State 完成大多数换肤；只有深度替换才进入受测试的 UI Adapter。
-
-参考：
-
-- <https://docusaurus.io/docs/swizzling>
-- <https://docusaurus.io/docs/styling-layout#theme-class-names>
-
-## 十九、分阶段落地
-
-### 阶段一：契约实验
-
-- 确认术语。
-- 确认 Compatibility Profile 名称。
-- 用 nagi 与最小参考 Theme 验证公共 Token。
-- 为 Search、LLMS、Code Group 补充 Part / State catalog 实验。
-- 不改变 0.1 的组件承载方式。
-
-### 阶段二：Registry 与 Outlet
-
-- 增加 Theme Host 和 Contribution Registry。
-- 确认 `contributeToOutlet()` 的最终名称与调用形态。
-- 提供类型化 `KawaOutlet`。
-- 实现 Profile、Outlet、顺序与缺失诊断。
-- 加入真实 SSR 与 hydration 测试。
-
-### 阶段三：nagi 兼容
-
-- nagi 声明文档 UI Profile。
-- 放置首批必需 Outlet。
-- 引入公共 Token 和 CSS Layers。
-- 保持现有 Theme 最小契约不变。
-
-### 阶段四：官方 Guest 迁移
-
-迁移顺序：
-
-1. Search。
-2. LLMS 页面操作。
-3. Code Group。
-4. 其他带 UI 的官方 Plugin。
-
-每次迁移都保留必要兼容面，并避免新旧路径重复渲染。
-
-### 阶段五：Conformance
-
-- 发布 Theme 与 Guest 测试工具。
-- 建立 Theme × Guest 测试矩阵。
-- 提供开发诊断。
-- 根据真实第三方 Theme 和 Plugin 调整 Profile。
-
-### 阶段六：深度替换
-
-- 设计 UI Adapter。
-- 明确 bindings、events、refs 和 fallback。
-- 为 Adapter 提供 Guest 自带 conformance tests。
-- 在 Default UI 路径稳定前不开放该能力。
-
-## 二十、仍需确认
-
-1. 首个 Compatibility Profile 使用 `docs-ui`、`kawa-docs-ui` 还是其他名称？
-2. UI 契约 API 放在 `kawapress/client`、新的 `kawapress/ui` 子入口，还是独立包？
-3. Theme Host 声明使用 Runtime API，还是 `defineRuntimePlugin()` 静态元数据？
-4. `contributeToOutlet()` 是否作为最终方法名？参数使用两个位置参数还是单对象？
-5. `document.aside` 是否进入首版 Profile？
-6. `shell.overlay` 是否需要成为 Outlet，还是由 Guest 使用原生 dialog / popover / top layer？
-7. 普通 Theme 遇到未消费 Contribution 时，只警告还是构建报错？
-8. 可选 Outlet 缺失时是否只在开发期提示？
-9. 公共 Token 的首版最小清单是什么？由 Theme 全部提供，还是由 KawaPress 提供中性 fallback？
-10. CSS layer prelude 由 Core、Theme 还是一个公共 CSS 入口保证最先加载？
-11. 是否允许 Theme 私有、带命名空间的 Outlet？
-12. Profile 支持几个 major，弃用窗口多长？
-13. UI Adapter 由 Theme 注册、站点配置，还是由 Guest 暴露专用入口？
-14. Theme conformance 是库 API、CLI，还是两者都提供？
-
-## 二十一、外部规范依据
-
-- CSS Custom Properties：<https://www.w3.org/TR/css-variables-1/>
-- CSS Cascade Layers：<https://www.w3.org/TR/css-cascade-5/#layer-ordering>
-- CSS Shadow Parts 的稳定结构思想：<https://www.w3.org/TR/css-shadow-parts-1/>
-- HTML `data-*`：<https://html.spec.whatwg.org/multipage/dom.html#embedding-custom-non-visible-data-with-the-data-*-attributes>
-- Vue Named / Scoped Slots：<https://vuejs.org/guide/components/slots.html>
-- Vue Provide / Inject：<https://vuejs.org/guide/components/provide-inject.html>
-- Radix Styling 与状态属性：<https://www.radix-ui.com/primitives/docs/guides/styling>
-- Radix Accessibility：<https://www.radix-ui.com/primitives/docs/overview/accessibility>
-- Ark UI Parts：<https://ark-ui.com/docs/guides/styling>
-- Semantic Versioning：<https://semver.org/>
+1. 第三方样式未分层导致优先级越界：未放在任何 Layer 中的外部 CSS 优先级高于主题样式。例如 nagi 引入了未分层的 `overlayscrollbars.css`。这类 CSS 必须使用 `@import ... layer(kawa.theme)` 的语法引入。这一规则必须写进主题开发文档中。
+2. 空白包裹节点残留：当某个页面主动关闭某项功能时（例如配置了 `llms: false`），插件组件不渲染任何内容，但主题在外层包裹的容器标签可能依然留在 DOM 中。主题可以使用 CSS `:empty` 伪类隐藏这类空白容器。
+3. 浏览器兼容性：`light-dark()` 和 `@layer` 需要现代浏览器支持。由于 nagi 主题目前已经在正式使用 `light-dark()`，因此本方案没有带来新的环境门槛。
