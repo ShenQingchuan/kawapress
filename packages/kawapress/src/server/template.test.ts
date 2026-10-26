@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { renderNotFoundDocumentMeta } from '../core/not-found'
 import { KAWA_DEFAULT_TOKENS, KAWA_LAYER_ORDER } from '../core/tokens'
 import { renderHtmlTemplate } from './template'
 
@@ -61,5 +62,19 @@ describe('renderHtmlTemplate', () => {
     const html = renderHtmlTemplate({ ...baseOptions, modulepreloadUrls: undefined })
 
     expect(html).not.toContain('modulepreload')
+  })
+
+  it('marks the not-found document so the client can recognise it', () => {
+    const notFoundHtml = renderHtmlTemplate({
+      ...baseOptions,
+      notFoundDocument: true,
+    })
+    const head = notFoundHtml.slice(
+      notFoundHtml.indexOf('<head>'),
+      notFoundHtml.indexOf('</head>'),
+    )
+
+    expect(head).toContain(renderNotFoundDocumentMeta())
+    expect(renderHtmlTemplate(baseOptions)).not.toContain(renderNotFoundDocumentMeta())
   })
 })

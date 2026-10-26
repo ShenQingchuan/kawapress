@@ -17,12 +17,14 @@ export interface KawapressApp {
   app: App
   router: Router
   outlets: OutletRegistry
+  /** See {@link import('./router').AppRouter.adoptRequestedUrl}. */
+  adoptRequestedUrl: () => Promise<void>
 }
 
 export async function createKawapressApp(
   { head }: CreateKawapressAppOptions,
 ): Promise<KawapressApp> {
-  const router = createAppRouter()
+  const { router, adoptRequestedUrl } = createAppRouter()
   const app = createSSRApp(Root)
   app.use(router)
   app.use(head)
@@ -40,5 +42,6 @@ export async function createKawapressApp(
     app,
     router,
     outlets: pluginRunner.outlets,
+    adoptRequestedUrl,
   }
 }

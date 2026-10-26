@@ -1,3 +1,4 @@
+import { renderNotFoundDocumentMeta } from '../core/not-found'
 import { KAWA_DEFAULT_TOKENS, KAWA_LAYER_ORDER } from '../core/tokens'
 
 export interface HtmlTemplateOptions {
@@ -8,6 +9,8 @@ export interface HtmlTemplateOptions {
   /** Page chunk JS, preloaded so hydration does not wait for a waterfall. */
   modulepreloadUrls?: string[]
   htmlAttrs?: string
+  /** Marks the document as the prerendered not-found page; see `core/not-found`. */
+  notFoundDocument?: boolean
 }
 
 export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
@@ -26,11 +29,14 @@ export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
 
   const serializedHtmlAttrs = options.htmlAttrs?.trim()
   const htmlAttrs = serializedHtmlAttrs ? ` ${serializedHtmlAttrs}` : ''
+  const notFoundMeta = options.notFoundDocument
+    ? `${renderNotFoundDocumentMeta()}\n    `
+    : ''
 
   return `<!DOCTYPE html>
 <html${htmlAttrs}>
   <head>
-    ${kawaStyles}
+    ${notFoundMeta}${kawaStyles}
     ${options.head}
     ${cssLinks}
     ${modulepreloadLinks}
