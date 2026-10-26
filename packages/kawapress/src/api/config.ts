@@ -1,3 +1,4 @@
+import type { DeadLinkConfig } from '../core/dead-links'
 import type { LocaleConfig } from '../core/site'
 import type { KawaPressPlugin } from './plugin'
 
@@ -9,6 +10,8 @@ export interface KawapressConfig<ThemeConfig extends object = object> {
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>
   plugins?: KawaPressPlugin[]
+  /** Internal link checking. Defaults to `{ level: 'error' }`; `false` disables it. */
+  deadLinks?: false | DeadLinkConfig
 }
 
 export function defineConfig<ThemeConfig extends object = object>(
