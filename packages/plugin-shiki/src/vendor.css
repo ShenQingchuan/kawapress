@@ -1,0 +1,6 @@
+/*
+ * Third-party CSS that Shiki and Twoslash expect. It must name a layer,
+ * otherwise it lands outside every layer and outranks the site theme.
+ */
+@import url('@shikijs/twoslash/style-rich.css') layer(kawa.plugin);
+@import url('floating-vue/dist/style.css') layer(kawa.plugin);

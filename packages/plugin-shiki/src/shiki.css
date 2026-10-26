@@ -1,0 +1,19 @@
+@layer kawa.plugin {
+  /*
+   * Shiki emits `<pre class="shiki"><code>…`. A theme that never heard of Shiki
+   * still needs the block to scroll instead of overflowing the page, and the
+   * line wrappers to span the full width.
+   */
+  pre.shiki {
+    overflow-x: auto;
+    tab-size: 4;
+  }
+
+  pre.shiki > code {
+    display: block;
+    width: fit-content;
+    min-width: 100%;
+    font-size: 0.875em;
+    line-height: 1.5;
+  }
+}

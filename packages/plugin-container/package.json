@@ -19,6 +19,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./runtime-plugin": {
+      "types": "./src/runtime-plugin.ts",
+      "import": "./src/runtime-plugin.ts",
+      "default": "./src/runtime-plugin.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [

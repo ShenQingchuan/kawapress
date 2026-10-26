@@ -1,0 +1,68 @@
+@layer kawa.plugin {
+  .kawa-alert {
+    --kawa-alert-accent: var(--kawa-c-info);
+
+    margin: 1.25rem 0;
+    padding: 1rem 1.25rem;
+    color: var(--kawa-c-text-2);
+    border: 1px solid color-mix(
+      in oklab,
+      var(--kawa-alert-accent) 26%,
+      var(--kawa-c-divider)
+    );
+    border-radius: 0.75rem;
+    background: color-mix(
+      in oklab,
+      var(--kawa-alert-accent) 7%,
+      var(--kawa-c-bg)
+    );
+  }
+
+  .kawa-alert--tip {
+    --kawa-alert-accent: var(--kawa-c-success);
+  }
+
+  .kawa-alert--important {
+    --kawa-alert-accent: var(--kawa-c-brand);
+  }
+
+  .kawa-alert--warning {
+    --kawa-alert-accent: var(--kawa-c-warning);
+  }
+
+  .kawa-alert--caution {
+    --kawa-alert-accent: var(--kawa-c-danger);
+  }
+
+  .kawa-alert > .kawa-alert__title {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin: 0;
+    color: var(--kawa-alert-accent);
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .kawa-alert > .kawa-alert__title::before {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex: none;
+    border-radius: 999px;
+    background: currentcolor;
+    box-shadow: 0 0 0 0.1875rem color-mix(
+      in oklab,
+      currentcolor 16%,
+      transparent
+    );
+    content: '';
+  }
+
+  .kawa-alert > .kawa-alert__title + :where(p, ul, ol, pre) {
+    margin-top: 0.625rem;
+  }
+
+  .kawa-alert > :last-child {
+    margin-bottom: 0;
+  }
+}
