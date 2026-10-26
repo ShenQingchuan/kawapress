@@ -101,6 +101,65 @@ KawaPress 会为 Markdown 标题生成稳定的锚点。默认主题里的本页
 
 外部页面继续使用完整 URL，例如：[访问 Vue 官网](https://vuejs.org/)。外部 Markdown 链接会在新标签页打开，并自动带上 `rel="noreferrer"`。
 
+## 死链检查 {#dead-links}
+
+KawaPress 会在构建时检查 Markdown 里的站内链接。页面不存在、标题锚点找不到，都会在 `kawapress build` 结束时一次性列出来，并让构建失败。访客因此不会在发布之后撞上本可以在本地发现的问题。
+
+每一行长这样：
+
+```text
+/guide/getting-started.md:12  ./instal  missing-page
+```
+
+依次是源文件、行号、Markdown 里写的原始链接，以及被判定为死链的原因。
+
+### 会检查什么 {#what-is-checked}
+
+- 页面链接：目标路由必须有对应的 Markdown 文件。无后缀、`.md`、`.html` 三种写法都会归一化成同一个路由，`/guide/` 与 `/guide/index.md` 也指向同一个页面。
+- 锚点：目标页面必须存在这个标题 ID。范围是 `h1` 到 `h6`，包含 `{#id}` 自定义 ID，同页的 `#锚点` 也一样检查。
+- 其他文件：像 `[手册](/files/manual.pdf)` 这种带其他扩展名的链接，必须在 `public` 目录里真实存在。
+
+### 不检查什么 {#what-is-not-checked}
+
+- 外部链接，以及 `mailto:` 这类非站点地址。KawaPress 不会联网验证它们。
+- Markdown 里直接写的 `<a>` 标签、Vue 组件内部的链接，以及主题或插件生成的链接。
+- 链接文字是否准确。检查只回答“目标存在吗”。
+
+### 忽略个别链接 {#ignoring-links}
+
+有些链接是故意指向还没写好的页面，或者暂时连不通的地址，可以列进 `deadLinks.ignore`：
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  deadLinks: {
+    ignore: [
+      '/guide/coming-soon', // 精确匹配归一化后的 target
+      './legacy.html', // 精确匹配原文 href
+      /^\/changelog\//, // 正则同时测试 href 和 target
+      link => link.reason === 'missing-anchor',
+    ],
+  },
+})
+```
+
+字符串是精确匹配，不是包含匹配。正则同时测试原文 `href` 和归一化后的 `target`。函数会拿到完整的死链对象，可以按 `reason`、`source`、`line` 自行判断。
+
+### 只警告，不中断构建 {#downgrading-to-warnings}
+
+迁移旧站点时，可能一时改不完所有链接。这时可以把等级降成警告：
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  deadLinks: { level: 'warn' },
+})
+```
+
+`kawapress dev` 始终只警告，而且只检查页面是否存在、同页锚点是否有效，不会因为还没写完的内容挡住开发。想彻底关掉检查，写 `deadLinks: false`。
+
 ## 部署到子路径 {#deploying-under-a-base-path}
 
 站点并不总是发布在域名根目录。例如，页面最终可能位于：
