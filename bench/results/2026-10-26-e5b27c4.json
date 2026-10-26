@@ -1,0 +1,121 @@
+{
+  "generatedAt": "2026-10-26T11:24:21.118Z",
+  "environment": {
+    "cpuModel": "Apple M2 Pro",
+    "cores": 10,
+    "memoryGiB": 16,
+    "os": "Darwin 24.6.0 (arm64)",
+    "nodeVersion": "v26.10.0"
+  },
+  "tools": {
+    "kawapressVersion": "0.0.1",
+    "kawapressGitSha": "e5b27c4",
+    "vitepressVersion": "1.6.4"
+  },
+  "settings": {
+    "sizes": [
+      50
+    ],
+    "runs": 1,
+    "lighthouse": false
+  },
+  "results": [
+    {
+      "size": 50,
+      "build": {
+        "kawapress": {
+          "runsMs": [
+            2070.772916
+          ],
+          "medianMs": 2070.772916
+        },
+        "vitepress": {
+          "runsMs": [
+            2176.683459
+          ],
+          "medianMs": 2176.683459
+        }
+      },
+      "dev": {
+        "kawapress": {
+          "runsMs": [
+            1337.434917
+          ],
+          "medianMs": 1337.434917
+        },
+        "vitepress": {
+          "runsMs": [
+            537.3188749999999
+          ],
+          "medianMs": 537.3188749999999
+        }
+      },
+      "assets": {
+        "kawapress": {
+          "home": {
+            "page": "/",
+            "js": {
+              "files": 1,
+              "raw": 300973,
+              "gzip": 96667,
+              "brotli": 83879
+            },
+            "css": {
+              "files": 1,
+              "raw": 83121,
+              "gzip": 14154,
+              "brotli": 12472
+            }
+          },
+          "guide": {
+            "page": "/guide/page-0001",
+            "js": {
+              "files": 1,
+              "raw": 300973,
+              "gzip": 96667,
+              "brotli": 83879
+            },
+            "css": {
+              "files": 1,
+              "raw": 83121,
+              "gzip": 14154,
+              "brotli": 12472
+            }
+          }
+        },
+        "vitepress": {
+          "home": {
+            "page": "/",
+            "js": {
+              "files": 4,
+              "raw": 169057,
+              "gzip": 61555,
+              "brotli": 54986
+            },
+            "css": {
+              "files": 2,
+              "raw": 112811,
+              "gzip": 20210,
+              "brotli": 17396
+            }
+          },
+          "guide": {
+            "page": "/guide/page-0001",
+            "js": {
+              "files": 4,
+              "raw": 168150,
+              "gzip": 61096,
+              "brotli": 54606
+            },
+            "css": {
+              "files": 2,
+              "raw": 112811,
+              "gzip": 20210,
+              "brotli": 17396
+            }
+          }
+        }
+      }
+    }
+  ]
+}

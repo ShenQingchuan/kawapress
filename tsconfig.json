@@ -3,6 +3,8 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    // `bench` runs on Node's type stripping, which needs explicit `.ts` import specifiers.
+    "allowImportingTsExtensions": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
@@ -17,6 +19,8 @@
     "packages/*/src/**/*.d.ts",
     "packages/*/*.ts",
     "packages/*/*.config.ts",
-    "e2e/**/*.ts"
+    "e2e/**/*.ts",
+    "bench/src/**/*.ts",
+    "bench/src/**/*.d.ts"
   ]
 }

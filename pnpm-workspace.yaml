@@ -6,16 +6,25 @@ minimumReleaseAgeExclude:
 shellEmulator: true
 
 trustPolicy: no-downgrade
+# VitePress 1.x 依赖 vite ^5.4.14，5.4.21 由 provenance 发布，
+# 与更早版本的 trusted publisher 证据不同，被信任策略判为降级。
+trustPolicyExclude:
+  - vite@5.4.21
 
 packages:
   - packages/*
   - docs
   - e2e
+  - bench
 
 overrides:
   '@xmldom/xmldom@0.9.10': 0.9.12
 
 catalogs:
+  bench:
+    chrome-launcher: 1.2.2
+    lighthouse: 12.8.2
+    vitepress: 1.6.4
   dev:
     '@antfu/eslint-config': ^9.3.0
     '@types/node': ^26.2.0
@@ -66,3 +75,7 @@ catalogs:
     vite: ^8.2.2
   test:
     '@playwright/test': ^1.63.0
+
+# VitePress 通过 vite 5 拉入 esbuild，其安装脚本只做二进制自检。
+allowBuilds:
+  esbuild: true
