@@ -233,6 +233,15 @@ importers:
         specifier: catalog:test
         version: 1.64.1
 
+  e2e/fixtures/plugins-site:
+    devDependencies:
+      '@kawapress/plugin-comments':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-comments
+      kawapress:
+        specifier: workspace:*
+        version: link:../../../packages/kawapress
+
   packages/create-kawapress:
     dependencies:
       '@clack/prompts':
@@ -333,6 +342,21 @@ importers:
       markdown-exit:
         specifier: catalog:markdown
         version: 1.3.0
+      vue:
+        specifier: catalog:frontend
+        version: 3.5.41(typescript@6.0.3)
+
+  packages/plugin-comments:
+    devDependencies:
+      happy-dom:
+        specifier: catalog:dev
+        version: 20.11.6
+      kawapress:
+        specifier: workspace:*
+        version: link:../kawapress
+      vite:
+        specifier: catalog:node
+        version: 8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0)
       vue:
         specifier: catalog:frontend
         version: 3.5.41(typescript@6.0.3)

@@ -1,0 +1,14 @@
+{
+  "name": "@kawapress/e2e-plugins-site",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "kawapress build",
+    "dev": "kawapress dev",
+    "preview": "kawapress preview"
+  },
+  "devDependencies": {
+    "@kawapress/plugin-comments": "workspace:*",
+    "kawapress": "workspace:*"
+  }
+}

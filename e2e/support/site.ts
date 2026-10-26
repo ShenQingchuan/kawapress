@@ -28,3 +28,12 @@ export const devPort = 5173
 
 export const previewOrigin = `http://localhost:${previewPort}`
 export const devOrigin = `http://localhost:${devPort}`
+
+/**
+ * The plugin fixture site (`e2e/fixtures/plugins-site`) runs next to the docs
+ * site so plugins that are useless in the docs configuration still get E2E
+ * coverage. It reuses the same base as the docs site.
+ */
+export const pluginsPort = Number(process.env.E2E_PLUGINS_PORT ?? 4174)
+
+export const pluginsOrigin = `http://localhost:${pluginsPort}`
