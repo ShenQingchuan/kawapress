@@ -97,13 +97,13 @@ afterEach(async () => {
  * "development" for the client build. `node_modules/kawapress` is a symlink
  * because the site is not installed, just like a `link:` dependency.
  */
-async function createSite(): Promise<void> {
+async function createSite(config = CONFIG): Promise<void> {
   await writeFile(join(siteDirectory, 'package.json'), JSON.stringify({
     name: 'build-env-test',
     private: true,
     type: 'module',
   }, null, 2))
-  await writeFile(join(siteDirectory, 'kawapress.config.ts'), CONFIG)
+  await writeFile(join(siteDirectory, 'kawapress.config.ts'), config)
   await writeFile(join(siteDirectory, 'index.md'), HOME_PAGE)
   await mkdir(join(siteDirectory, 'guide'), { recursive: true })
   await writeFile(join(siteDirectory, 'Probe.vue'), PROBE_COMPONENT)
@@ -124,6 +124,20 @@ async function buildWithoutNodeEnv(): Promise<void> {
     cwd: siteDirectory,
     env,
   })
+}
+
+/** Runs a build that is expected to fail and returns everything it printed. */
+async function buildExpectingFailure(): Promise<string> {
+  const env: NodeJS.ProcessEnv = { ...process.env }
+  delete env.NODE_ENV
+  try {
+    await run(process.execPath, [kawapressBin, 'build'], { cwd: siteDirectory, env })
+  }
+  catch (error) {
+    const failed = error as { stdout?: string, stderr?: string }
+    return `${failed.stdout ?? ''}${failed.stderr ?? ''}`
+  }
+  throw new Error('KawaPress: the build was expected to fail but succeeded.')
 }
 
 /** Every client file below `dist`, relative to it, for example `assets/app-x.js`. */
@@ -259,6 +273,34 @@ describe('buildSite', () => {
       (await listClientFiles()).filter(file => file.includes('_plugin-vue_export-helper')),
       'the helper every page imports belongs to the app chunk',
     ).toEqual([])
+  }, 300_000)
+
+  it('refuses a page chunk name the page table cannot derive', async () => {
+    // A plugin that renames output files would make the browser build page file
+    // names the prerendered table does not know, so the build has to stop and
+    // say which option is at fault.
+    await createSite(`import { definePlugin } from 'kawapress'
+
+export default {
+  title: 'Build Env Test',
+  plugins: [
+    definePlugin({
+      name: 'test-rename-entries',
+      setup(api) {
+        api.vite((config) => {
+          const output = config.environments.client.build.rolldownOptions.output
+          output.entryFileNames = 'assets/[name].[hash].js'
+        })
+      },
+    }),
+  ],
+}
+`)
+
+    const output = await buildExpectingFailure()
+
+    expect(output).toContain('entryFileNames')
+    expect(output).toContain('the page table derives page chunk file names')
   }, 300_000)
 
   it('ships no preload dependency table', async () => {
