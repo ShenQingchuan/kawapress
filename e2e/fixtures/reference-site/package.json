@@ -1,0 +1,25 @@
+{
+  "name": "@kawapress/e2e-reference-site",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "kawapress build",
+    "dev": "kawapress dev",
+    "preview": "kawapress preview"
+  },
+  "devDependencies": {
+    "@kawapress/e2e-reference-theme": "workspace:*",
+    "@kawapress/plugin-code-block": "workspace:*",
+    "@kawapress/plugin-code-group": "workspace:*",
+    "@kawapress/plugin-comments": "workspace:*",
+    "@kawapress/plugin-container": "workspace:*",
+    "@kawapress/plugin-github-alerts": "workspace:*",
+    "@kawapress/plugin-image-zoom": "workspace:*",
+    "@kawapress/plugin-last-updated": "workspace:*",
+    "@kawapress/plugin-llms": "workspace:*",
+    "@kawapress/plugin-mathjax": "workspace:*",
+    "@kawapress/plugin-search": "workspace:*",
+    "@kawapress/plugin-shiki": "workspace:*",
+    "kawapress": "workspace:*"
+  }
+}

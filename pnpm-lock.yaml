@@ -248,6 +248,54 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/kawapress
 
+  e2e/fixtures/reference-site:
+    devDependencies:
+      '@kawapress/e2e-reference-theme':
+        specifier: workspace:*
+        version: link:../reference-theme
+      '@kawapress/plugin-code-block':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-code-block
+      '@kawapress/plugin-code-group':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-code-group
+      '@kawapress/plugin-comments':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-comments
+      '@kawapress/plugin-container':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-container
+      '@kawapress/plugin-github-alerts':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-github-alerts
+      '@kawapress/plugin-image-zoom':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-image-zoom
+      '@kawapress/plugin-last-updated':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-last-updated
+      '@kawapress/plugin-llms':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-llms
+      '@kawapress/plugin-mathjax':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-mathjax
+      '@kawapress/plugin-search':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-search
+      '@kawapress/plugin-shiki':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-shiki
+      kawapress:
+        specifier: workspace:*
+        version: link:../../../packages/kawapress
+
+  e2e/fixtures/reference-theme:
+    devDependencies:
+      kawapress:
+        specifier: workspace:*
+        version: link:../../../packages/kawapress
+
   packages/create-kawapress:
     dependencies:
       '@clack/prompts':
