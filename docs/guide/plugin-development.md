@@ -194,6 +194,20 @@ api.vite((config) => {
 
 KawaPress 会在创建 Vite 之前校验维持渲染所需的基本条件。插件不能通过修改 Vite 配置绕开这些条件。
 
+#### 声明运行侧用到的依赖 {#runtime-dependencies}
+
+运行侧代码 `import` 了某个包，就要在 `vite()` 里用 `useRuntimeDependencies()` 声明它。开发服务器会先把这些包准备好，否则第一次访问用到它们的页面时，Vite 会边加载边发现新依赖，然后把整页刷新一次；服务端渲染也会把它们一起打包，不会另外加载一份 Vue。
+
+```ts
+import { useRuntimeDependencies } from 'kawapress/generator'
+
+api.vite((config) => {
+  useRuntimeDependencies(config, '@your-scope/plugin-name', ['some-browser-lib'])
+})
+```
+
+第二个参数是真正依赖这个包的包名，通常就是你自己的插件包。站点一般只安装 `kawapress` 或某个 Preset，装不到插件内部的依赖，所以这个函数会顺着 package.json 里声明的依赖关系，算出从站点到这个包的路径，再按 Vite 的 `owner > dependency` 写法声明。只在开发时生效，不影响构建产物。
+
 ### `buildArtifacts()`：生成静态文件 {#build-artifacts}
 
 `buildArtifacts()` 只在 `kawapress build` 中执行。它发生在全部 Vite 构建完成之后、HTML 预渲染之前。handler 接收全部页面和一个 `emitFile()` 函数：

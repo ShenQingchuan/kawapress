@@ -195,6 +195,20 @@ api.vite((config) => {
 
 KawaPress checks the conditions required for rendering before it creates Vite. A plugin cannot bypass those conditions by changing the Vite configuration.
 
+#### Declare the Dependencies Your Runtime Code Uses {#runtime-dependencies}
+
+When your runtime code imports a package, declare it in `vite()` with `useRuntimeDependencies()`. The dev server then prepares the package up front. Without the declaration, Vite discovers it while the first page that needs it is loading and reloads the whole page; the server render bundles it as well instead of loading a second copy of Vue.
+
+```ts
+import { useRuntimeDependencies } from 'kawapress/generator'
+
+api.vite((config) => {
+  useRuntimeDependencies(config, '@your-scope/plugin-name', ['some-browser-lib'])
+})
+```
+
+The second argument is the package that really depends on it, usually your own plugin package. A site normally installs `kawapress` or a preset, not the packages inside a plugin, so the function follows the dependencies declared in `package.json` to work out how the site reaches your package, then declares the dependency in Vite's `owner > dependency` form. It only affects the dev server, never the built site.
+
 ### `buildArtifacts()`: Generate Static Files {#build-artifacts}
 
 `buildArtifacts()` runs only during `kawapress build`. It runs after all Vite builds have finished and before HTML prerendering. The handler receives all pages and an `emitFile()` function:
