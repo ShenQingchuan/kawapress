@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { pseudoTerminalCommand } from './runtime.mjs'
 import { buildTrustArguments, formatTrustCommand, isDesiredTrust, parseTrustList, planTrustChange } from './trust.mjs'
 
 describe('buildTrustArguments', () => {
@@ -71,5 +72,22 @@ describe('planTrustChange', () => {
   it('keeps the right one and revokes the extra ones', () => {
     const stale = { ...current, id: 'old', repository: 'someone/else' }
     expect(planTrustChange([stale, current])).toEqual({ create: false, revoke: ['old'] })
+  })
+})
+
+describe('parseTrustList over a pseudo-terminal', () => {
+  it('reads objects whose lines end in CRLF and that follow a prompt', () => {
+    const body = JSON.stringify(current, null, 2).replaceAll('\n', '\r\n')
+    const output = `Authenticate your account at:\r\nhttps://example.test\r\n${body}\r\n`
+    expect(parseTrustList(output)).toHaveLength(1)
+    expect(parseTrustList(output)[0].id).toBe('id-1')
+  })
+})
+
+describe('pseudoTerminalCommand', () => {
+  it('wraps the command with script on macOS and Linux, and not elsewhere', () => {
+    expect(pseudoTerminalCommand('npm', ['trust', 'list'], 'darwin')).toEqual(['script', ['-q', '/dev/null', 'npm', 'trust', 'list']])
+    expect(pseudoTerminalCommand('npm', ['trust', 'list', '@a/b'], 'linux')?.[1]).toEqual(['-qec', `'npm' 'trust' 'list' '@a/b'`, '/dev/null'])
+    expect(pseudoTerminalCommand('npm', [], 'win32')).toBeNull()
   })
 })

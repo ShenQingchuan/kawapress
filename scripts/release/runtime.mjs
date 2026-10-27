@@ -67,6 +67,58 @@ export function run(command, args, options = {}) {
   })
 }
 
+/**
+ * Arguments that run a command inside a pseudo-terminal through `script`, or `null` when
+ * this platform has none. The command then sees a real terminal on stdin and stdout.
+ */
+export function pseudoTerminalCommand(command, args, platform = process.platform) {
+  if (platform === 'darwin')
+    return ['script', ['-q', '/dev/null', command, ...args]]
+  if (platform === 'linux')
+    return ['script', ['-qec', [command, ...args].map(shellQuote).join(' '), '/dev/null']]
+  return null
+}
+
+function shellQuote(value) {
+  return `'${String(value).replaceAll('\'', '\'\\\'\'')}'`
+}
+
+/**
+ * Runs a command that may need the person at the terminal, for example npm asking for
+ * two-factor approval, and still returns what it printed. npm only offers that prompt when
+ * stdin and stdout are a terminal, so the command gets a pseudo-terminal and its output is
+ * both captured and shown. Output after `quietAfter` is captured without being shown.
+ */
+export function runOnTerminal(command, args, options = {}) {
+  const { quietAfter = '{', env = process.env } = options
+  const wrapped = pseudoTerminalCommand(command, args)
+  if (!wrapped || !process.stdin.isTTY)
+    return run(command, args, { capture: true, env })
+
+  return new Promise((resolvePromise, rejectPromise) => {
+    const child = spawn(wrapped[0], wrapped[1], { env, stdio: ['inherit', 'pipe', 'inherit'] })
+    let stdout = ''
+    let quiet = false
+
+    child.stdout.setEncoding('utf8')
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk
+      if (!quiet && stdout.includes(quietAfter))
+        quiet = true
+      if (!quiet)
+        process.stdout.write(chunk)
+    })
+    child.on('error', rejectPromise)
+    child.on('close', (exitCode) => {
+      const result = { exitCode, stderr: '', stdout }
+      if (exitCode === 0)
+        resolvePromise(result)
+      else
+        rejectPromise(new CommandError(command, args, result))
+    })
+  })
+}
+
 export function logStep(message) {
   console.log(`\n▶ ${message}`)
 }

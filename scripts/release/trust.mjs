@@ -3,7 +3,7 @@
 import { setTimeout as delay } from 'node:timers/promises'
 
 import { publishEnvironment, publishRepository, publishWorkflowFile } from './constants.mjs'
-import { logStep, logSuccess, run } from './runtime.mjs'
+import { logStep, logSuccess, run, runOnTerminal } from './runtime.mjs'
 
 export const TRUST_COMMAND_PAUSE_MS = 2_000
 
@@ -75,26 +75,14 @@ export function planTrustChange(existing) {
 }
 
 /**
- * Asks npm for two-factor approval once, with the terminal fully attached. npm only
- * offers its browser step when stdin and stdout are both a terminal, so this call
- * cannot capture its output. Approving with "skip two-factor for 5 minutes" ticked lets
- * every later call, including the ones that capture output, go through.
+ * Reads the trusted publishers of one package. npm may ask for two-factor approval here,
+ * so it runs on a pseudo-terminal: the prompt reaches the person, the JSON reaches us.
  */
-export async function approveTwoFactor(name, registry) {
-  logStep('npm needs two-factor approval once')
-  console.log('Open the link npm prints, approve, and tick "skip two-factor for the next 5 minutes".')
-  const args = ['trust', 'list', name]
-  if (registry)
-    args.push(`--registry=${registry}`)
-  await run('npm', args)
-}
-
-/** Reads the trusted publishers of one package. */
 async function readTrust(name, registry) {
   const args = ['trust', 'list', name, '--json']
   if (registry)
     args.push(`--registry=${registry}`)
-  const result = await run('npm', args, { capture: true })
+  const result = await runOnTerminal('npm', args)
   return parseTrustList(result.stdout)
 }
 
@@ -107,8 +95,8 @@ export async function syncTrust(names, options = {}) {
   const { apply = false, registry, pauseMs = TRUST_COMMAND_PAUSE_MS } = options
   logStep(`${apply ? 'Configuring' : 'Checking'} npm trusted publishers for ${desiredTrust.repository}`)
 
-  if (names.length > 0)
-    await approveTwoFactor(names[0], registry)
+  console.log('npm asks for two-factor approval in the browser. Approve it and tick')
+  console.log('"skip two-factor for the next 5 minutes", so it does not ask again for every package.')
 
   let changed = 0
   for (const [index, name] of names.entries()) {
