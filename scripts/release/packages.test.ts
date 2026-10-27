@@ -12,8 +12,8 @@ const manifest = `{
 }
 `
 
-function pkg(name, version, directoryName = name.replace('@kawapress/', '')) {
-  return { directory: `/repo/packages/${directoryName}`, manifest: { name, version } }
+function pkg(name: string, version: string) {
+  return { directory: `/repo/packages/${name.replace('@kawapress/', '')}`, manifest: { name, version } }
 }
 
 const packages = [
@@ -46,20 +46,23 @@ describe('setManifestField', () => {
 })
 
 describe('findPackage', () => {
-  it('finds a package by its npm name or by its directory name', () => {
+  it('finds a package by its full npm name', () => {
     expect(findPackage(packages, '@kawapress/plugin-mermaid').manifest.name).toBe('@kawapress/plugin-mermaid')
-    expect(findPackage(packages, 'plugin-mermaid').manifest.name).toBe('@kawapress/plugin-mermaid')
     expect(findPackage(packages, 'kawapress').manifest.name).toBe('kawapress')
   })
 
+  it('does not accept the directory name or any other short form', () => {
+    expect(() => findPackage(packages, 'plugin-mermaid')).toThrow('Use the full npm name')
+  })
+
   it('names the known packages when nothing matches', () => {
-    expect(() => findPackage(packages, 'plugin-nope')).toThrow('Known packages: kawapress, plugin-mermaid, create-kawapress')
+    expect(() => findPackage(packages, '@kawapress/nope')).toThrow('Known packages: kawapress, @kawapress/plugin-mermaid, create-kawapress')
   })
 })
 
 describe('parseBumps', () => {
   it('maps each package to its new version', () => {
-    const bumps = parseBumps(packages, ['kawapress=0.3.0', 'plugin-mermaid=0.2.1'])
+    const bumps = parseBumps(packages, ['kawapress=0.3.0', '@kawapress/plugin-mermaid=0.2.1'])
     expect(bumps.get('kawapress')).toBe('0.3.0')
     expect(bumps.get('@kawapress/plugin-mermaid')).toBe('0.2.1')
   })

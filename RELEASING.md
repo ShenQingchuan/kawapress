@@ -97,7 +97,7 @@ pnpm release:lock --apply    # 真正修改；第一次会在浏览器里做两�
 
 ```sh
 # 1. 改版本号（只改 package.json，不发布）。可以一次写多个包。
-pnpm release:prepare plugin-mermaid=0.2.1
+pnpm release:prepare @kawapress/plugin-mermaid=0.2.1
 
 # 2. 提交并推 main
 git commit -am "chore: 发布 plugin-mermaid 0.2.1"
@@ -115,7 +115,7 @@ npm view @kawapress/plugin-mermaid version
 
 几条规则：
 
-- 包名可以写目录名（`plugin-mermaid`）或完整的 npm 名（`@kawapress/plugin-mermaid`）。
+- 包名必须写完整的 npm 名（`@kawapress/plugin-mermaid`、`kawapress`）。目录名等简写一律拒绝，避免以后重名时发错包。
 - 新版本必须高于该包当前的版本。
 - **tag 只负责启动工作流，不表示版本号**：任何以 `v` 开头、没用过的名字都行，例如 `v2026-05-30`、`v0.3.0`。每次发布用一个新 tag。发布哪些包、发哪个版本，由已提交的各 `package.json` 决定。
 - 同时发布 `kawapress` 时必须带上 `create-kawapress`，因为 `create-kawapress` 里的 `kawapressVersion` 记着新建站点要装的核心版本。`release:prepare` 会自动把它改成 `kawapress` 的新版本，并要求你同时给 `create-kawapress` 一个新版本。

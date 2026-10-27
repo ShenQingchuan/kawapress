@@ -144,7 +144,7 @@ function printPublishSummary(publishOrder, states, ci) {
 /** Rewrites the version of the named packages so the bump can be committed. */
 async function prepareRelease(options, packages) {
   if (options.bumps.length === 0)
-    throw new Error('Name the packages to release, for example: pnpm release:prepare kawapress=0.3.0 plugin-mermaid=0.2.1')
+    throw new Error('Name the packages to release, for example: pnpm release:prepare @kawapress/plugin-mermaid=0.2.1')
 
   const bumps = parseBumps(packages, options.bumps)
   // New sites get `kawapressVersion` from create-kawapress, so it has to ship with every

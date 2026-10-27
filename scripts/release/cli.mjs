@@ -17,7 +17,7 @@ Every package has its own version. A release publishes each package whose versio
 is not on npm yet, and leaves the others alone.
 
 Usage:
-  pnpm release:prepare <package>=<version> [<package>=<version> ...]
+  pnpm release:prepare <full-npm-name>=<version> [<full-npm-name>=<version> ...]
   pnpm release [--dry-run]
   pnpm release --publish [--yes]
   pnpm release --bootstrap --version <semver> [--yes]
@@ -44,7 +44,7 @@ comes from the OIDC token, the versions must already be committed, and the
 working tree is never modified.
 
 Examples:
-  pnpm release:prepare kawapress=0.3.0 plugin-mermaid=0.2.1
+  pnpm release:prepare kawapress=0.3.0 create-kawapress=0.3.0 @kawapress/plugin-mermaid=0.2.1
   pnpm release --dry-run
   pnpm release --bootstrap --version 0.0.1
 `)

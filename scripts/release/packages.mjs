@@ -1,7 +1,7 @@
 /** Discovery of the public packages and the local version helpers. */
 
 import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { basename, join, relative } from 'node:path'
+import { join, relative } from 'node:path'
 
 import { normalizeRegistry } from './cli.mjs'
 import { defaultRegistry, rootDir, unscopedPackageNames } from './constants.mjs'
@@ -73,15 +73,15 @@ export function readVersions(packages) {
 }
 
 /**
- * Resolves the names a maintainer types (`plugin-mermaid`, `@kawapress/plugin-mermaid`,
- * `kawapress`) to packages. A name that matches nothing is an error, never a guess.
+ * Finds a package by its full npm name (`@kawapress/plugin-mermaid`, `kawapress`).
+ * Directory names and other short forms are rejected on purpose: a short name
+ * could one day match two packages, and a release must never guess.
  */
 export function findPackage(packages, name) {
-  const found = packages.find(({ manifest, directory }) =>
-    manifest.name === name || basename(directory) === name)
+  const found = packages.find(({ manifest }) => manifest.name === name)
   if (!found) {
-    const known = packages.map(({ directory }) => basename(directory)).join(', ')
-    throw new Error(`Unknown package "${name}". Known packages: ${known}`)
+    const known = packages.map(({ manifest }) => manifest.name).join(', ')
+    throw new Error(`Unknown package "${name}". Use the full npm name. Known packages: ${known}`)
   }
   return found
 }
