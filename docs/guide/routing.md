@@ -204,6 +204,8 @@ export default nagi({
 
 这意味着首次访问和构建使用相同的 SSR 语义，而后续跳转不需要整页刷新。外部链接、下载链接、带 `target` 的链接以及配合修饰键打开新标签页的操作，仍然保留浏览器原本的行为。
 
+地址栏里带有查询串或锚点时，例如 `/guide/routing?from=search#links`，静态托管仍然只按路径返回同一份 HTML，浏览器也不会把锚点发给服务器。所以 KawaPress 先按路径完成 hydration，再切换到地址栏里的完整 URL：地址栏始终是访客打开的那一条，历史记录不会多出一项，页面照常停在目标标题上。在这次切换之前，读取 `route.query` 与 `route.hash` 的代码看到的还是空值，切换之后才是真实值；需要它们参与首屏输出时，请放到 `watch` 或 `onMounted` 里读取。
+
 ## 为什么使用 Vue Router {#why-vue-router}
 
 VitePress 没有把 Vue Router 作为运行时依赖。它在客户端维护了一套专门面向文档站的[轻量路由实现](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts)，直接负责页面模块加载、浏览器历史、滚动位置和路由前后钩子。功能集中、依赖更少，也方便 VitePress 精确控制自己的页面加载流程。

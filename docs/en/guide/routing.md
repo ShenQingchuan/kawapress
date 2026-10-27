@@ -204,6 +204,8 @@ Initial request
 
 The initial request and production build therefore share SSR semantics, while later navigation avoids a full-page reload. External links, downloads, links with a `target`, and modified clicks that open a new tab keep their native browser behavior.
 
+When the address bar carries a query or an anchor, such as `/guide/routing?from=search#links`, a static host still answers with the HTML of the path alone, and browsers never send the anchor to the server. KawaPress therefore hydrates that path first and switches the router to the full URL right after: the address bar keeps what the visitor typed, no extra history entry appears, and the page still lands on the target heading. Until that switch, code that reads `route.query` or `route.hash` sees empty values; read them after hydration, for instance inside `watch` or `onMounted`, when their output has to reflect the URL.
+
 ## Why Vue Router? {#why-vue-router}
 
 VitePress does not ship Vue Router as a runtime dependency. Its client includes a [small, purpose-built router](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts) that handles page-module loading, browser history, scroll positions, and navigation hooks. This keeps the dependency surface focused and gives VitePress direct control over its page-loading pipeline.
