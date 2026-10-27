@@ -13,6 +13,7 @@ import { createMarkdownExit } from 'markdown-exit'
 import anchorPlugin from 'markdown-it-anchor'
 import { withBase } from '../core/base'
 import { resolveHeadConfig } from '../core/head'
+import { resolveHeadingTitle } from '../core/heading-title'
 import { stringifyJsonForScript } from '../core/json'
 import { markdownPagePathToRoutePath } from '../core/markdown-route'
 import { resolvePageMetadata } from '../core/page-metadata'
@@ -81,12 +82,66 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   })
   // include h1: page title inference reads it; outline rendering filters to h2+ itself
   useMarkdownItPlugin(md, headersPlugin, { level: [1, 2, 3] })
+  installHeadingTitles(md)
   installPageLinkCollector(md)
   installLinkRenderer(md, options.base ?? '/')
   installDocHeaderOutlet(md)
 
   await options.pluginRunner?.runMarkdown(md)
   return md
+}
+
+/**
+ * Replaces the title `@mdit-vue/plugin-headers` extracted with the plain text
+ * the author wrote. The plugin only sees what the inline children of a heading
+ * left behind, so the title of a heading with a formula, or with a syntax only
+ * a Markdown plugin understands, would differ from the same heading read by the
+ * page summary reader and by the search index. Both lists are joined by the
+ * heading ID, which the plugin reads from `markdown-it-anchor` either way, so
+ * slugs never change here.
+ */
+function installHeadingTitles(md: MarkdownExit): void {
+  const render = md.renderer.render.bind(md.renderer)
+
+  md.renderer.render = (tokens, options, env) => {
+    // Runs after the headers plugin wrapped the same method, so the headers of
+    // this page already exist when their titles are replaced.
+    const html = render(tokens, options, env)
+    const headers = (env as MarkdownEnv).headers
+
+    if (headers?.length) {
+      replaceHeaderTitles(headers, collectHeadingTitles(tokens))
+    }
+    return html
+  }
+}
+
+/** Plain-text title of every heading of the page, keyed by heading ID. */
+function collectHeadingTitles(tokens: readonly Token[]): Map<string, string> {
+  const titles = new Map<string, string>()
+
+  for (const [index, token] of tokens.entries()) {
+    if (token.type !== 'heading_open') {
+      continue
+    }
+    const id = token.attrGet('id')
+    const inline = tokens[index + 1]
+    if (id && inline?.type === 'inline') {
+      titles.set(id, resolveHeadingTitle(inline))
+    }
+  }
+
+  return titles
+}
+
+function replaceHeaderTitles(headers: PageHeader[], titles: Map<string, string>): void {
+  for (const header of headers) {
+    const title = titles.get(header.slug)
+    if (title !== undefined) {
+      header.title = title
+    }
+    replaceHeaderTitles(header.children, titles)
+  }
 }
 
 function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {

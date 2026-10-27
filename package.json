@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
+    "@kawapress/plugin-mathjax": "workspace:*",
     "@kawapress/plugin-shiki": "workspace:*",
     "@types/node": "catalog:dev",
     "@vitejs/plugin-vue": "catalog:node",

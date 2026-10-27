@@ -3,6 +3,7 @@ import type { PageSummary } from '../core/page-manifest'
 import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter'
 import { attrs as attrsPlugin } from '@mdit/plugin-attrs'
 import { createMarkdownExit } from 'markdown-exit'
+import { resolveHeadingTitle } from '../core/heading-title'
 import { resolvePageMetadata } from '../core/page-metadata'
 import { installJsonFrontmatterCompatibility } from './frontmatter-compat'
 import { useMarkdownItPlugin } from './markdown-it-compat'
@@ -18,9 +19,6 @@ export interface PageSummaryReader {
 interface SummaryEnv {
   frontmatter?: Record<string, unknown>
 }
-
-/** Inline token types whose content becomes part of a heading title. */
-const HEADING_TITLE_TOKEN_TYPES = new Set(['text', 'emoji', 'code_inline'])
 
 /**
  * Reads route summaries without running the Markdown pipeline, so listing the
@@ -92,23 +90,7 @@ function firstLevelOneHeading(tokens: Token[]): string | undefined {
     }
     const inline = tokens[index + 1]
     return inline?.type === 'inline'
-      ? resolveHeadingText(inline)
+      ? resolveHeadingTitle(inline)
       : undefined
   }
-}
-
-/**
- * Joins the text an author wrote: inline code, emphasis and links keep their
- * content while their markup disappears. The permalink that a rendered heading
- * carries is not part of the title.
- */
-function resolveHeadingText(token: Token): string {
-  return (token.children ?? [])
-    .filter(child =>
-      HEADING_TITLE_TOKEN_TYPES.has(child.type)
-      && !child.meta?.isPermalinkSymbol,
-    )
-    .map(child => child.content)
-    .join('')
-    .trim()
 }

@@ -12,6 +12,7 @@ import { container as containerPlugin } from '@mdit/plugin-container'
 import {
   markdownPagePathToRoutePath,
   normalizeFrontmatterSource,
+  resolveHeadingTitle,
   resolveLocaleIndex,
   resolvePageMetadata,
   stringifyJson,
@@ -308,7 +309,7 @@ export function createSearchDocuments(
     if (token.type === 'heading_open') {
       finishSection()
       const inline = tokens[index + 1]
-      const title = inline ? getInlineText(inline) : ''
+      const title = inline ? resolveHeadingTitle(inline) : ''
       const level = Number.parseInt(token.tag.slice(1), 10)
       if (!title || !Number.isInteger(level)) {
         continue
@@ -358,16 +359,12 @@ function getSearchPageHeaders(tokens: Token[]): Array<{
       continue
     }
     const level = Number.parseInt(token.tag.slice(1), 10)
-    const title = tokens[index + 1] ? getInlineText(tokens[index + 1]) : ''
+    const title = tokens[index + 1] ? resolveHeadingTitle(tokens[index + 1]) : ''
     if (title && Number.isInteger(level)) {
       headers.push({ level, title })
     }
   }
   return headers
-}
-
-function getInlineText(token: Token): string {
-  return normalizeText(getInlineRawText(token))
 }
 
 function getInlineRawText(token: Token): string {
@@ -413,7 +410,7 @@ function getInlineSourceText(
   const inline = markdown.parseInline(source, {
     references: env.references,
   })[0]
-  return inline ? getInlineText(inline) : ''
+  return inline ? normalizeText(getInlineRawText(inline)) : ''
 }
 
 function resolveGitHubAlertLabels(
