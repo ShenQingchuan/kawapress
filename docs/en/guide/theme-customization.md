@@ -409,7 +409,7 @@ The default tokens use `light-dark()`, and `color-scheme: light dark` is declare
 | `--kawa-radius` | Default control radius |
 | `--kawa-shadow-overlay` | Shadow for floating surfaces |
 
-To restyle a token, redeclare it; there is no need to copy plugin styles:
+To restyle a token, redeclare it; there is no need to copy plugin styles. A `light-dark()` value works as written: the build keeps it unchanged, so the rule does not need its own `color-scheme`:
 
 ```css
 @layer kawa.theme {

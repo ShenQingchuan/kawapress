@@ -4,8 +4,6 @@
  */
 @layer kawa.theme {
   :root {
-    /* The token uses `light-dark()`, so the scheme is declared next to it. */
-    color-scheme: light dark;
     --kawa-c-brand: light-dark(#b3005c, #ff8ab8);
     --kawa-radius: 10px;
   }

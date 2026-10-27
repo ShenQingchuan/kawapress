@@ -71,6 +71,10 @@ KawaPress generates a separate HTML file for every page. For example, `/guide/ro
 - Return `dist/404.html` when no page exists.
 - Do not send every unknown path to `index.html`; KawaPress is not a single-entry SPA build.
 
+## Supported Browsers {#supported-browsers}
+
+Site styles use the CSS `light-dark()` function for both the light and the dark appearance, so readers need a browser released in May 2024 or later: Chrome and Edge 123, Firefox 120, Safari 17.5, or newer. Older browsers still open pages and show the text, but some colors may be missing.
+
 ## Configure Caching {#configure-caching}
 
 Generated assets use content-hashed filenames and can be cached for a long time:

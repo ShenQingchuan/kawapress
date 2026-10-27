@@ -409,7 +409,7 @@ nagi 的做法可以参考：它的 Generator Plugin 扫描一遍 Markdown 源�
 | `--kawa-radius` | 控件默认圆角 |
 | `--kawa-shadow-overlay` | 浮层阴影 |
 
-主题覆盖 Token 时只需要重写变量，不用复制插件样式：
+主题覆盖 Token 时只需要重写变量，不用复制插件样式。值可以直接写成 `light-dark()`，构建时会原样保留，不需要在同一处再声明 `color-scheme`：
 
 ```css
 @layer kawa.theme {

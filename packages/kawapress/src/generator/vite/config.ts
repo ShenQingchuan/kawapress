@@ -35,6 +35,17 @@ const CORE_RUNTIME_DEPENDENCIES = ['@unhead/vue', '@unhead/vue/client']
  */
 const VUE_DEPENDENCY = 'vue'
 
+/**
+ * Oldest browsers the shipped CSS is written for: the first releases with
+ * `light-dark()` (Chrome and Edge 123, Firefox 120, Safari 17.5). Every token,
+ * plugin and theme colour is a `light-dark()` value, so the minifier must leave
+ * it as written. With an older target lightningcss rewrites `light-dark()` inside
+ * a custom property into helper variables that only exist on rules declaring
+ * `color-scheme`, and a theme that overrides a token without one silently loses
+ * the colour in production. JavaScript keeps Vite's default target.
+ */
+export const CSS_TARGET = ['chrome123', 'edge123', 'firefox120', 'safari17.5', 'ios17.5']
+
 export interface CreateBaseViteConfigOptions {
   /** Reuse a page loader created by the caller, for example to read its link registry. */
   pageLoader?: MarkdownPageLoader
@@ -52,6 +63,9 @@ export function createBaseViteConfig(
     publicDir: resolve(root, siteConfig.srcDir, siteConfig.publicDir),
     clearScreen: false,
     appType: 'custom',
+    build: {
+      cssTarget: CSS_TARGET,
+    },
     ...createDefineOverrides(),
     resolve: {
       alias: resolveVueAliases(root),
