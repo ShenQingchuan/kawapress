@@ -1,4 +1,4 @@
-/** npm trusted publisher configuration commands. */
+/** npm trusted publisher configuration: read what npm has, then make it match the repository. */
 
 import { setTimeout as delay } from 'node:timers/promises'
 
@@ -7,18 +7,26 @@ import { logStep, logSuccess, run } from './runtime.mjs'
 
 export const TRUST_COMMAND_PAUSE_MS = 2_000
 
-/** CLI arguments (without the `npm` binary) that attach a trusted publisher to one package. */
+/** The one trusted publisher every package must have. */
+export const desiredTrust = {
+  environment: publishEnvironment,
+  file: publishWorkflowFile,
+  repository: publishRepository,
+  type: 'github',
+}
+
+/** CLI arguments (without the `npm` binary) that attach the trusted publisher to one package. */
 export function buildTrustArguments(name) {
   return [
     'trust',
     'github',
     name,
     '--file',
-    publishWorkflowFile,
+    desiredTrust.file,
     '--repository',
-    publishRepository,
+    desiredTrust.repository,
     '--environment',
-    publishEnvironment,
+    desiredTrust.environment,
     '--allow-publish',
     '-y',
   ]
@@ -30,34 +38,88 @@ export function formatTrustCommand(name) {
 }
 
 export function printTrustCommands(names) {
-  logStep(`npm trusted publisher commands for ${names.length} package(s)`)
-  console.log('Run these once from a logged-in terminal, in this order, with a pause between')
-  console.log('each call; npm asks for two-factor authentication in the browser only once.')
-  console.log('')
-  console.log(names.map(formatTrustCommand).join('\n'))
-  console.log('')
-  console.log('Or let the helper do it: pnpm release:trust --apply')
+  logStep(`Trusted publisher for ${names.length} package(s)`)
+  console.log('Let the helper configure all of them, and replace any stale configuration:')
+  console.log('  pnpm release:trust --apply')
 }
 
 /**
- * Runs `npm trust github` for every package. Dry-run by default: it passes
- * `--dry-run` to npm, which validates the config against the registry without 2FA.
+ * `npm trust list --json` prints one flat JSON object per configuration, one after
+ * the other. Returns them as an array; an empty output means no configuration.
  */
-export async function runTrustCommands(names, options = {}) {
+export function parseTrustList(output) {
+  return (output.match(/\{[^{}]*\}/g) ?? []).map(item => JSON.parse(item))
+}
+
+/** True when an existing configuration is exactly the one we want, publish permission included. */
+export function isDesiredTrust(config) {
+  return config.type === desiredTrust.type
+    && config.repository === desiredTrust.repository
+    && config.file === desiredTrust.file
+    && config.environment === desiredTrust.environment
+    && Array.isArray(config.permissions)
+    && config.permissions.includes('createPackage')
+}
+
+/**
+ * Decides what to do for one package: nothing when the right configuration is there,
+ * otherwise revoke every other configuration and create the right one. npm accepts one
+ * configuration at a time, so a stale one has to go first.
+ */
+export function planTrustChange(existing) {
+  const hasDesired = existing.some(isDesiredTrust)
+  return {
+    create: !hasDesired,
+    revoke: existing.filter(config => !isDesiredTrust(config) && config.id).map(config => config.id),
+  }
+}
+
+async function readTrust(name, registry) {
+  const args = ['trust', 'list', name, '--json']
+  if (registry)
+    args.push(`--registry=${registry}`)
+  const result = await run('npm', args, { interactive: true })
+  return parseTrustList(result.stdout)
+}
+
+/**
+ * Brings every package's trusted publisher in line with `desiredTrust`. Without `apply`
+ * it only reports what would change. Reading needs npm's two-factor prompt in the browser,
+ * so run it from a terminal; npm remembers the answer for a few minutes.
+ */
+export async function syncTrust(names, options = {}) {
   const { apply = false, registry, pauseMs = TRUST_COMMAND_PAUSE_MS } = options
-  logStep(apply ? 'Configuring npm trusted publishers' : 'Checking npm trusted publisher commands (dry run)')
+  logStep(`${apply ? 'Configuring' : 'Checking'} npm trusted publishers for ${desiredTrust.repository}`)
 
+  let changed = 0
   for (const [index, name] of names.entries()) {
-    const args = buildTrustArguments(name)
-    if (!apply)
-      args.push('--dry-run')
-    if (registry)
-      args.push(`--registry=${registry}`)
+    const plan = planTrustChange(await readTrust(name, registry))
 
-    await run('npm', args)
-    logSuccess(`${name}${apply ? '' : ' (dry run)'}`)
+    if (!plan.create && plan.revoke.length === 0) {
+      logSuccess(`${name} (already correct)`)
+    }
+    else {
+      changed += 1
+      const steps = [...plan.revoke.map(id => `revoke ${id}`), ...(plan.create ? ['create'] : [])]
+      if (!apply) {
+        console.log(`! ${name}: would ${steps.join(', then ')}`)
+      }
+      else {
+        for (const id of plan.revoke) {
+          await run('npm', ['trust', 'revoke', name, `--id=${id}`, ...(registry ? [`--registry=${registry}`] : [])])
+          await delay(pauseMs)
+        }
+        if (plan.create)
+          await run('npm', [...buildTrustArguments(name), ...(registry ? [`--registry=${registry}`] : [])])
+        logSuccess(`${name} (${steps.join(', then ')})`)
+      }
+    }
 
     if (index < names.length - 1)
       await delay(pauseMs)
   }
+
+  console.log(changed === 0
+    ? '\nEvery package already trusts this repository.'
+    : apply ? `\nUpdated ${changed} package(s).` : `\n${changed} package(s) need an update. Run again with --apply.`)
 }

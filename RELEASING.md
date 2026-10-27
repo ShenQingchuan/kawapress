@@ -43,7 +43,7 @@ npm login                      # 需要是 @kawapress 组织成员、kawapress �
 pnpm release --bootstrap --version 0.0.1
 ```
 
-`--bootstrap` 只发布「npm 上还查不到」的包，已经存在的包一律跳过。包内容走同一套暂存目录和 tarball 校验，发完会把全部包的 `npm trust github` 命令打印出来。
+`--bootstrap` 只发布「npm 上还查不到」的包，已经存在的包一律跳过。包内容走同一套暂存目录和 tarball 校验，发完会提示你接着跑 `pnpm release:trust --apply`。
 
 **占位版本固定用 `0.0.1`，不要用要正式发布的版本号。**
 
@@ -54,27 +54,28 @@ pnpm release --bootstrap --version 0.0.1
 
 `--bootstrap` 会跳过 lint/typecheck/test/构建（这一步只是占坑，内容马上会被正式版本覆盖），但 tarball 校验一样跑。
 
-### 4. 给新包配置 trusted publisher
+### 4. 配置 trusted publisher
 
-`pnpm release:trust --apply` 会对**全部公开包**依次执行下面的命令。已经配置过的包再配一次是重复操作，所以只给刚占位的新包配时，直接手工跑那几条即可（用 `pnpm release:trust` 打印出来复制）。
-
-```sh
-pnpm release:trust --apply
-```
-
-它会依次执行（每条之间停 2 秒）：
+一条命令搞定全部包，重复跑是安全的：
 
 ```sh
-npm trust github <包名> --file release.yml --repository ShenQingchuan/kawapress --environment npm --allow-publish -y
+pnpm release:trust            # 只汇报：哪些包要改，不动任何东西
+pnpm release:trust --apply    # 真正让每个包都信任当前仓库的 release.yml
 ```
 
-想手工逐条跑也行，`pnpm release:trust`（不带 `--apply`）会把 17 条命令打印出来，而且真的用 `npm trust github ... --dry-run` 校验了一遍，不登录也能跑。
+它先读每个包在 npm 上现有的配置，再决定怎么做：
+
+- 已经是正确配置（仓库、`release.yml`、`npm` 环境、发布权限都对）的包，不碰。
+- 没有配置的包，新建。
+- 配置过期的包（比如仓库换了所有者，指向旧仓库），先撤销旧的，再新建。
+
+npm 要求这类账号级操作必须做两步验证，这一步脚本无法代劳：第一次读取时 npm 会在终端里给一个链接，在浏览器里点一下确认，之后 5 分钟内的全部调用都免验证。所以**需要你在终端前点一次**。
 
 几个容易踩的点：
 
-- **每个包单独配一次**，共 17 次。第一次会弹浏览器做 2FA，之后 5 分钟内不用重复。
-- 配好之后 **2 天内必须完成第一次通过 CI 的成功发布**，否则这条 trust 配置会被 npm 自动清掉，只能重配。所以第 3、4 步做完就尽快发带真实内容的第一个版本（例如 `0.1.0`）。
-- 想检查现状：`npm trust list <包名>`。想撤销：`npm trust revoke <包名> --id=<trust-id>`。
+- 配好之后 **2 天内必须完成第一次通过 CI 的成功发布**，否则这条 trust 配置会被 npm 自动清掉，需要再跑一次 `pnpm release:trust --apply`。
+- 仓库改名或转移所有者之后，所有包都要再跑一次（配置里记的是旧仓库）。
+- 手工检查：`npm trust list <包名>`。
 
 ### 5. 第一次 CI 发布成功之后，关掉 token 发布
 
@@ -181,4 +182,4 @@ pnpm release --publish     # 会要求手输 publish 确认
 | `scripts/release/ci.mjs` | CI 模式判定：tag / 版本 / HEAD 校验，缺包报错文案 |
 | `scripts/release/pack.mjs` | 暂存目录、打包、tarball 校验 |
 | `scripts/release/registry.mjs` | 已发布内容、dist-tag、缺包检查 |
-| `scripts/trust-publishers.mjs` | `pnpm release:trust`，批量配置 trusted publisher |
+| `scripts/trust-publishers.mjs` | `pnpm release:trust`，读取并校准全部包的 trusted publisher |

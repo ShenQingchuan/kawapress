@@ -29,23 +29,28 @@ export function run(command, args, options = {}) {
     capture = false,
     cwd = rootDir,
     env = process.env,
+    interactive = false,
   } = options
 
   return new Promise((resolvePromise, rejectPromise) => {
     const child = spawn(command, args, {
       cwd,
       env,
-      stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+      // `interactive` captures stdout only: the command may still ask the person at the
+      // terminal for something, such as npm's two-factor prompt.
+      stdio: interactive ? ['inherit', 'pipe', 'inherit'] : capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
     })
     let stderr = ''
     let stdout = ''
 
-    if (capture) {
+    if (capture || interactive) {
       child.stdout.setEncoding('utf8')
-      child.stderr.setEncoding('utf8')
       child.stdout.on('data', (chunk) => {
         stdout += chunk
       })
+    }
+    if (capture) {
+      child.stderr.setEncoding('utf8')
       child.stderr.on('data', (chunk) => {
         stderr += chunk
       })

@@ -2,21 +2,23 @@
 // @env node
 
 /**
- * Attaches the `release.yml` workflow as a trusted publisher to every public package.
- * Dry-run by default; pass `--apply` to talk to npm for real (needs `npm login`).
+ * Makes every public package trust the `release.yml` workflow of this repository.
+ * It reads the current npm configuration first, so a rerun is safe and a stale
+ * configuration, such as one for the repository's old owner, is replaced.
+ * Without `--apply` it only reports. It needs `npm login` and a terminal for npm's 2FA prompt.
  */
 
 import process from 'node:process'
 
 import { discoverPackages } from './release/packages.mjs'
-import { runTrustCommands } from './release/trust.mjs'
+import { syncTrust } from './release/trust.mjs'
 
 function printUsage() {
   console.log(`Configure npm trusted publishers
 
 Usage:
-  pnpm release:trust            # print the commands npm would run, no changes
-  pnpm release:trust --apply    # create the trusted publisher for every package
+  pnpm release:trust            # report what would change, no changes
+  pnpm release:trust --apply    # make every package trust this repository
 `)
 }
 
@@ -33,7 +35,7 @@ async function main() {
 
   const packages = await discoverPackages()
   const names = packages.map(packageInfo => packageInfo.manifest.name)
-  await runTrustCommands(names, { apply: argv.includes('--apply') })
+  await syncTrust(names, { apply: argv.includes('--apply') })
 }
 
 main().catch((error) => {
