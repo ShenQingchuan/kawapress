@@ -1,6 +1,6 @@
 # 发布 KawaPress
 
-KawaPress 的 17 个公开包永远同一个版本号，由 `scripts/release.mjs` 一起打包、校验、按依赖顺序发布。
+KawaPress 的 17 个公开包共用同一个版本号，由 `scripts/release.mjs` 一起打包、校验、按依赖顺序发布。npm 上已经有这个版本号的包会被跳过，所以新增的包可以用已发过的版本号单独首发。
 
 真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `ShenQingchuan/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。推送 `v*` tag 之后全程自动，不需要人工介入。
 
@@ -120,6 +120,21 @@ open https://www.npmjs.com/package/kawapress/v/0.1.0   # 页面上有 provenance
 - `publish`：`verify` 通过后自动启动，跑在 `npm` 环境里，同一个 tag、同一套校验，真实发布。
 
 tag 和版本的对应关系写死在工作流里：tag 必须是 `v<包版本>`，而且必须指向这次提交，否则一开场就会失败。
+
+### 版本号已经在 npm 上时
+
+脚本对每个包按 npm 上的情况分四种处理：
+
+| npm 上的情况 | 处理 |
+| --- | --- |
+| 没有这个版本 | 发布 |
+| 有，且 tarball 内容一致 | 续跑，只核对 dist-tag |
+| 有，但内容不一致 | **跳过**，打印警告，不碰它的 dist-tag |
+| 标签已指向该版本，元数据还没同步 | 等待元数据 |
+
+"内容不一致"不等于源码有改动：同样的源码在不同机器上打出的 tarball 不一定逐字节相同。想把某个包的新源码发出去，必须升版本号。
+
+这条规则让新增的包可以用已发过的版本号首发。例如其余包都是 `0.1.0` 时，新包直接发 `0.1.0`，其它包全部跳过。
 
 ### 版本号怎么选
 
