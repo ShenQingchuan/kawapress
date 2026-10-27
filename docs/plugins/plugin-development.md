@@ -28,13 +28,60 @@ description: 按扩展位置编写 KawaPress 插件，使用生成侧与运行�
 
 一个能力可以使用表中的多个位置，但应该作为一个插件包交付。
 
-## 创建 Generator Plugin {#create-a-generator-plugin}
+## 完整的包结构 {#package-layout}
 
-Generator Plugin 使用 `definePlugin()` 创建。`name` 是插件的稳定身份，应与 npm 包名一致。`setup()` 接收 `api`，只需要注册真正用到的方法。
+一个 KawaPress 插件通常作为一个标准的 npm 包交付。如果它同时需要参与构建和在浏览器运行，建议使用以下目录结构：
 
-习惯上，插件导出一个工厂函数，让使用者可以传入选项：
+```text
+@acme/kawapress-plugin-notes
+├─ package.json
+└─ src
+   ├─ index.ts           默认入口：Generator Plugin（生成侧）
+   ├─ runtime-plugin.ts  运行入口：Runtime Plugin（运行侧）
+   └─ NotesBadge.vue     组件与样式等资源
+```
+
+在 `package.json` 中公开这两个入口：
+
+```json
+{
+  "name": "@acme/kawapress-plugin-notes",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./runtime-plugin": {
+      "types": "./src/runtime-plugin.ts",
+      "import": "./src/runtime-plugin.ts",
+      "default": "./src/runtime-plugin.ts"
+    }
+  },
+  "files": [
+    "src/**/!(*.test.*)"
+  ],
+  "peerDependencies": {
+    "kawapress": "^0.0.1"
+  }
+}
+```
+
+> **提示**：如果插件纯粹参与构建过程（例如仅处理 Markdown 语法或构建钩子），无需在浏览器运行，可以省去 `./runtime-plugin` 入口和 `runtime-plugin.ts`。
+
+## 生成侧插件（Generator Plugin） {#generator-plugin}
+
+Generator Plugin 运行在 Node.js 构建期，负责处理构建过程中的配置、Markdown 编译、页面元数据以及静态资源产物。它使用 `definePlugin()` 创建。`name` 是插件的稳定身份，应与 npm 包名一致。
+
+### 定义生成侧插件 {#defining-generator-plugin}
+
+插件通常导出一个工厂函数，让使用者传入选项并在内部闭包使用：
 
 ```ts
+// src/index.ts
 import { definePlugin } from 'kawapress'
 
 export interface NotesPluginOptions {
@@ -48,6 +95,7 @@ export function notesPlugin(options: NotesPluginOptions = {}) {
   return definePlugin({
     name: '@acme/kawapress-plugin-notes',
     setup(api) {
+      // 所有的生成侧 API (api.config, api.markdown, api.pageData 等) 都在这里调用
       api.pageData((pageData) => {
         pageData.description ??= `${prefix}${pageData.title}`
       })
@@ -58,7 +106,7 @@ export function notesPlugin(options: NotesPluginOptions = {}) {
 export default notesPlugin
 ```
 
-把插件加入站点：
+把插件加入站点配置（`kawapress.config.ts`）：
 
 ```ts
 import notesPlugin from '@acme/kawapress-plugin-notes'
@@ -71,17 +119,52 @@ export default defineConfig({
 })
 ```
 
-工厂函数负责校验并整理选项。`setup()` 中只使用整理好的值，不再重复读取原始选项。
+工厂函数负责校验并整理选项，`setup(api)` 中只使用整理好的值。
 
-## 生成侧 API {#generator-api}
+### 生成侧 API 总览 {#generator-api}
 
-六个生成侧方法都在 `setup(api)` 中注册。handler 可以是同步函数，也可以是异步函数。同一类 handler 按插件在 `plugins` 中的顺序串行执行。
+生成侧提供六个方法，均在 `definePlugin` 的 `setup(api)` 中调用。同一个插件内可以按需调用一个或多个方法；多个插件按在 `plugins` 数组中的顺序串行执行。
+
+一个典型的生成侧插件完整骨架如下：
+
+```ts
+// src/index.ts
+import { definePlugin } from 'kawapress'
+
+export default function myGeneratorPlugin() {
+  return definePlugin({
+    name: '@acme/kawapress-plugin-notes',
+    setup(api) {
+      // 1. 修改或读取站点配置
+      api.config((config) => { /* ... */ })
+
+      // 2. 扩展 Markdown 解析器
+      api.markdown((markdown) => { /* ... */ })
+
+      // 3. 增强页面元数据
+      api.pageData((pageData, { file, sourcePath }) => { /* ... */ })
+
+      // 4. 监听每个页面的产物
+      api.pageArtifact((pageArtifact) => { /* ... */ })
+
+      // 5. 注入 Vite 插件或选项
+      api.vite((vite) => { /* ... */ })
+
+      // 6. 整站构建完成后生成额外静态文件
+      api.buildArtifacts(async (context) => { /* ... */ })
+    },
+  })
+}
+```
+
+下面逐一介绍每个方法的具体用途。
 
 ### `api.config()` {#config}
 
-`config()` 在站点配置归一化后调用。handler 接收真实的站点配置对象，可以直接修改。
+`config()` 在站点配置归一化后调用。handler 接收真实的站点配置对象，可以直接读取或修改配置。
 
 ```ts
+// 在 setup(api) 中：
 api.config((config) => {
   config.title ??= 'My Docs'
 })
@@ -94,6 +177,7 @@ api.config((config) => {
 `markdown()` 在 Markdown 编译器创建时调用，handler 接收真实的 `MarkdownExit` 实例。
 
 ```ts
+// 在 setup(api) 中：
 import { useMarkdownItPlugin } from 'kawapress'
 import { notePlugin } from 'markdown-it-example-note'
 
@@ -105,6 +189,7 @@ api.markdown((markdown) => {
 如果 markdown-it 插件的类型与 KawaPress 不完全匹配，请使用 `useMarkdownItPlugin()`。它保留插件的参数类型，并集中处理类型兼容：
 
 ```ts
+// 在 setup(api) 中：
 api.markdown((markdown) => {
   useMarkdownItPlugin(markdown, notePlugin, { className: 'acme-note' })
 })
@@ -115,6 +200,7 @@ api.markdown((markdown) => {
 有些插件会输出自己的组件，比如图表或可交互的示例。用 `addPageComponent()` 告诉 KawaPress“这一页用到了某个组件”，它会把对应的导入写进当前页面的 SFC，Vue 就能在模板里认出这个标签：
 
 ```ts
+// 在 setup(api) 中：
 import { addPageComponent } from 'kawapress'
 
 api.markdown((markdown) => {
@@ -138,6 +224,7 @@ api.markdown((markdown) => {
 `pageData()` 在每个页面的 `pageData` 生成之后调用。handler 接收当前页面的可修改数据：
 
 ```ts
+// 在 setup(api) 中：
 api.pageData((pageData) => {
   pageData.description ??= `${pageData.title} 的笔记`
 })
@@ -146,6 +233,7 @@ api.pageData((pageData) => {
 `pageData` 会被序列化给运行时使用，因此它只能包含 JSON 可表示的值：文字、数字、布尔值、`null`、数组和普通对象。`Date`、`Map`、函数和类实例都不能直接写入。例如，下面的写法会让构建失败：
 
 ```ts
+// 在 setup(api) 中：
 api.pageData((pageData) => {
   pageData.frontmatter.reviewedAt = new Date('2026-10-08')
 })
@@ -156,6 +244,7 @@ api.pageData((pageData) => {
 handler 的第二个参数告诉你当前页面来自哪个文件：`file` 是 Markdown 源文件的绝对路径，`sourcePath` 是相对 `srcDir` 的路径，例如 `/guide/intro.md`。需要读取文件信息（比如 git 提交时间）时使用它，不要从路由反推文件名，因为 `/guide` 既可能来自 `guide.md`，也可能来自 `guide/index.md`。
 
 ```ts
+// 在 setup(api) 中：
 api.pageData((pageData, { file, sourcePath }) => {
   pageData.frontmatter.source = sourcePath
 })
@@ -212,6 +301,7 @@ page.value?.lastUpdated // number | undefined，不需要写 as
 `pageArtifact()` 在一个页面完成 Markdown 编译和全部 `pageData()` 之后调用。handler 只能读取结果，不能修改页面的源文件、数据或路由。
 
 ```ts
+// 在 setup(api) 中：
 const sourcePaths = new Map<string, string>()
 
 api.pageArtifact((artifact) => {
@@ -226,6 +316,7 @@ api.pageArtifact((artifact) => {
 `vite()` 在 Vite 配置完成基础组装后调用。handler 接收完整的 `UserConfig`，可以直接修改。
 
 ```ts
+// 在 setup(api) 中：
 import { someVitePlugin } from 'some-vite-plugin'
 
 api.vite((config) => {
@@ -241,6 +332,7 @@ KawaPress 会在创建 Vite 之前校验维持渲染所需的基本条件。插�
 运行侧代码 `import` 了某个包，就要在 `vite()` 里用 `useRuntimeDependencies()` 声明它。开发服务器会先把这些包准备好，否则第一次访问用到它们的页面时，Vite 会边加载边发现新依赖，然后把整页刷新一次；服务端渲染也会把它们一起打包，不会另外加载一份 Vue。
 
 ```ts
+// 在 setup(api) 中：
 import { useRuntimeDependencies } from 'kawapress/generator'
 
 api.vite((config) => {
@@ -255,6 +347,7 @@ api.vite((config) => {
 `buildArtifacts()` 只在 `kawapress build` 中执行。它发生在全部 Vite 构建完成之后、HTML 预渲染之前。handler 接收全部页面和一个 `emitFile()` 函数：
 
 ```ts
+// 在 setup(api) 中：
 api.buildArtifacts(async ({ pages, emitFile }) => {
   const routes = pages.map(page => page.routePath)
   await emitFile('notes/routes.json', `${JSON.stringify(routes, null, 2)}\n`)
@@ -268,6 +361,7 @@ api.buildArtifacts(async ({ pages, emitFile }) => {
 多语言站点的插件往往要给不同语言不同的文案或文件。判断一个路由属于哪种语言时，别自己拆路径，用 `resolveLocaleIndex()`：
 
 ```ts
+// 在 setup(api) 中：
 import { resolveLocaleIndex, useMarkdownItPlugin } from 'kawapress'
 
 const LABELS: Record<string, string> = {
@@ -343,11 +437,29 @@ const { title, layout } = reader.read(source, page.file)
 
 开发服务器把改动的文件报成绝对路径，判断它是不是页面用 `isMarkdownPage()`，换回路由路径用 `markdownFileToRoutePath()`。
 
-## 运行侧 API {#runtime-api}
+## 运行侧插件（Runtime Plugin） {#runtime-plugin}
 
-Runtime Plugin 在网站运行时工作，它的代码会进入站点的 Vite 模块图，所以可以静态导入 `.vue`、CSS 和普通 Vue 插件。
+Runtime Plugin 在网站运行时工作，它的代码会被打包进入站点的客户端/SSR Vite 模块图，因此可以静态导入 `.vue` 组件、CSS 样式和常规 Vue 插件。
 
-它与 Generator Plugin 放在同一个包中，并通过 `./runtime-plugin` 入口公开。它的 `name` 同样应与包名一致。
+它与 Generator Plugin 处于同一个 npm 包中，并通过 `./runtime-plugin` 入口导出。它的 `name` 同样必须与包名一致。
+
+### 定义运行侧插件 {#defining-runtime-plugin}
+
+运行侧插件使用 `defineRuntimePlugin()` 定义。所有的运行侧扩展逻辑在 `setup(api)` 中执行：
+
+```ts
+// src/runtime-plugin.ts
+import { defineRuntimePlugin } from 'kawapress'
+
+export default defineRuntimePlugin({
+  name: '@acme/kawapress-plugin-notes',
+  setup(api) {
+    // 所有的运行侧 API (api.vueApp, api.addToOutlet, api.router) 都在这里调用
+  },
+})
+```
+
+下面逐一介绍运行侧提供的具体能力。
 
 ### `api.vueApp()` {#vue-app}
 
@@ -372,7 +484,12 @@ export default defineRuntimePlugin({
 
 ### `api.addToOutlet()` {#add-to-outlet}
 
-`addToOutlet()` 把一个组件放进主题提供的某个固定位置。导航栏按钮、复制按钮、评论区这类界面，属于页面框架的某个位置，而不属于 Markdown 正文。这类界面应该通过 Outlet 交给主题：
+`addToOutlet()` 用于把插件的界面挂进主题预留的位置。
+
+搜索按钮、文档复制按钮、评论区这些界面，属于页面框架的一部分，而不是写在 Markdown 正文里的内容。插件和主题彼此不需要直接引用，而是通过 **Outlet（插座）** 机制协作：
+
+1. **主题负责留位置**：主题在模板的合适位置放上 `<KawaOutlet name="..." />`。
+2. **插件负责送组件**：插件在 Runtime Plugin 中调用 `api.addToOutlet()`，把自己的组件插进去。
 
 ```ts
 // src/runtime-plugin.ts
@@ -390,25 +507,25 @@ export default defineRuntimePlugin({
 })
 ```
 
-主题只需在合适的位置写 `<KawaOutlet name="doc.header" />`，不需要知道这个插件的存在。
+#### 标准 Outlet 位置
 
-首版有四个 Outlet：
+KawaPress 约定了四个标准 Outlet：
 
-| Outlet | 渲染方 | 适合放什么 |
-| --- | --- | --- |
-| `header.actions` | 主题 | 搜索按钮、仓库链接等顶栏操作 |
-| `doc.header` | KawaPress（Markdown 首个 H1 之后） | 复制页面、页面工具 |
-| `doc.footer` | 主题 | 最后更新时间、编辑此页链接 |
-| `doc.after` | 主题 | 评论区、反馈表单 |
+| Outlet | 谁来放置插座 | 页面位置与用途 | 常见内容 |
+| --- | --- | --- | --- |
+| `header.actions` | 主题 | 页面顶部导航栏的操作区域 | 搜索按钮、GitHub 链接、暗色模式切换 |
+| `doc.header` | KawaPress 自动放置 | 正文第一个 `<h1>` 标题正下方（仅正文含 H1 时出现） | 复制正文按钮、阅读时间、页面工具栏 |
+| `doc.footer` | 主题 | 正文末尾与页脚之间的信息区 | 最后更新时间、编辑此页链接 |
+| `doc.after` | 主题 | 整个正文区下方 | 评论区、反馈表单、上一篇/下一篇导航 |
 
-规则很简单：
+> **提示**：除了 `doc.header` 由框架自动挂载到文章首个标题后，其余三个 Outlet 均由主题模板自由决定放在具体 DOM 结构的什么位置。
 
-- `id` 在同一个插件内必须唯一。完整标识是 `<插件名>:<id>`，插件名由 KawaPress 自动补上，插件无法伪造。
-- 渲染顺序先按插件在 `plugins` 数组中的顺序，再按同一个插件内调用 `addToOutlet()` 的先后顺序。不提供数字权重或相对位置设置。
-- 名字写错、`id` 为空、同一个插件里 `id` 重复，都会直接报错，错误信息会带插件名。
-- 全站都没有页面渲染你使用的 Outlet 时，`kawapress build` 会按插件名给出警告。看到警告时，先确认主题是否支持这个 Outlet。
+#### 插入规则与注意事项
 
-如果插件既会显示自己的界面，又希望主题可以完全接管，可以另外导出一个组合式函数（例如 `useCopyPage()`），主题就能用自己的组件套用同一套逻辑，然后在 Slot 中过滤掉默认组件。
+- **命名空间与 ID**：同一个插件内 `id` 必须唯一。KawaPress 会自动拼装为 `<插件名>:<id>`，防止多个插件冲突。
+- **渲染顺序**：先按 `kawapress.config.ts` 中 `plugins` 数组的插件顺序排列；同一个插件内多次调用 `addToOutlet()` 时，按调用先后顺序排列。不提供权重配置。
+- **校验与告警**：Outlet 名字写错、`id` 为空或插件内重复均会直接报错。如果插件向某个 Outlet 注册了组件，但当前使用的主题完全没有渲染该 Outlet，在 `kawapress build` 时会收到警告提示。
+- **提供纯逻辑支持**：如果插件希望主题能够完全定制这块 UI，建议同时导出一个 Composable（例如 `useCopyPage()`）。这样主题既可以直接用 Outlet 显示默认界面，也可以选择自行调用 Composable 重新实现组件。
 
 ### 插件样式包进 `kawa.plugin` 层 {#plugin-styles}
 
@@ -435,23 +552,25 @@ export default defineRuntimePlugin({
 `router()` 接收 KawaPress 的站内 `Router`，名字与用法和 Vue Router 相同的部分保持相同。它适合添加导航守卫：`beforeEach()` 返回 `false` 就取消这次跳转；插件想换一个地址时，自己调用 `router.push()`。
 
 ```ts
-api.router((router) => {
-  router.beforeEach((to) => {
-    // 例如：草稿页只在本地开发时可访问
-    if (to.path === '/notes/draft' && import.meta.env.PROD) {
-      return false
-    }
-  })
-})
-```
+// src/runtime-plugin.ts
+import { defineRuntimePlugin } from 'kawapress'
 
-`afterEach()` 在跳转提交后执行，适合清理与上一页有关的状态：
+export default defineRuntimePlugin({
+  name: '@acme/kawapress-plugin-notes',
+  setup(api) {
+    api.router((router) => {
+      router.beforeEach((to) => {
+        // 例如：草稿页只在本地开发时可访问
+        if (to.path === '/notes/draft' && import.meta.env.PROD) {
+          return false
+        }
+      })
 
-```ts
-api.router((router) => {
-  router.afterEach(() => {
-    closeDialog()
-  })
+      router.afterEach(() => {
+        // 例如：在跳转后关闭弹窗或重置状态
+      })
+    })
+  },
 })
 ```
 
@@ -462,50 +581,6 @@ api.router((router) => {
 Runtime Plugin 会为每个 Vue App 执行一次。服务端渲染时，每次渲染都会创建新的 App；浏览器中则在启动时创建一次。因此，不要在模块顶层保存只属于某次渲染的状态。
 
 另外，Runtime Plugin 同时在服务端和浏览器中运行。访问 `window`、`document` 等浏览器对象前，请先阅读 [SSR 兼容性](/guide/ssr-compatibility)。
-
-## 完整的包结构 {#package-layout}
-
-一个包含两个运行入口的插件，通常这样组织：
-
-```text
-@acme/kawapress-plugin-notes
-├─ package.json
-└─ src
-   ├─ index.ts           默认入口：Generator Plugin
-   ├─ runtime-plugin.ts  运行入口：Runtime Plugin
-   └─ NotesBadge.vue
-```
-
-`package.json` 需要公开两个入口，并只把源码交给 npm：
-
-```json
-{
-  "name": "@acme/kawapress-plugin-notes",
-  "type": "module",
-  "version": "0.1.0",
-  "license": "MIT",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./runtime-plugin": {
-      "types": "./src/runtime-plugin.ts",
-      "import": "./src/runtime-plugin.ts",
-      "default": "./src/runtime-plugin.ts"
-    }
-  },
-  "files": [
-    "src/**/!(*.test.*)"
-  ],
-  "peerDependencies": {
-    "kawapress": "^0.0.1"
-  }
-}
-```
-
-如果插件只参与构建，就删除 `./runtime-plugin` 入口和 `runtime-plugin.ts`。
 
 ## 发布前检查 {#publish-checklist}
 

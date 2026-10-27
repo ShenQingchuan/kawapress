@@ -28,13 +28,60 @@ Before writing an extension, ask where the work happens:
 
 One feature may use several entries in this table, but it should still ship as one plugin package.
 
-## Create a Generator Plugin {#create-a-generator-plugin}
+## Complete Package Layout {#package-layout}
 
-A Generator Plugin is created with `definePlugin()`. Its `name` is the stable identity of the plugin and should match the npm package name. `setup()` receives `api`, and you should register only the methods you actually use.
+A KawaPress plugin ships as a standard npm package. If it needs both build-time hooks and browser-side code, use the following layout:
 
-By convention, a plugin exports a factory function so that users can pass options:
+```text
+@acme/kawapress-plugin-notes
+├─ package.json
+└─ src
+   ├─ index.ts           Default entry: Generator Plugin
+   ├─ runtime-plugin.ts  Runtime entry: Runtime Plugin
+   └─ NotesBadge.vue     Components and style assets
+```
+
+Expose both entries in `package.json`:
+
+```json
+{
+  "name": "@acme/kawapress-plugin-notes",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./runtime-plugin": {
+      "types": "./src/runtime-plugin.ts",
+      "import": "./src/runtime-plugin.ts",
+      "default": "./src/runtime-plugin.ts"
+    }
+  },
+  "files": [
+    "src/**/!(*.test.*)"
+  ],
+  "peerDependencies": {
+    "kawapress": "^0.0.1"
+  }
+}
+```
+
+> **Note**: If a plugin only participates in the build (e.g. extending Markdown or adding Vite plugins), you can omit `./runtime-plugin` and `runtime-plugin.ts`.
+
+## Generator Plugins {#generator-plugin}
+
+A Generator Plugin runs in Node.js during the build to handle configuration, Markdown compilation, page metadata, and build-time assets. It is created with `definePlugin()`. Its `name` is the stable identity of the plugin and should match the npm package name.
+
+### Defining a Generator Plugin {#defining-generator-plugin}
+
+By convention, a plugin exports a factory function so users can pass options:
 
 ```ts
+// src/index.ts
 import { definePlugin } from 'kawapress'
 
 export interface NotesPluginOptions {
@@ -48,6 +95,7 @@ export function notesPlugin(options: NotesPluginOptions = {}) {
   return definePlugin({
     name: '@acme/kawapress-plugin-notes',
     setup(api) {
+      // All generator APIs (api.config, api.markdown, api.pageData, etc.) are called here
       api.pageData((pageData) => {
         pageData.description ??= `${prefix}${pageData.title}`
       })
@@ -58,7 +106,7 @@ export function notesPlugin(options: NotesPluginOptions = {}) {
 export default notesPlugin
 ```
 
-Add the plugin to the site:
+Add the plugin to the site configuration (`kawapress.config.ts`):
 
 ```ts
 import notesPlugin from '@acme/kawapress-plugin-notes'
@@ -71,17 +119,52 @@ export default defineConfig({
 })
 ```
 
-The factory function validates and normalizes the options. `setup()` should use those normalized values instead of reading the raw options again.
+The factory function validates and normalizes options, while `setup(api)` only works with normalized values.
 
-## Generator API {#generator-api}
+### Generator API Overview {#generator-api}
 
-The six generator methods are registered inside `setup(api)`. A handler can be synchronous or asynchronous. Handlers of the same kind run serially in the order the plugins appear in `plugins`.
+There are six generator methods, all called inside `setup(api)` of `definePlugin()`. A plugin can register one or multiple methods as needed; plugins execute sequentially in the order listed in `plugins`.
+
+A typical generator plugin skeleton looks like:
+
+```ts
+// src/index.ts
+import { definePlugin } from 'kawapress'
+
+export default function myGeneratorPlugin() {
+  return definePlugin({
+    name: '@acme/kawapress-plugin-notes',
+    setup(api) {
+      // 1. Read or modify site configuration
+      api.config((config) => { /* ... */ })
+
+      // 2. Extend Markdown compiler
+      api.markdown((markdown) => { /* ... */ })
+
+      // 3. Enhance page metadata
+      api.pageData((pageData, { file, sourcePath }) => { /* ... */ })
+
+      // 4. Observe page build artifacts
+      api.pageArtifact((pageArtifact) => { /* ... */ })
+
+      // 5. Inject Vite plugins or options
+      api.vite((vite) => { /* ... */ })
+
+      // 6. Emit static files after full build
+      api.buildArtifacts(async (context) => { /* ... */ })
+    },
+  })
+}
+```
+
+Below is the detailed usage for each method.
 
 ### `api.config()` {#config}
 
 `config()` runs after the site configuration has been normalized. The handler receives the real site configuration object and can change it directly.
 
 ```ts
+// Inside setup(api):
 api.config((config) => {
   config.title ??= 'My Docs'
 })
@@ -344,11 +427,29 @@ The same file with the same content reuses the previous result, so reading a who
 
 A dev server reports changed files as absolute paths: `isMarkdownPage()` tells you whether such a file is a page, and `markdownFileToRoutePath()` turns it back into a route path.
 
-## Runtime API {#runtime-api}
+## Runtime Plugins {#runtime-plugin}
 
-A Runtime Plugin works while the website runs. Its code enters the site's Vite module graph, so it can statically import `.vue` files, CSS, and regular Vue plugins.
+A Runtime Plugin operates in the browser and SSR runtime. Its code enters the site's Vite module graph, allowing it to statically import `.vue` files, CSS, and regular Vue plugins.
 
-It lives in the same package as the Generator Plugin and is exposed through the `./runtime-plugin` entry. Its `name` should also match the package name.
+It lives in the same package as the Generator Plugin and is exposed through the `./runtime-plugin` entry. Its `name` must also match the package name.
+
+### Defining a Runtime Plugin {#defining-runtime-plugin}
+
+A Runtime Plugin is created with `defineRuntimePlugin()`. All runtime extension logic executes inside `setup(api)`:
+
+```ts
+// src/runtime-plugin.ts
+import { defineRuntimePlugin } from 'kawapress'
+
+export default defineRuntimePlugin({
+  name: '@acme/kawapress-plugin-notes',
+  setup(api) {
+    // All runtime APIs (api.vueApp, api.addToOutlet, api.router) are called here
+  },
+})
+```
+
+Below is the detailed usage for each runtime method.
 
 ### `api.vueApp()` {#vue-app}
 
@@ -373,7 +474,12 @@ export default defineRuntimePlugin({
 
 ### `api.addToOutlet()` {#add-to-outlet}
 
-`addToOutlet()` puts a component into one of the fixed spots a theme provides. Top-bar buttons, copy-page buttons, and comment sections belong to a spot in the page frame, not to the Markdown body. Hand these interfaces to the theme through an outlet:
+`addToOutlet()` mounts a plugin's interface into a predefined spot provided by the theme.
+
+Interface elements like search buttons, copy buttons, and comment sections belong to the page frame rather than the Markdown document body. Plugins and themes do not need to know about each other directly. Instead, they collaborate through **Outlets**:
+
+1. **Themes provide spots**: The theme places `<KawaOutlet name="..." />` at appropriate positions in its layout templates.
+2. **Plugins provide components**: The plugin calls `api.addToOutlet()` in its Runtime Plugin to inject its components into those spots.
 
 ```ts
 // src/runtime-plugin.ts
@@ -391,25 +497,25 @@ export default defineRuntimePlugin({
 })
 ```
 
-The theme only writes `<KawaOutlet name="doc.header" />` where it wants that spot, and never needs to know this plugin exists.
+#### Standard Outlets
 
-The first release has four outlets:
+KawaPress defines four standard outlets:
 
-| Outlet | Rendered by | Good fit |
-| --- | --- | --- |
-| `header.actions` | Theme | Search trigger, repository link, top-bar actions |
-| `doc.header` | KawaPress, after the first Markdown H1 | Copy page, page tools |
-| `doc.footer` | Theme | Last updated date, edit-this-page link |
-| `doc.after` | Theme | Comments, feedback form |
+| Outlet | Placed by | Location & Purpose | Typical Content |
+| --- | --- | --- | --- |
+| `header.actions` | Theme | Top navigation bar action area | Search trigger, repository link, dark mode toggle |
+| `doc.header` | KawaPress automatically | Directly below the first `<h1>` in the document body (only appears when an H1 is present) | Copy page button, reading time, page tools |
+| `doc.footer` | Theme | Information area between document body end and footer | Last updated date, edit-this-page link |
+| `doc.after` | Theme | Below the entire document body | Comments, feedback form, prev/next pagination |
 
-The rules are short:
+> **Note**: Except for `doc.header` which is mounted automatically by KawaPress below the first heading, the other three outlets are placed freely by the theme in its templates.
 
-- `id` must be unique inside one plugin. The full identifier is `<plugin name>:<id>`, and KawaPress fills in the plugin name, so a plugin cannot impersonate another one.
-- Items render in the order of the `plugins` array first, then in the order of `addToOutlet()` calls inside one plugin. There are no numeric weights and no relative placement options.
-- An unknown outlet name, an empty `id`, or a repeated `id` inside one plugin throws immediately, and the error names the plugin.
-- When no page in the site renders an outlet you used, `kawapress build` warns once per plugin. Check whether the installed theme supports that outlet.
+#### Rules & Notes
 
-If a plugin both renders its own interface and wants themes to take full control, export a composable next to it (for example `useCopyPage()`). A theme can then build its own component on the same logic and filter the default component out of the slot.
+- **Namespaces & IDs**: The `id` must be unique within the plugin. KawaPress automatically prefixes it as `<plugin-name>:<id>` to avoid conflicts.
+- **Render Order**: Items render in the order plugins appear in the `kawapress.config.ts` `plugins` array first, then in the order `addToOutlet()` was called within the plugin. There are no numeric weights.
+- **Validation & Warnings**: Invalid outlet names, empty IDs, or duplicate IDs within a plugin throw errors immediately. If a plugin injects into an outlet that the current theme never renders, `kawapress build` emits a warning.
+- **Provide Logic-Only Composables**: If you want themes to be able to fully customize this UI, consider exporting a composable (such as `useCopyPage()`). Themes can then reuse the underlying logic with their own components.
 
 ### Wrap Plugin Styles in the `kawa.plugin` Layer {#plugin-styles}
 
@@ -463,50 +569,6 @@ The `Router` covers what a documentation site needs (navigation, the current rou
 A Runtime Plugin runs once for each Vue App. During server rendering, every render creates a new App. In the browser, the App is created once when the site starts. Therefore, do not store state in module scope if that state belongs to one render.
 
 A Runtime Plugin also runs on the server and in the browser. Before you access browser objects such as `window` or `document`, read [SSR Compatibility](/en/guide/ssr-compatibility).
-
-## Complete Package Layout {#package-layout}
-
-A plugin with two entries usually uses this layout:
-
-```text
-@acme/kawapress-plugin-notes
-├─ package.json
-└─ src
-   ├─ index.ts           default entry: Generator Plugin
-   ├─ runtime-plugin.ts  runtime entry: Runtime Plugin
-   └─ NotesBadge.vue
-```
-
-The `package.json` exposes both entries and publishes only the source files:
-
-```json
-{
-  "name": "@acme/kawapress-plugin-notes",
-  "type": "module",
-  "version": "0.1.0",
-  "license": "MIT",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./runtime-plugin": {
-      "types": "./src/runtime-plugin.ts",
-      "import": "./src/runtime-plugin.ts",
-      "default": "./src/runtime-plugin.ts"
-    }
-  },
-  "files": [
-    "src/**/!(*.test.*)"
-  ],
-  "peerDependencies": {
-    "kawapress": "^0.0.1"
-  }
-}
-```
-
-If the plugin only participates in the build, remove the `./runtime-plugin` entry and `runtime-plugin.ts`.
 
 ## Publishing Checklist {#publish-checklist}
 

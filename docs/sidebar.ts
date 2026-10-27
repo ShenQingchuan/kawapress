@@ -110,6 +110,13 @@ export const guideSidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: '主题架构与 Outlet 机制',
+            en: 'Theme Architecture & Outlets',
+          },
+          link: '/guide/theme-architecture',
+        },
+        {
+          text: {
             zhCN: '主题定制',
             en: 'Theme Customization',
           },
