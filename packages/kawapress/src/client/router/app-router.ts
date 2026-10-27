@@ -5,6 +5,7 @@ import { resolveHydrationPlan } from '../../core/hydration-plan'
 import { NOT_FOUND_DOCUMENT_META } from '../../core/not-found'
 import { createBrowserHistory, createMemoryHistory } from './history'
 import { installLinkInterceptor } from './link-interceptor'
+import { reloadDocument } from './reload'
 import { createRouter } from './router'
 
 export interface AppRouter {
@@ -34,7 +35,18 @@ export function createAppRouter(pages: PageTable): AppRouter {
   }
 
   const history = createBrowserHistory(site.base)
-  const router = createRouter({ pages, history })
+  const router = createRouter({
+    pages,
+    history,
+    // A page chunk that cannot be loaded means the page table no longer matches
+    // the deployment. Reload the target URL so the server answers with fresh
+    // HTML instead of showing the not-found page for a page that exists.
+    onPageLoadError: (error, to) => {
+      if (!reloadDocument(to.fullPath, site.base)) {
+        reportPageLoadError(error, to.path)
+      }
+    },
+  })
   // The served HTML only describes a path: static hosts ignore the query, the
   // browser never sends the hash and the not-found document is served for every
   // unknown URL. See resolveHydrationPlan().
@@ -59,4 +71,14 @@ export function createAppRouter(pages: PageTable): AppRouter {
       }
     },
   }
+}
+
+/** A page chunk that even a fresh document load would ask for again, for example when offline. */
+function reportPageLoadError(error: unknown, path: string): void {
+  console.error(
+    `[KawaPress] Could not load the page ${JSON.stringify(path)}, and a full reload would request `
+    + `the very same files again. Reload the page once the site is reachable, or after the `
+    + `deployment that replaced them finished.`,
+    error,
+  )
 }

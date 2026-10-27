@@ -66,8 +66,9 @@ function setup(initial = '/', table?: PageTable) {
     '/guide/routing': page(Routing),
   }
   const { history, writes, go } = createFakeHistory(initial)
-  const router = createRouter({ pages, history })
-  return { router, writes, go, pages }
+  const onPageLoadError = vi.fn()
+  const router = createRouter({ pages, history, onPageLoadError })
+  return { router, writes, go, pages, onPageLoadError }
 }
 
 describe('createRouter', () => {
@@ -251,6 +252,55 @@ describe('createRouter', () => {
     expect(router.currentRoute.value.fullPath).toBe('/guide/intro')
     expect(router.page.value).toBe(Intro)
     expect(writes).toEqual([])
+  })
+
+  it('leaves the current page alone when a page module cannot be loaded', async () => {
+    // A stale page table after a redeploy names a chunk that no longer exists.
+    const { router, writes, onPageLoadError } = setup('/guide/intro', {
+      '/guide/intro': page(Intro),
+      '/guide/gone': async () => {
+        throw new Error('Failed to fetch dynamically imported module')
+      },
+    })
+    await router.enter('/guide/intro')
+
+    await router.push('/guide/gone')
+
+    expect(onPageLoadError).toHaveBeenCalledTimes(1)
+    expect(onPageLoadError.mock.calls[0]?.[1]).toMatchObject({ path: '/guide/gone' })
+    // Nothing committed: the reader keeps the page that works, and no history
+    // entry points at a page that cannot be shown.
+    expect(router.currentRoute.value.path).toBe('/guide/intro')
+    expect(router.page.value).toBe(Intro)
+    expect(writes).toEqual([])
+  })
+
+  it('rethrows a page module failure while entering a location', async () => {
+    // The first render has to match the served HTML, so there is nothing to fall
+    // back to on the server or during hydration.
+    const { router, onPageLoadError } = setup('/', {
+      '/guide/gone': async () => {
+        throw new Error('page chunk missing')
+      },
+    })
+
+    await expect(router.enter('/guide/gone')).rejects.toThrow('page chunk missing')
+    expect(onPageLoadError).not.toHaveBeenCalled()
+    expect(router.currentRoute.value.path).toBe('/')
+  })
+
+  it('rethrows a page module failure when no handler is registered', async () => {
+    const { history } = createFakeHistory('/')
+    const router = createRouter({
+      pages: {
+        '/guide/gone': async () => {
+          throw new Error('page chunk missing')
+        },
+      },
+      history,
+    })
+
+    await expect(router.push('/guide/gone')).rejects.toThrow('page chunk missing')
   })
 
   it('reports the page data the page module carries', async () => {

@@ -19,7 +19,9 @@ export interface AppRouterInstance extends Router {
   /**
    * Resolves `location`, loads its page and commits it without writing a
    * history entry. Used for the route the served HTML was rendered with and for
-   * the URL adopted after hydration.
+   * the URL adopted after hydration. A page that cannot be loaded is an error:
+   * the first render has to match the served HTML, so there is nothing to fall
+   * back to.
    */
   enter: (location: string) => Promise<void>
 }
@@ -27,6 +29,13 @@ export interface AppRouterInstance extends Router {
 export interface CreateRouterOptions {
   pages: PageTable
   history: RouteHistory
+  /**
+   * Called when the page module of a navigation cannot be loaded, typically a
+   * stale page table after a redeploy. The navigation is then abandoned and the
+   * current page stays. Without this hook the error is rethrown, which is what a
+   * server render wants.
+   */
+  onPageLoadError?: (error: unknown, to: Route) => void
 }
 
 /**
@@ -37,7 +46,11 @@ export interface CreateRouterOptions {
  * run the post hooks. Back and forward arrive through the history listener and
  * never write a history entry themselves.
  */
-export function createRouter({ pages, history }: CreateRouterOptions): AppRouterInstance {
+export function createRouter({
+  pages,
+  history,
+  onPageLoadError,
+}: CreateRouterOptions): AppRouterInstance {
   const currentRoute = shallowRef<Route>(resolveRoute(history.location(), pages))
   const page = shallowRef<Component | null>(null)
   const guards: RouteGuard[] = []
@@ -45,7 +58,16 @@ export function createRouter({ pages, history }: CreateRouterOptions): AppRouter
   /** Counter that makes the latest navigation win over slower earlier ones. */
   let revision = 0
 
-  async function navigate(location: string, write: HistoryWrite): Promise<void> {
+  /**
+   * `recover` decides what a page module that cannot be loaded means: a reader
+   * who is already on a page gets a document reload (`onPageLoadError`), the
+   * first render of a document throws.
+   */
+  async function navigate(
+    location: string,
+    write: HistoryWrite,
+    recover: 'reload' | 'throw',
+  ): Promise<void> {
     const from = currentRoute.value
     const to = resolveRoute(location, pages)
     const started = ++revision
@@ -61,7 +83,23 @@ export function createRouter({ pages, history }: CreateRouterOptions): AppRouter
     let component = page.value
     // Same path means a query- or hash-only change: do not load the page again.
     if (to.path !== from.path || component === null) {
-      component = await loadPage(to.path, pages)
+      let loaded: Component | null
+      try {
+        loaded = await loadPage(to.path, pages)
+      }
+      catch (error) {
+        if (started !== revision) {
+          return
+        }
+        // A page the table does not have is a not-found page, not a failure; only
+        // a chunk that could not be fetched lands here.
+        if (recover === 'reload' && onPageLoadError) {
+          onPageLoadError(error, to)
+          return
+        }
+        throw error
+      }
+      component = loaded
       if (started !== revision) {
         return
       }
@@ -89,15 +127,15 @@ export function createRouter({ pages, history }: CreateRouterOptions): AppRouter
   }
 
   history.listen((location) => {
-    void navigate(location, 'none').catch(reportNavigationError)
+    void navigate(location, 'none', 'reload').catch(reportNavigationError)
   })
 
   return {
     currentRoute,
     page,
-    enter: location => navigate(location, 'none'),
-    push: location => navigate(location, 'push'),
-    replace: location => navigate(location, 'replace'),
+    enter: location => navigate(location, 'none', 'throw'),
+    push: location => navigate(location, 'push', 'reload'),
+    replace: location => navigate(location, 'replace', 'reload'),
     beforeEach(guard) {
       guards.push(guard)
       return () => remove(guards, guard)
