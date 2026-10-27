@@ -74,6 +74,7 @@ async function measureSite(
   const pageLoadRuns = await measurePageLoads(site, {
     runs,
     startRoute: options.startPage.route,
+    startHeading: options.startPage.title,
     targetRoute: options.targetPage.route,
     expectHeading: options.targetPage.title,
     base: site.base,

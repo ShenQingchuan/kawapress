@@ -27,6 +27,8 @@ export interface MeasurePageLoadOptions {
   runs: number
   /** Route a run starts on. */
   startRoute: string
+  /** Heading the page a run starts on has to show. */
+  startHeading: string
   /** Route the sidebar link of the site points at. */
   targetRoute: string
   /** Heading the target page has to show before the navigation counts as done. */
@@ -104,6 +106,11 @@ async function measureRun(
   options: MeasurePageLoadOptions,
 ): Promise<PageLoadRuns> {
   const page = await context.newPage()
+  // Every run has to fetch the target page chunk itself: a cache shared by the
+  // contexts of one browser would turn the second run into a different test.
+  const session = await context.newCDPSession(page)
+  await session.send('Network.enable')
+  await session.send('Network.setCacheDisabled', { cacheDisabled: true })
   await page.addInitScript(() => {
     const marks: BrowserMarks = {}
     ;(window as unknown as { __bench: BrowserMarks }).__bench = marks
@@ -129,20 +136,44 @@ async function measureRun(
   )
   const hydrationMs = await readHydrationMs(page)
 
-  await clickSidebarLink(page, options)
-  const clientNavigationMs = await readClientNavigationMs(page)
+  // Let the app settle before the click, so the navigation is not measured
+  // against work the first paint left behind.
+  await page.waitForLoadState('networkidle', { timeout: PAGE_TIMEOUT_MS })
+  const clientNavigationMs = await measureClientNavigation(page, options)
 
   await page.close()
   return { hydrationMs, clientNavigationMs }
 }
 
 /**
- * Click the sidebar link of the target page and record how long the page needs
- * until the new heading is on screen. The heading check runs in the page per
- * animation frame, so the time is the reader's time and not a polling interval
- * of the benchmark.
+ * Navigate three times, alternating between the two guide pages, and report the
+ * median. One navigation of a local site is a few dozen milliseconds, so a
+ * single sample is mostly scheduler noise; every navigation starts from an idle
+ * page and a disabled cache, so the three are the same experiment.
  */
-async function clickSidebarLink(page: Page, options: MeasurePageLoadOptions): Promise<void> {
+async function measureClientNavigation(
+  page: Page,
+  options: MeasurePageLoadOptions,
+): Promise<number> {
+  const samples: number[] = []
+  for (const target of [options.targetRoute, options.startRoute, options.targetRoute]) {
+    const heading = target === options.startRoute
+      ? options.startHeading
+      : options.expectHeading
+    await page.waitForLoadState('networkidle', { timeout: PAGE_TIMEOUT_MS })
+    await clickSidebarLink(page, target, heading)
+    samples.push(await readClientNavigationMs(page))
+  }
+  return samples.sort((left, right) => left - right)[1]!
+}
+
+/**
+ * Click the sidebar link of a page and record how long the page needs until the
+ * new heading is on screen. The heading check runs in the page per animation
+ * frame, so the time is the reader's time and not a polling interval of the
+ * benchmark.
+ */
+async function clickSidebarLink(page: Page, route: string, heading: string): Promise<void> {
   await page.evaluate(({ route, heading }) => {
     const marks = (window as unknown as { __bench: BrowserMarks }).__bench
     // VitePress writes the `.html` file name into its links, KawaPress the route
@@ -169,7 +200,7 @@ async function clickSidebarLink(page: Page, options: MeasurePageLoadOptions): Pr
 
     link.click()
     check()
-  }, { route: options.targetRoute, heading: options.expectHeading })
+  }, { route, heading })
 
   await page.waitForFunction(
     () => (window as unknown as { __bench?: BrowserMarks }).__bench?.clientNavigation?.done === true,
