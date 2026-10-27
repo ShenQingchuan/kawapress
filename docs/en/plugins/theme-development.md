@@ -17,48 +17,30 @@ Unlike other static site generators, KawaPress follows two primary architectural
 
 A typical KawaPress documentation page is composed of **Theme Layout Components**, **KawaPress Core Content Area**, and **Four Standard Outlets**.
 
-To ensure balanced visual scaling, the page skeleton is organized vertically:
+The overall structural layout looks like:
 
-```mermaid
-flowchart TD
-  subgraph Layout["Global Layout (Layout.vue) — Theme Governed"]
-    direction TB
-    
-    subgraph Header["Top Bar (Header / NavBar)"]
-      Brand["Logo & Site Title"]
-      OutletActions["🔌 Outlet: header.actions<br/>(Search trigger, repo link, theme toggle)"]
-    end
-
-    subgraph MainArea["Main Content Container (Main Container)"]
-      direction TB
-      subgraph Doc["Markdown Document (RouterView) — Core Governed"]
-        direction TB
-        H1["First Heading &lt;h1&gt;"]
-        OutletDocHeader["🔌 Outlet: doc.header (Injected by Core)<br/>(Copy button, reading time, etc.)"]
-        Body["Paragraphs, code blocks, lists, tables..."]
-        OutletDocFooter["🔌 Outlet: doc.footer<br/>(Last updated, edit link, contributors)"]
-        
-        H1 --> OutletDocHeader --> Body --> OutletDocFooter
-      end
-      
-      OutletDocAfter["🔌 Outlet: doc.after<br/>(Comments, prev/next pagination, feedback)"]
-      Doc --> OutletDocAfter
-    end
-
-    subgraph Footer["Page Footer (Footer)"]
-      Copyright["Copyright & License"]
-    end
-
-    Header --> MainArea --> Footer
-  end
-
-  classDef themeBox fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px;
-  classDef coreBox fill:#fef3c7,stroke:#d97706,stroke-width:1.5px;
-  classDef outletBox fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px;
-
-  class Layout,Header,MainArea,Footer,Brand,Copyright themeBox;
-  class Doc,H1,Body coreBox;
-  class OutletActions,OutletDocHeader,OutletDocFooter,OutletDocAfter outletBox;
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Layout.vue (Theme Governed)                                 │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Top Bar (Header / NavBar)                             │  │
+│  │ Logo & Site Title               [header.actions] 🔌   │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Main Content Area (Main)                              │  │
+│  │  ┌─────────────────────────────────────────────────┐  │  │
+│  │  │ Markdown Body (RouterView, Core Governed)       │  │  │
+│  │  │ <h1>First Heading</h1>                          │  │  │
+│  │  │ [doc.header] 🔌 (Core auto-mounts below H1)     │  │  │
+│  │  │ Paragraphs, code blocks, tables...              │  │  │
+│  │  │ [doc.footer] 🔌                                 │  │  │
+│  │  └─────────────────────────────────────────────────┘  │  │
+│  │  [doc.after] 🔌 (Comments, prev/next pagination)   │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Page Footer (Footer)                                  │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Four Standard Outlets {#standard-outlets}
@@ -78,21 +60,12 @@ KawaPress defines four standard outlets:
 
 ## How Themes & Plugins Decouple {#how-they-collaborate}
 
-Themes and plugins never directly import each other. Here is the interaction lifecycle:
+Themes and plugins never directly import each other. The collaboration flow is straightforward:
 
-```mermaid
-sequenceDiagram
-  autonumber
-  actor Config as Site Config (kawapress.config.ts)
-  participant Core as KawaPress Runtime
-  participant Theme as Theme Plugin
-  participant Plugin as Feature Plugin (Search/Comments)
-
-  Config->>Core: Register plugins: [myTheme(), searchPlugin()]
-  Theme->>Core: Mount Layout template (Declares outlet: header.actions)
-  Plugin->>Core: api.addToOutlet('header.actions', { component: SearchBtn })
-  Core->>Theme: Stream SearchBtn into header.actions outlet in order
-```
+1. **User declares plugins**: Both the theme and feature plugins (like search or comments) are listed in `kawapress.config.ts`.
+2. **Theme provides outlets**: The theme's `Layout.vue` template places `<KawaOutlet name="..." />` at appropriate spots.
+3. **Plugins inject components**: Plugins call `api.addToOutlet(name, { component })` in `runtime-plugin.ts`.
+4. **Core handles distribution**: KawaPress connects plugins to their corresponding outlets in deterministic plugin order.
 
 ### Responsibility Boundaries {#responsibilities}
 

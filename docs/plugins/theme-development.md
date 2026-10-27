@@ -17,48 +17,30 @@ description: 了解 KawaPress 的主题架构、插座插头模型、必要组�
 
 一个典型的 KawaPress 文档页面由**主题布局组件**、**核心正文渲染区**和**四个标准插座（Outlet）**共同组织。
 
-为了保证自适应阅读体验，页面骨架从上至下纵向分布：
+页面的整体排版结构如下：
 
-```mermaid
-flowchart TD
-  subgraph Layout["全局布局 (Layout.vue) — 主题搭建"]
-    direction TB
-    
-    subgraph Header["顶栏 (Header / NavBar)"]
-      Brand["Logo & 站点标题"]
-      OutletActions["🔌 Outlet: header.actions<br/>(搜索按钮、GitHub 链接、暗色模式切换)"]
-    end
-
-    subgraph MainArea["主内容容器 (Main Container)"]
-      direction TB
-      subgraph Doc["Markdown 正文渲染区 (RouterView) — 核心负责"]
-        direction TB
-        H1["页面首个大标题 &lt;h1&gt;"]
-        OutletDocHeader["🔌 Outlet: doc.header (框架自动插入)<br/>(复制 Markdown、阅读时间等)"]
-        Body["正文段落、代码块、列表、表格..."]
-        OutletDocFooter["🔌 Outlet: doc.footer<br/>(最后更新时间、编辑此页链接)"]
-        
-        H1 --> OutletDocHeader --> Body --> OutletDocFooter
-      end
-      
-      OutletDocAfter["🔌 Outlet: doc.after<br/>(评论区、前后篇翻页、页面反馈)"]
-      Doc --> OutletDocAfter
-    end
-
-    subgraph Footer["页脚 (Footer)"]
-      Copyright["版权信息与备案号"]
-    end
-
-    Header --> MainArea --> Footer
-  end
-
-  classDef themeBox fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px;
-  classDef coreBox fill:#fef3c7,stroke:#d97706,stroke-width:1.5px;
-  classDef outletBox fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px;
-
-  class Layout,Header,MainArea,Footer,Brand,Copyright themeBox;
-  class Doc,H1,Body coreBox;
-  class OutletActions,OutletDocHeader,OutletDocFooter,OutletDocAfter outletBox;
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Layout.vue (由主题控制)                                     │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ 顶栏 (Header / NavBar)                                │  │
+│  │ Logo & 站点名                   [header.actions] 🔌   │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ 主内容区 (Main)                                       │  │
+│  │  ┌─────────────────────────────────────────────────┐  │  │
+│  │  │ Markdown 正文区 (RouterView，核心负责渲染)      │  │  │
+│  │  │ <h1>首个大标题</h1>                             │  │  │
+│  │  │ [doc.header] 🔌 (由核心在首个 H1 后自动插入)    │  │  │
+│  │  │ 正文段落、代码块、列表...                       │  │  │
+│  │  │ [doc.footer] 🔌                                 │  │  │
+│  │  └─────────────────────────────────────────────────┘  │  │
+│  │  [doc.after] 🔌 (评论区、前后篇翻页等)             │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ 页脚 (Footer)                                         │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### 四个标准 Outlet 规范 {#standard-outlets}
@@ -78,21 +60,12 @@ KawaPress 约定了以下四个标准的 Outlet 位置：
 
 ## 主题与插件如何解耦协作？ {#how-they-collaborate}
 
-主题与插件之间没有直接的依赖链。以下时序图展示了完整的协同流程：
+主题与插件之间没有直接的依赖链。协作流程非常纯粹：
 
-```mermaid
-sequenceDiagram
-  autonumber
-  actor Config as 站点配置 (kawapress.config.ts)
-  participant Core as KawaPress 运行时
-  participant Theme as 主题插件
-  participant Plugin as 功能插件 (如搜索/评论)
-
-  Config->>Core: 注册 plugins: [myTheme(), searchPlugin()]
-  Theme->>Core: 挂载 Layout 模板 (声明插座: header.actions)
-  Plugin->>Core: api.addToOutlet('header.actions', { component: SearchBtn })
-  Core->>Theme: 将 SearchBtn 按顺序送入 header.actions 插座渲染
-```
+1. **用户在配置中声明插件**：在 `kawapress.config.ts` 的 `plugins` 数组中同时列出主题和各种功能插件（如搜索、评论）。
+2. **主题声明插座**：主题的 `Layout.vue` 模板在对应位置放置 `<KawaOutlet name="..." />`，等待接入。
+3. **插件声明插头**：插件在运行侧入口（`runtime-plugin.ts`）中调用 `api.addToOutlet(name, { component })`。
+4. **运行时统一组装**：KawaPress 自动将插件的组件按插件顺序注入主题对应的插座位置渲染。
 
 ### 职责边界清单 {#responsibilities}
 
