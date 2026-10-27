@@ -4,14 +4,14 @@
   "version": "0.2.0",
   "description": "Create a new KawaPress site",
   "license": "MIT",
-  "homepage": "https://shenqingchuan.github.io/kawapress/",
+  "homepage": "https://kawapress.dev/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ShenQingchuan/kawapress.git",
+    "url": "git+https://github.com/kawapress/kawapress.git",
     "directory": "packages/create-kawapress"
   },
   "bugs": {
-    "url": "https://github.com/ShenQingchuan/kawapress/issues"
+    "url": "https://github.com/kawapress/kawapress/issues"
   },
   "keywords": [
     "create",

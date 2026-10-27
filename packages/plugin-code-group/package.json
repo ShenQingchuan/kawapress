@@ -4,14 +4,14 @@
   "version": "0.2.0",
   "description": "Accessible code group tabs for KawaPress",
   "license": "MIT",
-  "homepage": "https://shenqingchuan.github.io/kawapress/",
+  "homepage": "https://kawapress.dev/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ShenQingchuan/kawapress.git",
+    "url": "git+https://github.com/kawapress/kawapress.git",
     "directory": "packages/plugin-code-group"
   },
   "bugs": {
-    "url": "https://github.com/ShenQingchuan/kawapress/issues"
+    "url": "https://github.com/kawapress/kawapress/issues"
   },
   "exports": {
     ".": {

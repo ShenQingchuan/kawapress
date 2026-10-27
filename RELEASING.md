@@ -2,7 +2,7 @@
 
 KawaPress 有 17 个公开包，每个包有自己的版本号，各发各的。一次发布由 `scripts/release.mjs` 把全部包打包、校验，然后只发布「npm 上还没有这个版本」的包，其余的原样跳过，按依赖顺序发布。所以要发哪个包，只需要提高它自己的版本号。
 
-真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `ShenQingchuan/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。推送 `v*` tag 之后全程自动，不需要人工介入。
+真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `kawapress/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。推送 `v*` tag 之后全程自动，不需要人工介入。
 
 下面分成两部分：**只做一次的准备**，和**每次发版的固定动作**。
 
@@ -15,17 +15,17 @@ KawaPress 有 17 个公开包，每个包有自己的版本号，各发各的。
 发布 job 跑在名为 `npm` 的 environment 里。npm 的 trusted publisher 也绑定这个环境名，所以只有跑在这个环境里的发布才会被 npm 接受。环境不设审批人，只限制部署来源：只有 `v*` tag 触发的运行能进入它，其他分支即使改了 `release.yml` 也发不出去。
 
 ```sh
-gh api --method PUT repos/ShenQingchuan/kawapress/environments/npm --input - <<'JSON'
+gh api --method PUT repos/kawapress/kawapress/environments/npm --input - <<'JSON'
 {
   "reviewers": [],
   "deployment_branch_policy": { "protected_branches": false, "custom_branch_policies": true }
 }
 JSON
-gh api --method POST repos/ShenQingchuan/kawapress/environments/npm/deployment-branch-policies \
+gh api --method POST repos/kawapress/kawapress/environments/npm/deployment-branch-policies \
   -f name='v*' -f type=tag
 ```
 
-核对：`gh api repos/ShenQingchuan/kawapress/environments/npm/deployment-branch-policies --jq '.branch_policies[] | .name + " " + .type'` 应输出 `v* tag`。
+核对：`gh api repos/kawapress/kawapress/environments/npm/deployment-branch-policies --jq '.branch_policies[] | .name + " " + .type'` 应输出 `v* tag`。
 
 ### 2. 给 npm 账号开两步验证
 

@@ -15,7 +15,7 @@ export default nagi({
     commentsPlugin({
       // giscus 只读取 GitHub Discussions，站点本身不存任何评论数据。
       giscus: {
-        repo: 'ShenQingchuan/kawapress',
+        repo: 'kawapress/kawapress',
         repoId: 'R_kgDOUBnCOQ',
         category: 'Announcements',
         categoryId: 'DIC_kwDOUBnCOc4DJuT-',
@@ -25,7 +25,7 @@ export default nagi({
     mermaidPlugin(),
     lastUpdatedPlugin({
       editLink: {
-        pattern: 'https://github.com/ShenQingchuan/kawapress/edit/main/:path',
+        pattern: 'https://github.com/kawapress/kawapress/edit/main/:path',
       },
     }),
   ],
@@ -35,7 +35,7 @@ export default nagi({
       dark: '/kawapress-logo-dark.png',
       alt: 'KawaPress',
     },
-    githubUrl: 'https://github.com/ShenQingchuan/kawapress',
+    githubUrl: 'https://github.com/kawapress/kawapress',
     nav: [
       { text: '指南', link: '/guide/what-is-kawapress', activeMatch: '/guide' },
       { text: '插件', link: '/plugins/plugin-system', activeMatch: '/plugins' },

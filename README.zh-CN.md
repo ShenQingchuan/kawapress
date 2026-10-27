@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ShenQingchuan/kawapress/main/docs/public/kawapress-logo-dark.png">
-    <img src="https://raw.githubusercontent.com/ShenQingchuan/kawapress/main/docs/public/kawapress-logo.png" alt="KawaPress" width="180">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kawapress/kawapress/main/docs/public/kawapress-logo-dark.png">
+    <img src="https://raw.githubusercontent.com/kawapress/kawapress/main/docs/public/kawapress-logo.png" alt="KawaPress" width="180">
   </picture>
 </p>
 
@@ -17,18 +17,18 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/kawapress"><img src="https://img.shields.io/npm/v/kawapress?label=npm&color=42b883" alt="npm 版本"></a>
-  <a href="https://github.com/ShenQingchuan/kawapress/actions/workflows/deploy-pages.yml"><img src="https://github.com/ShenQingchuan/kawapress/actions/workflows/deploy-pages.yml/badge.svg" alt="文档构建状态"></a>
-  <a href="https://github.com/ShenQingchuan/kawapress/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ShenQingchuan/kawapress" alt="MIT 许可"></a>
+  <a href="https://github.com/kawapress/kawapress/actions/workflows/deploy-pages.yml"><img src="https://github.com/kawapress/kawapress/actions/workflows/deploy-pages.yml/badge.svg" alt="文档构建状态"></a>
+  <a href="https://github.com/kawapress/kawapress/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kawapress/kawapress" alt="MIT 许可"></a>
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A522.12-339933?logo=nodedotjs&logoColor=white" alt="Node.js 22.12 或更高版本">
 </p>
 
 <p align="center">
-  <a href="https://shenqingchuan.github.io/kawapress/">中文文档</a>
+  <a href="https://kawapress.dev/">中文文档</a>
   ·
-  <a href="https://github.com/ShenQingchuan/kawapress/blob/main/README.md">English</a>
+  <a href="https://github.com/kawapress/kawapress/blob/main/README.md">English</a>
 </p>
 
-使用 KawaPress 时遇到任何问题，欢迎到 [提交 Issue](https://github.com/ShenQingchuan/kawapress/issues) 反馈，一起参与本项目的早期建设。
+使用 KawaPress 时遇到任何问题，欢迎到 [提交 Issue](https://github.com/kawapress/kawapress/issues) 反馈，一起参与本项目的早期建设。
 
 ## 为什么选择 KawaPress？
 
@@ -100,7 +100,7 @@ pnpm exec kawapress dev
 pnpm exec kawapress build
 ```
 
-部署产物是普通静态文件，不需要在服务器上继续运行 Node.js。npm 和 Yarn 的完整命令可以查看[快速开始](https://shenqingchuan.github.io/kawapress/guide/getting-started)。
+部署产物是普通静态文件，不需要在服务器上继续运行 Node.js。npm 和 Yarn 的完整命令可以查看[快速开始](https://kawapress.dev/guide/getting-started)。
 
 > 如果站点会直接导入 Vue API 或 Vue 组件，还需要把 `vue` 安装为开发依赖。
 
@@ -126,17 +126,17 @@ KawaPress 把扩展边界分得很清楚：
 - **Runtime Plugin** 在 SSR 和浏览器中扩展真实的 Vue App 与 Vue Router；
 - **Preset** 把配置和一组插件组合成可以直接使用的产品体验，例如 nagi。
 
-一个逻辑插件只需要安装一次，同时可以提供生成侧和运行侧能力。更多内容请查看[插件体系](https://shenqingchuan.github.io/kawapress/plugins/plugin-system)。
+一个逻辑插件只需要安装一次，同时可以提供生成侧和运行侧能力。更多内容请查看[插件体系](https://kawapress.dev/plugins/plugin-system)。
 
 ## 文档
 
-- [快速开始](https://shenqingchuan.github.io/kawapress/guide/getting-started)
-- [KawaPress 是什么？](https://shenqingchuan.github.io/kawapress/guide/what-is-kawapress)
-- [Markdown 语法扩展](https://shenqingchuan.github.io/kawapress/guide/markdown-extensions)
-- [国际化](https://shenqingchuan.github.io/kawapress/guide/internationalization)
-- [插件体系](https://shenqingchuan.github.io/kawapress/plugins/plugin-system)
-- [官方插件总览](https://shenqingchuan.github.io/kawapress/plugins/overview)
-- [主题定制](https://shenqingchuan.github.io/kawapress/guide/theme-customization)
+- [快速开始](https://kawapress.dev/guide/getting-started)
+- [KawaPress 是什么？](https://kawapress.dev/guide/what-is-kawapress)
+- [Markdown 语法扩展](https://kawapress.dev/guide/markdown-extensions)
+- [国际化](https://kawapress.dev/guide/internationalization)
+- [插件体系](https://kawapress.dev/plugins/plugin-system)
+- [官方插件总览](https://kawapress.dev/plugins/overview)
+- [主题定制](https://kawapress.dev/guide/theme-customization)
 
 ## 参与贡献
 
@@ -154,4 +154,4 @@ KawaPress 仓库使用 Node.js 22.12 或更高版本，以及 pnpm 11.22.0 进�
 
 ## 开源许可
 
-[MIT](https://github.com/ShenQingchuan/kawapress/blob/main/LICENSE) © KawaPress 贡献者
+[MIT](https://github.com/kawapress/kawapress/blob/main/LICENSE) © KawaPress 贡献者

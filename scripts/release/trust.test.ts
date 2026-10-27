@@ -11,7 +11,7 @@ describe('buildTrustArguments', () => {
       '--file',
       'release.yml',
       '--repository',
-      'ShenQingchuan/kawapress',
+      'kawapress/kawapress',
       '--environment',
       'npm',
       '--allow-publish',
@@ -23,7 +23,7 @@ describe('buildTrustArguments', () => {
 describe('formatTrustCommand', () => {
   it('renders a copy-pasteable npm command', () => {
     expect(formatTrustCommand('kawapress')).toBe(
-      'npm trust github kawapress --file release.yml --repository ShenQingchuan/kawapress --environment npm --allow-publish -y',
+      'npm trust github kawapress --file release.yml --repository kawapress/kawapress --environment npm --allow-publish -y',
     )
   })
 })
@@ -33,7 +33,7 @@ const current = {
   file: 'release.yml',
   id: 'id-1',
   permissions: ['createPackage'],
-  repository: 'ShenQingchuan/kawapress',
+  repository: 'kawapress/kawapress',
   type: 'github',
 }
 

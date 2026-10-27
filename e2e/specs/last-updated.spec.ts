@@ -19,7 +19,7 @@ test('the doc footer shows the last commit time and the edit link', async ({ pag
   const editLink = footer.locator('.kawa-last-updated__edit')
   await expect(editLink).toHaveAttribute(
     'href',
-    'https://github.com/ShenQingchuan/kawapress/edit/main/docs/guide/getting-started.md',
+    'https://github.com/kawapress/kawapress/edit/main/docs/guide/getting-started.md',
   )
   await expect(editLink).toHaveAttribute('target', '_blank')
 })
@@ -33,6 +33,6 @@ test('the English page uses English text and its own source path', async ({ page
     .toHaveText('Last updated: ')
   await expect(footer.locator('.kawa-last-updated__edit')).toHaveAttribute(
     'href',
-    'https://github.com/ShenQingchuan/kawapress/edit/main/docs/en/guide/getting-started.md',
+    'https://github.com/kawapress/kawapress/edit/main/docs/en/guide/getting-started.md',
   )
 })

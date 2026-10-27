@@ -31,5 +31,5 @@ export const minNpmVersionForTrustedPublishing = '11.5.1'
 
 /** GitHub Actions workflow that publishes, as npm's trusted publisher config expects it. */
 export const publishWorkflowFile = 'release.yml'
-export const publishRepository = 'ShenQingchuan/kawapress'
+export const publishRepository = 'kawapress/kawapress'
 export const publishEnvironment = 'npm'

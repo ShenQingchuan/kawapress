@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ShenQingchuan/kawapress/main/docs/public/kawapress-logo-dark.png">
-    <img src="https://raw.githubusercontent.com/ShenQingchuan/kawapress/main/docs/public/kawapress-logo.png" alt="KawaPress" width="180">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kawapress/kawapress/main/docs/public/kawapress-logo-dark.png">
+    <img src="https://raw.githubusercontent.com/kawapress/kawapress/main/docs/public/kawapress-logo.png" alt="KawaPress" width="180">
   </picture>
 </p>
 
@@ -17,18 +17,18 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/kawapress"><img src="https://img.shields.io/npm/v/kawapress?label=npm&color=42b883" alt="npm version"></a>
-  <a href="https://github.com/ShenQingchuan/kawapress/actions/workflows/deploy-pages.yml"><img src="https://github.com/ShenQingchuan/kawapress/actions/workflows/deploy-pages.yml/badge.svg" alt="documentation build"></a>
-  <a href="https://github.com/ShenQingchuan/kawapress/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ShenQingchuan/kawapress" alt="MIT license"></a>
+  <a href="https://github.com/kawapress/kawapress/actions/workflows/deploy-pages.yml"><img src="https://github.com/kawapress/kawapress/actions/workflows/deploy-pages.yml/badge.svg" alt="documentation build"></a>
+  <a href="https://github.com/kawapress/kawapress/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kawapress/kawapress" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A522.12-339933?logo=nodedotjs&logoColor=white" alt="Node.js 22.12 or newer">
 </p>
 
 <p align="center">
-  <a href="https://shenqingchuan.github.io/kawapress/en/">Documentation</a>
+  <a href="https://kawapress.dev/en/">Documentation</a>
   ·
-  <a href="https://github.com/ShenQingchuan/kawapress/blob/main/README.zh-CN.md">简体中文</a>
+  <a href="https://github.com/kawapress/kawapress/blob/main/README.zh-CN.md">简体中文</a>
 </p>
 
-If you run into any problems while using KawaPress, please [open an issue](https://github.com/ShenQingchuan/kawapress/issues). Your feedback helps shape the project during its early development.
+If you run into any problems while using KawaPress, please [open an issue](https://github.com/kawapress/kawapress/issues). Your feedback helps shape the project during its early development.
 
 ## Why KawaPress?
 
@@ -100,7 +100,7 @@ Build static files into `dist`:
 pnpm exec kawapress build
 ```
 
-The deployed output is static and does not require a Node.js server. npm and Yarn commands are available in the [Getting Started guide](https://shenqingchuan.github.io/kawapress/en/guide/getting-started).
+The deployed output is static and does not require a Node.js server. npm and Yarn commands are available in the [Getting Started guide](https://kawapress.dev/en/guide/getting-started).
 
 > If your site directly imports Vue APIs or Vue components, also install `vue` as a development dependency.
 
@@ -126,17 +126,17 @@ KawaPress keeps extension boundaries explicit:
 - a **Runtime Plugin** extends the real Vue App and Vue Router in both SSR and the browser;
 - a **Preset** combines configuration and plugins into a ready-to-use experience such as nagi.
 
-A logical plugin is installed once and can provide both generator and runtime behavior. Learn more in the [Plugin System guide](https://shenqingchuan.github.io/kawapress/en/plugins/plugin-system).
+A logical plugin is installed once and can provide both generator and runtime behavior. Learn more in the [Plugin System guide](https://kawapress.dev/en/plugins/plugin-system).
 
 ## Documentation
 
-- [Getting Started](https://shenqingchuan.github.io/kawapress/en/guide/getting-started)
-- [What is KawaPress?](https://shenqingchuan.github.io/kawapress/en/guide/what-is-kawapress)
-- [Markdown Extensions](https://shenqingchuan.github.io/kawapress/en/guide/markdown-extensions)
-- [Internationalization](https://shenqingchuan.github.io/kawapress/en/guide/internationalization)
-- [Plugin System](https://shenqingchuan.github.io/kawapress/en/plugins/plugin-system)
-- [Official Plugins](https://shenqingchuan.github.io/kawapress/en/plugins/overview)
-- [Theme Customization](https://shenqingchuan.github.io/kawapress/en/guide/theme-customization)
+- [Getting Started](https://kawapress.dev/en/guide/getting-started)
+- [What is KawaPress?](https://kawapress.dev/en/guide/what-is-kawapress)
+- [Markdown Extensions](https://kawapress.dev/en/guide/markdown-extensions)
+- [Internationalization](https://kawapress.dev/en/guide/internationalization)
+- [Plugin System](https://kawapress.dev/en/plugins/plugin-system)
+- [Official Plugins](https://kawapress.dev/en/plugins/overview)
+- [Theme Customization](https://kawapress.dev/en/guide/theme-customization)
 
 ## Contributing
 
@@ -154,4 +154,4 @@ KawaPress uses Node.js 22.12 or newer and pnpm 11.22.0 for repository developmen
 
 ## License
 
-[MIT](https://github.com/ShenQingchuan/kawapress/blob/main/LICENSE) © KawaPress contributors
+[MIT](https://github.com/kawapress/kawapress/blob/main/LICENSE) © KawaPress contributors

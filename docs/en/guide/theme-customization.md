@@ -212,7 +212,7 @@ export default defineConfig({
 
 A site should install only one theme responsible for `Layout` and `NotFound`. Other interface features can continue to use regular Plugins.
 
-If you want to see all of this in real files, the repository ships a tested reference theme: [`e2e/fixtures/reference-theme`](https://github.com/ShenQingchuan/kawapress/tree/main/e2e/fixtures/reference-theme). It renders all four outlets and runs every official UI plugin under them, and the end-to-end suite keeps it working — a useful page to open whenever a plugin does not show up where you expected.
+If you want to see all of this in real files, the repository ships a tested reference theme: [`e2e/fixtures/reference-theme`](https://github.com/kawapress/kawapress/tree/main/e2e/fixtures/reference-theme). It renders all four outlets and runs every official UI plugin under them, and the end-to-end suite keeps it working — a useful page to open whenever a plugin does not show up where you expected.
 
 ## The Theme Defines `themeConfig` {#the-theme-defines-themeconfig}
 

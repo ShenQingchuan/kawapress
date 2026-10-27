@@ -73,13 +73,13 @@ describe('sidebar item links', () => {
       text: 'Group',
       items: [
         { text: 'Routing', link: '/guide/routing' },
-        { text: 'GitHub', link: 'https://github.com/ShenQingchuan/kawapress' },
+        { text: 'GitHub', link: 'https://github.com/kawapress/kawapress' },
       ],
     }, '/kawapress/guide/routing')
 
     const links = document.querySelectorAll<HTMLAnchorElement>('.nagi-sidebar-item__link')
     expect(links[0]!.getAttribute('href')).toBe('/kawapress/guide/routing')
-    expect(links[1]!.getAttribute('href')).toBe('https://github.com/ShenQingchuan/kawapress')
+    expect(links[1]!.getAttribute('href')).toBe('https://github.com/kawapress/kawapress')
     expect(testState.withBase).toHaveBeenCalledWith('/guide/routing', '/kawapress/')
     // External links stay plain links; they must never look like the current page.
     expect(links[1]!.classList.contains('is-active')).toBe(false)
