@@ -607,3 +607,12 @@ Runtime Plugin 会为每个 Vue App 执行一次。服务端渲染时，每次�
 - 生成侧和运行侧的代码运行在不同阶段。不要让一侧依赖另一侧模块中的状态。
 - `buildArtifacts()` 中不要使用 `eval` 或 `new Function` 绕过模块边界。需要加载模块时，请使用 `importModule()`。
 - 0.1 不提供 `addPage()`。需要新的页面时，请先在 Markdown 源文件中创建它。
+
+## 官方插件参考 {#official-plugins-reference}
+
+如果你希望对照完整的真实代码来学习插件编写，推荐直接阅读官方插件包的源码：
+
+- **生成侧扩展（Markdown 与代码高亮）**：[`packages/plugin-shiki`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-shiki)（演示了在 `setup(api)` 中调用 `api.markdown()` 注入语法高亮）。
+- **运行侧界面与 Outlet 挂载（带 UI 的插件）**：[`packages/plugin-search`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-search)（演示了如何提供双入口、在 `runtime-plugin.ts` 中调用 `api.addToOutlet()` 挂载搜索按钮，以及通过 `@layer kawa.plugin` 组织样式）。
+- **页面工具栏与复制能力**：[`packages/plugin-llms`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-llms)（演示了如何向 `doc.header` 挂载页面操作按钮）。
+

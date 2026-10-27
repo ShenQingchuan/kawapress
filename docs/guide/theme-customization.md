@@ -91,6 +91,8 @@ const site = useSite()
 
 插件不该知道是谁在渲染页面，主题也不该知道有哪些插件。两者通过 Outlet 对接：插件把一小块界面放进 Outlet，主题只决定这个 Outlet 出现在页面哪里。
 
+> 关于页面骨架剖析、四个 Outlet 的物理分布图解与时序交互，请先阅读 [主题架构与 Outlet 机制](/guide/theme-architecture)。
+
 KawaPress 提供 `KawaOutlet` 组件，并且已经把它注册为全局组件，主题模板里直接写名字就能用：
 
 ```vue
@@ -133,16 +135,11 @@ import { KawaOutlet } from 'kawapress/client'
 
 每一项包含三个字段：`id` 是完整标识 `插件名:插件内部 id`，`owner` 是插件名，`component` 是插件提供的组件。想只显示部分插件时，按 `owner` 或 `id` 过滤即可。
 
-KawaPress 约定了四个标准 Outlet：
-
-| Outlet | 由谁放置插座 | 页面位置与用途 | 常见内容 |
-| --- | --- | --- | --- |
-| `header.actions` | 主题 | 页面顶部导航栏的操作区域 | 搜索按钮、源码链接等顶栏操作 |
-| `doc.header` | KawaPress 自动放置 | 正文第一个 `<h1>` 标题正下方（仅正文含 H1 时出现） | 复制页面、页面工具按钮 |
-| `doc.footer` | 主题 | 正文末尾与页脚之间的信息区 | 最后更新时间、编辑此页链接 |
-| `doc.after` | 主题 | 整个正文区下方 | 评论区、反馈表单 |
-
-> **提示**：`doc.header` 由框架自动挂载到文章首个标题后，主题不需要自己写。其余三个 Outlet 均由主题在模板中自由决定摆放在具体的什么位置。
+四个标准 Outlet 的具体分工如下：
+- `header.actions`：主题放置在顶栏，用于搜索、仓库链接等操作。
+- `doc.header`：KawaPress 自动插入在 Markdown 首个 H1 后面，主题无需编写。
+- `doc.footer`：主题放置在正文底部，用于显示最后更新时间与编辑链接。
+- `doc.after`：主题放置在正文容器外部下方，用于展示评论区或翻页导航。
 
 主题渲染了某个 Outlet，就表示支持它，不需要额外声明。两种诊断信息会帮你检查：同一个页面里重复渲染了同一个 Outlet 时，开发模式会打印一次警告；全站都没有渲染某个 Outlet，而插件已经往里放了内容时，`kawapress build` 会按插件各给一行警告。
 

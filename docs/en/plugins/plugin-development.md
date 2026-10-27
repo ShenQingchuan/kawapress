@@ -595,3 +595,12 @@ Also keep these boundaries in mind:
 - Generator and runtime code run at different stages. Do not make one side depend on state stored in a module of the other side.
 - Do not use `eval` or `new Function` in `buildArtifacts()` to bypass module boundaries. To load a module, use `importModule()`.
 - 0.1 does not provide `addPage()`. When you need a new page, create it in a Markdown source file first.
+
+## Official Plugins as Reference {#official-plugins-reference}
+
+To see production plugins built with these patterns, explore the official plugin implementations in the repository:
+
+- **Build-time Markdown extensions**: [`packages/plugin-shiki`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-shiki) (demonstrates using `api.markdown()` in `setup(api)` to inject syntax highlighting).
+- **Runtime UI and Outlets**: [`packages/plugin-search`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-search) (demonstrates dual-entry export, mounting buttons with `api.addToOutlet()` in `runtime-plugin.ts`, and styling with `@layer kawa.plugin`).
+- **Page tools and actions**: [`packages/plugin-llms`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-llms) (demonstrates mounting page action tools into the `doc.header` outlet).
+

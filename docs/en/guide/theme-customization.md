@@ -91,6 +91,8 @@ const site = useSite()
 
 A plugin should not know which theme draws the page, and a theme should not know which plugins exist. Outlets are the meeting point: a plugin puts a small piece of interface into an outlet, and the theme decides where that outlet appears.
 
+> For page structure diagrams, physical outlet layout, and sequence flows, see [Theme Architecture & Outlets](/en/guide/theme-architecture).
+
 KawaPress provides the `KawaOutlet` component and registers it globally, so a theme template can use the name directly:
 
 ```vue
@@ -133,16 +135,11 @@ import { KawaOutlet } from 'kawapress/client'
 
 Every item has three fields: `id` is the full identifier `plugin-name:plugin-local-id`, `owner` is the plugin name, and `component` is the component the plugin registered. Filter on `owner` or `id` to show only part of them.
 
-The first release has four outlets:
-
-| Outlet | Rendered by | Typical content |
-| --- | --- | --- |
-| `header.actions` | Theme | Search trigger, repository link, top-bar actions |
-| `doc.header` | KawaPress | Copy-page button, page tools |
-| `doc.footer` | Theme | Last updated date, edit-this-page link |
-| `doc.after` | Theme | Comments, feedback form |
-
-KawaPress places `doc.header` right after the first H1 of the Markdown body, so the theme never writes it. Pages without an H1 get no such spot.
+The four standard outlets are:
+- `header.actions`: Placed in top navigation bar for search, repository links, or actions.
+- `doc.header`: Automatically mounted by KawaPress after the first Markdown H1; themes do not write it.
+- `doc.footer`: Placed at document end for updated dates and edit links.
+- `doc.after`: Placed outside and below the main document container for comments or pagination.
 
 Rendering an outlet is how a theme declares support for it; no extra declaration is needed. Two diagnostics keep that honest: rendering the same outlet twice on one page prints a single development warning, and on `kawapress build`, a plugin that placed items in an outlet no page ever rendered gets one warning line naming that plugin.
 
