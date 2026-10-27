@@ -54,6 +54,10 @@ describe('resolveHeadingTitle', () => {
     expect(headingTitle(md, '# Install KawaPress')).toBe('Install KawaPress')
   })
 
+  it('reads entities and escapes as the characters they stand for', () => {
+    expect(headingTitle(md, '# A &amp; B \\* C &copy;')).toBe('A & B * C ©')
+  })
+
   it('drops emphasis, strong and strikethrough markup but keeps their text', () => {
     expect(headingTitle(md, '# A *em* **strong** ~~gone~~ word'))
       .toBe('A em strong gone word')

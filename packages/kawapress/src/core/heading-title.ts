@@ -57,7 +57,9 @@ function readTokenText(token: Token): string {
     return ' '
   }
 
-  if (token.type === 'code_inline') {
+  // Plain text is already what the reader sees: entities and escapes are
+  // decoded into `content`, and `markup` only records how they were written.
+  if (token.type === 'text' || token.type === 'code_inline') {
     return token.content
   }
 
