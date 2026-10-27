@@ -1,4 +1,5 @@
 import process from 'node:process'
+import commentsPlugin from '@kawapress/plugin-comments'
 import imageZoomPlugin from '@kawapress/plugin-image-zoom'
 import lastUpdatedPlugin from '@kawapress/plugin-last-updated'
 import mathjaxPlugin from '@kawapress/plugin-mathjax'
@@ -10,6 +11,15 @@ export default nagi({
   base: process.env.KAWAPRESS_BASE,
   plugins: [
     imageZoomPlugin(),
+    commentsPlugin({
+      // giscus 只读取 GitHub Discussions，站点本身不存任何评论数据。
+      giscus: {
+        repo: 'ShenQingchuan/kawapress',
+        repoId: 'R_kgDOUBnCOQ',
+        category: 'Announcements',
+        categoryId: 'DIC_kwDOUBnCOc4DJuT-',
+      },
+    }),
     mathjaxPlugin(),
     lastUpdatedPlugin({
       editLink: {

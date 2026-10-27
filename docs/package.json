@@ -8,6 +8,7 @@
     "preview": "kawapress preview"
   },
   "devDependencies": {
+    "@kawapress/plugin-comments": "workspace:*",
     "@kawapress/plugin-image-zoom": "workspace:*",
     "@kawapress/plugin-last-updated": "workspace:*",
     "@kawapress/plugin-mathjax": "workspace:*",

@@ -217,6 +217,9 @@ importers:
 
   docs:
     devDependencies:
+      '@kawapress/plugin-comments':
+        specifier: workspace:*
+        version: link:../packages/plugin-comments
       '@kawapress/plugin-image-zoom':
         specifier: workspace:*
         version: link:../packages/plugin-image-zoom
