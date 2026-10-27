@@ -16,6 +16,8 @@ let frame = 0
 let ignoreUntil = 0
 let bindGeneration = 0
 let stopRouteWatch: (() => void) | undefined
+/** Anchor the scroll area already landed on, `undefined` before the first jump. */
+let positionedLink: string | undefined
 
 export function useActiveOutline() {
   const page = usePageData()
@@ -76,7 +78,16 @@ export function useActiveOutline() {
       return false
     }
 
+    // The URL the visitor opened is adopted right after hydration, which reports
+    // a hash the initial load already landed on. Anchoring again would drag a
+    // reader who scrolled away in the meantime back up, so only a new anchor
+    // moves the scroll area.
+    if (header.link === positionedLink) {
+      return true
+    }
+
     target.scrollIntoView({ block: 'start' })
+    positionedLink = header.link
     activateLink(header.link, true)
     return true
   }
@@ -128,6 +139,7 @@ export function useActiveOutline() {
 
   function unbind(): void {
     bindGeneration += 1
+    positionedLink = undefined
     scrollRoot?.removeEventListener('scroll', onScroll)
     if (frame) {
       window.cancelAnimationFrame(frame)

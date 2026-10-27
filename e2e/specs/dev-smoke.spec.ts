@@ -1,5 +1,5 @@
 import { expect, test } from '../support/fixtures'
-import { sitePath } from '../support/site'
+import { devOrigin, sitePath } from '../support/site'
 
 interface MarkerWindow extends Window {
   __kawapressE2eMarker?: string
@@ -33,4 +33,20 @@ test('sidebar links navigate on the client in dev', async ({ page }) => {
   expect(
     await page.evaluate(() => (window as MarkerWindow).__kawapressE2eMarker),
   ).toBe('kept')
+})
+
+/**
+ * Dev renders every request by path only as well, so a URL with a query and a
+ * hash has to hydrate the same way the built site does.
+ */
+test('the dev server hydrates a page opened with a query and a hash', async ({ page }) => {
+  const requestedPath = `${sitePath('/guide/routing')}?from=test#linking-between-pages`
+  await page.goto(requestedPath)
+
+  await expect(page.locator('article h1')).toContainText('路由')
+  await expect(page).toHaveURL(`${devOrigin}${requestedPath}`)
+  await expect(
+    page.locator('.nagi-language-menu__link[lang="en"]'),
+    'the dev server has to adopt the requested URL as well',
+  ).toHaveAttribute('href', `${sitePath('/en/guide/routing')}?from=test#linking-between-pages`)
 })

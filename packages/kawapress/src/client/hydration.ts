@@ -1,6 +1,7 @@
 import type { Router, RouterHistory } from 'vue-router'
-import type { HydrationPlan } from '../core/not-found'
-import { NOT_FOUND_DOCUMENT_META, resolveHydrationPlan } from '../core/not-found'
+import type { HydrationPlan } from '../core/hydration-plan'
+import { resolveHydrationPlan } from '../core/hydration-plan'
+import { NOT_FOUND_DOCUMENT_META } from '../core/not-found'
 
 export interface ClientHydration {
   /** History the router has to use so its first render matches the served HTML. */
@@ -15,9 +16,11 @@ const NOT_FOUND_DOCUMENT_SELECTOR = `meta[name="${NOT_FOUND_DOCUMENT_META}"]`
  * Wrap the browser history so the router can start on the route the server
  * rendered without ever changing the address bar.
  *
- * The not-found document is prerendered at `/404` but served for every unknown
- * URL, so the first client render has to resolve `/404` as well; it is only
- * after hydration that the router may move to the URL the visitor opened.
+ * The served HTML only describes a path: static hosts ignore the query and the
+ * browser never sends the hash, and the not-found document is prerendered at
+ * `/404` but served for every unknown URL. The first client render therefore has
+ * to use that path as well; only after hydration may the router move to the URL
+ * the visitor opened.
  *
  * The router reads `history.location` exactly once, when it installs and starts
  * its first navigation, so the plan is resolved lazily at that moment (by then
@@ -34,7 +37,7 @@ export function createClientHydration(
 ): ClientHydration {
   // The web history already resolved `window.location` against the site base,
   // so this is the URL the visitor opened, in router terms.
-  const requestedPath = history.location
+  const requestedLocation = history.location
   let plan: HydrationPlan | undefined
   let adopted = false
 
@@ -51,8 +54,8 @@ export function createClientHydration(
   function hydrationPlan(): HydrationPlan {
     plan ??= resolveHydrationPlan({
       isNotFoundDocument: document.querySelector(NOT_FOUND_DOCUMENT_SELECTOR) !== null,
-      requestedPath,
-      routeName: requireRouter().resolve(requestedPath).name,
+      requestedLocation,
+      routeName: requireRouter().resolve(requestedLocation).name,
     })
     return plan
   }

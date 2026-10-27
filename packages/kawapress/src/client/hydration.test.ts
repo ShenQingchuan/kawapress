@@ -65,6 +65,54 @@ describe('createClientHydration', () => {
     })
   })
 
+  it('starts on the path without the query and the hash, then adopts them', () => {
+    const { history, writes } = createFakeHistory('/guide/routing?from=search#dead-links')
+    const { router, replaced } = createFakeRouter({ '/guide/routing': '/guide/routing' })
+    const hydration = createClientHydration(history, () => router)
+
+    expect(hydration.history.location).toBe('/guide/routing')
+
+    hydration.history.replace('/guide/routing', { scroll: null })
+    expect(writes, 'the address bar must keep the requested URL while hydrating').toEqual([])
+
+    return hydration.adoptRequestedUrl().then(() => {
+      expect(replaced).toEqual(['/guide/routing?from=search#dead-links'])
+      expect(writes).toEqual([])
+      expect(hydration.history.location).toBe('/guide/routing?from=search#dead-links')
+
+      // From here on the router writes to the real history again.
+      hydration.history.push('/guide/getting-started')
+      expect(writes).toEqual(['push /guide/getting-started'])
+    })
+  })
+
+  it('hydrates a plain path in place without adopting anything', () => {
+    const { history, writes } = createFakeHistory('/guide/getting-started')
+    const { router, replaced } = createFakeRouter({ '/guide/getting-started': '/guide/getting-started' })
+    const hydration = createClientHydration(history, () => router)
+
+    expect(hydration.history.location).toBe('/guide/getting-started')
+    hydration.history.replace('/guide/getting-started')
+    expect(writes).toEqual(['replace /guide/getting-started'])
+
+    return hydration.adoptRequestedUrl().then(() => {
+      expect(replaced).toEqual([])
+    })
+  })
+
+  it('adopts the requested URL of a not-found document that carries a query', () => {
+    markNotFoundDocument()
+    const { history } = createFakeHistory('/guide/missing?from=search#top')
+    const { router, replaced } = createFakeRouter({ '/guide/missing?from=search#top': NOT_FOUND_ROUTE_NAME })
+    const hydration = createClientHydration(history, () => router)
+
+    expect(hydration.history.location).toBe(NOT_FOUND_ROUTE_PATH)
+
+    return hydration.adoptRequestedUrl().then(() => {
+      expect(replaced).toEqual(['/guide/missing?from=search#top'])
+    })
+  })
+
   it('writes to the browser history again once the URL was adopted', () => {
     markNotFoundDocument()
     const { history, writes } = createFakeHistory('/guide/missing')

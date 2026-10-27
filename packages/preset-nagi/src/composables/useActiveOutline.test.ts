@@ -251,4 +251,64 @@ describe('active outline', () => {
 
     expect(root.addEventListener).not.toHaveBeenCalled()
   })
+
+  it('does not jump again when the route reports the anchor it already landed on', async () => {
+    const scrolls: string[] = []
+    const root = {
+      scrollTop: 0,
+      clientHeight: 400,
+      scrollHeight: 1200,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      getBoundingClientRect: () => ({ top: 0 }),
+    }
+    const positions: Record<string, number> = { child: 320 }
+    const article = {
+      querySelector: (selector: string) => {
+        const top = positions[selector.slice(1)]
+        if (top === undefined) {
+          return null
+        }
+        return {
+          getBoundingClientRect: () => ({ top: top - root.scrollTop }),
+          scrollIntoView: () => {
+            scrolls.push(selector)
+            root.scrollTop = top
+          },
+        }
+      },
+    }
+    const location = { hash: '#child' }
+    testState.page.value = {
+      path: '/guide',
+      headers: [header(2, 'Child', 'child')],
+    }
+    testState.getScrollElement = () => root as unknown as HTMLElement
+    vi.stubGlobal('window', {
+      location,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        callback(0)
+        return 1
+      },
+      cancelAnimationFrame: vi.fn(),
+    })
+    vi.stubGlobal('document', { querySelector: () => article })
+    vi.stubGlobal('CSS', { escape: (value: string) => value })
+
+    useActiveOutline()
+    testState.mountedHook?.()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(scrolls).toEqual(['#child'])
+
+    // The reader scrolls away, then the client adopts the requested URL, which
+    // reports the same hash the initial load already landed on.
+    root.scrollTop = 0
+    testState.routeWatch?.callback(['/guide', '#child'], ['/guide', ''])
+
+    expect(scrolls).toEqual(['#child'])
+    expect(root.scrollTop).toBe(0)
+  })
 })
