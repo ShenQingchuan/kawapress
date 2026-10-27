@@ -78,9 +78,16 @@ npm trust github <包名> --file release.yml --repository ShenQingchuan/kawapres
 
 ### 5. 第一次 CI 发布成功之后，关掉 token 发布
 
-去每个包的 npm 页面 → Settings → Publishing access，改成 **Require two-factor authentication and disallow tokens**（16 个包都改）。
+把 16 个包的发布权限都改成「必须两步验证，不接受绕过两步验证的 token」（网页上的 Require two-factor authentication and disallow bypass 2fa tokens）：
 
-这一步做完，只有 CI 的 OIDC 和带 2FA 的人工操作能发布，长期 token 彻底没用。要等第一次 CI 发布成功再改，否则万一需要救火，你会连手工发布的路都没有。
+```sh
+pnpm release:lock            # 先打印 16 条命令，不改任何东西
+pnpm release:lock --apply    # 真正修改；第一次会在浏览器里做两步验证
+```
+
+它对每个包执行 `npm access set mfa=publish <包名>`，每条之间停 2 秒。CI 走的是 OIDC，不受这个设置影响。
+
+这一步做完，只有 CI 的 OIDC 和带两步验证的人工操作能发布，长期 token 彻底没用。要等第一次 CI 发布成功再改，否则万一需要救火，你会连手工发布的路都没有。
 
 ---
 

@@ -18,7 +18,8 @@
     "release": "node scripts/release.mjs",
     "release:dry": "node scripts/release.mjs --dry-run",
     "release:prepare": "node scripts/release.mjs --prepare",
-    "release:trust": "node scripts/trust-publishers.mjs"
+    "release:trust": "node scripts/trust-publishers.mjs",
+    "release:lock": "node scripts/publishing-access.mjs"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
