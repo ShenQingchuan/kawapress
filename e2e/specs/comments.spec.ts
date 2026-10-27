@@ -1,28 +1,10 @@
-import type { Page } from '@playwright/test'
 import { expect, test } from '../support/fixtures'
+import { stubGiscus } from '../support/giscus'
 import { sitePath } from '../support/site'
 
 const commentsSection = '.kawa-comments'
 const giscusFrame = '.kawa-comments iframe.giscus-frame'
 const giscusScript = '.kawa-comments script'
-
-/**
- * The real giscus script renders a cross-origin iframe, which no test can
- * inspect. This stub does the same DOM work with the same class name, so the
- * spec can assert when the script is requested and which attributes it carries.
- */
-const GISCUS_STUB_SCRIPT = `
-(() => {
-  const host = document.querySelector('.kawa-comments__thread')
-  if (!host) {
-    return
-  }
-  const frame = document.createElement('iframe')
-  frame.className = 'giscus-frame'
-  frame.title = 'Comments'
-  host.append(frame)
-})()
-`
 
 test('giscus is only requested once the section approaches the viewport', async ({ page }) => {
   const requests = await stubGiscus(page)
@@ -83,16 +65,3 @@ test('frontmatter comments: false hides the section', async ({ page }) => {
   await page.mouse.wheel(0, 2000)
   expect(requests, 'a page that opted out never loads giscus').toHaveLength(0)
 })
-
-/** Serves a tiny stand-in for the giscus client and records every request. */
-async function stubGiscus(page: Page): Promise<string[]> {
-  const requests: string[] = []
-  await page.route('https://giscus.app/**', async (route) => {
-    requests.push(route.request().url())
-    await route.fulfill({
-      body: GISCUS_STUB_SCRIPT,
-      contentType: 'text/javascript',
-    })
-  })
-  return requests
-}
