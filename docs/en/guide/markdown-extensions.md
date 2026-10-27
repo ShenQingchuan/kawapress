@@ -71,7 +71,7 @@ Root-relative links follow the configured `base` as well:
 [Home](/en/index.md)
 ```
 
-Generated pages use the canonical extensionless URL. After hydration, Vue Router handles normal internal page links without a full-page reload. A same-page `#heading` link keeps the browser's native anchor behavior.
+Generated pages use the canonical extensionless URL. After hydration, the client router handles normal internal page links without a full-page reload. A same-page `#heading` link keeps the browser's native anchor behavior.
 
 For example, continue to [Routing](./routing.md) or [Deployment](./deploy.html).
 

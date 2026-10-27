@@ -1,6 +1,7 @@
+import type { FixturePage } from './fixture.ts'
 import type { LighthouseScore } from './measure-lighthouse.ts'
 import type { PageSizeResult } from './measure-size.ts'
-import type { BenchReport, DevMeasurement, Measurement, SizeResult } from './report.ts'
+import type { BenchReport, DevMeasurement, Measurement, PageLoads, SizeResult } from './report.ts'
 import type { SiteKind, SitePaths } from './sites.ts'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -13,6 +14,7 @@ import { createFixture, HOME_HERO_NAME } from './fixture.ts'
 import { measureColdBuild } from './measure-build.ts'
 import { measureDevReady } from './measure-dev.ts'
 import { measureLighthouse } from './measure-lighthouse.ts'
+import { measurePageLoads } from './measure-page-load.ts'
 import { measurePageSize } from './measure-size.ts'
 import {
   formatBytes,
@@ -27,8 +29,18 @@ import { SITE_KINDS, SITE_LABELS, writeSites } from './sites.ts'
 interface SiteMeasurement {
   build: Measurement
   dev: DevMeasurement
+  browser: PageLoads
   assets: { home: PageSizeResult, guide: PageSizeResult }
   lighthouse?: LighthouseScore
+}
+
+interface MeasureSiteOptions {
+  runs: number
+  lighthouse: boolean
+  /** The page a run starts on, which is also the page the size measurement reads. */
+  startPage: FixturePage
+  /** The page the sidebar link of the benchmark clicks. */
+  targetPage: FixturePage
 }
 
 function log(message: string): void {
@@ -37,9 +49,9 @@ function log(message: string): void {
 
 async function measureSite(
   site: SitePaths,
-  runs: number,
-  lighthouse: boolean,
+  options: MeasureSiteOptions,
 ): Promise<SiteMeasurement> {
+  const { runs, lighthouse } = options
   const label = SITE_LABELS[site.kind]
 
   log(`${label}: cold build, ${runs} run(s)`)
@@ -55,6 +67,20 @@ async function measureSite(
     onRun: ({ run, contentVisibleMs, firstHtmlMs }) => log(
       `  run ${run}: ${formatDuration(contentVisibleMs)} until visible, `
       + `${formatDuration(firstHtmlMs)} until the first HTML response`,
+    ),
+  })
+
+  log(`${label}: hydration and client navigation, ${runs} run(s)`)
+  const pageLoadRuns = await measurePageLoads(site, {
+    runs,
+    startRoute: options.startPage.route,
+    startHeading: options.startPage.title,
+    targetRoute: options.targetPage.route,
+    expectHeading: options.targetPage.title,
+    base: site.base,
+    onRun: ({ run, hydrationMs, clientNavigationMs }) => log(
+      `  run ${run}: ${formatDuration(hydrationMs)} until the app was mounted, `
+      + `${formatDuration(clientNavigationMs)} until the next page was readable`,
     ),
   })
 
@@ -80,6 +106,10 @@ async function measureSite(
     dev: {
       contentVisible: summarizeRuns(devRuns.map(run => run.contentVisibleMs)),
       firstHtml: summarizeRuns(devRuns.map(run => run.firstHtmlMs)),
+    },
+    browser: {
+      hydration: summarizeRuns(pageLoadRuns.map(run => run.hydrationMs)),
+      clientNavigation: summarizeRuns(pageLoadRuns.map(run => run.clientNavigationMs)),
     },
     assets: { home, guide },
   }
@@ -117,13 +147,19 @@ async function main(): Promise<void> {
 
     const measurements: [SiteKind, SiteMeasurement][] = []
     for (const kind of SITE_KINDS) {
-      measurements.push([kind, await measureSite(sites[kind], options.runs, options.lighthouse)])
+      measurements.push([kind, await measureSite(sites[kind], {
+        runs: options.runs,
+        lighthouse: options.lighthouse,
+        startPage: fixture.pages[0]!,
+        targetPage: fixture.pages[1]!,
+      })])
     }
 
     results.push({
       size,
       build: byKind(measurements.map(([kind, measurement]) => [kind, measurement.build] as const)),
       dev: byKind(measurements.map(([kind, measurement]) => [kind, measurement.dev] as const)),
+      browser: byKind(measurements.map(([kind, measurement]) => [kind, measurement.browser] as const)),
       assets: byKind(measurements.map(([kind, measurement]) => [kind, measurement.assets] as const)),
       ...(options.lighthouse
         ? {

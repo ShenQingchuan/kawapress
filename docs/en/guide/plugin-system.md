@@ -52,7 +52,7 @@ A custom container only changes generated HTML, so a Generator Plugin is enough.
 
 ### A Runtime Plugin Participates in the Page Runtime {#a-runtime-plugin-participates-in-the-page-runtime}
 
-A Runtime Plugin works when KawaPress creates the Vue App and Vue Router. It can:
+A Runtime Plugin works when KawaPress creates the Vue App and the client router. It can:
 
 - install regular Vue plugins;
 - register global components;

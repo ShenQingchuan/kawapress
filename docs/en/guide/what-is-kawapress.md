@@ -42,7 +42,7 @@ KawaPress combines pre-rendered HTML with client-side navigation.
 
 - **Hydration**: After the client bundle loads, Vue hydrates the existing HTML and takes over interaction.
 
-- **Later navigation**: Vue Router handles internal navigation without a full page reload. Markdown pages are split by route and loaded on demand.
+- **Later navigation**: the router KawaPress ships with handles internal navigation without a full page reload. Markdown pages are split by route and loaded on demand.
 
 - **Static deployment**: `kawapress build` pre-renders every known Markdown route. The final output can be deployed to any static file service.
 

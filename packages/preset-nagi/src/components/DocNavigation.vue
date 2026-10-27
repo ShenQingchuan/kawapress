@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { RouterLink, useRouter } from 'kawapress/client'
+import { RouterLink, useRoute } from 'kawapress/client'
 import { computed } from 'vue'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import { useSidebarItems } from '../composables/useSidebarItems'
 import { findSidebarNavigation } from '../sidebar'
 
-const router = useRouter()
+const route = useRoute()
 const theme = useNagiThemeConfig()
 const items = useSidebarItems()
 const navigation = computed(() => findSidebarNavigation(
   items.value,
-  router.currentRoute.value.path,
+  route.value.path,
 ))
 </script>
 

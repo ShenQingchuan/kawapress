@@ -1,4 +1,4 @@
-import { usePageData, useRouter } from 'kawapress/client'
+import { usePageData, useRoute } from 'kawapress/client'
 import { nextTick, onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import {
   findOutlineHeaderByHash,
@@ -21,7 +21,7 @@ let positionedLink: string | undefined
 
 export function useActiveOutline() {
   const page = usePageData()
-  const router = useRouter()
+  const route = useRoute()
   const getScrollElement = useDocScrollElement()
 
   function activateLink(link: string | null, sticky = false): void {
@@ -158,7 +158,7 @@ export function useActiveOutline() {
       void bind()
       window.addEventListener('hashchange', onHashChange)
       stopRouteWatch = watch(
-        () => [page.value?.path, router.currentRoute.value.hash] as const,
+        () => [page.value?.path, route.value.hash] as const,
         ([path], [previousPath]) => {
           if (path === previousPath) {
             // 同一页面内的 hash 跳转（如搜索结果）不会触发 hashchange，需要在这里主动定位

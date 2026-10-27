@@ -1,8 +1,8 @@
 import type { MarkdownExit } from 'markdown-exit'
 import type { UserConfig } from 'vite'
 import type { App } from 'vue'
-import type { Router } from 'vue-router'
 import type { OutletItemInput, OutletName } from '../core/outlet'
+import type { Router } from '../core/router'
 import type { PageData, SiteConfig } from '../core/site'
 
 export type MaybePromise<T> = T | Promise<T>

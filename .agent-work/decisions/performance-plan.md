@@ -19,7 +19,6 @@
 |---|---|---|
 | Vue 运行时（runtime-core、reactivity、runtime-dom、shared） | 110 KB | 必需 |
 | 全站 pageData 索引 | 57 KB | 41 个页面的完整 pageData，包含每页全部 headers |
-| vue-router | 35 KB | 必需 |
 | nagi 主题组件 | 40 KB | 必需 |
 | floating-vue 与 @floating-ui | 45 KB | 只有 Twoslash 浮层使用 |
 | overlayscrollbars | 30 KB | nagi 滚动条 |
@@ -40,27 +39,25 @@
 
 ### 2.1 `kawapress build` 始终产出生产构建
 
-`loadSiteConfig()` 使用 Vite `runnerImport()`。它内部按开发环境解析配置；`NODE_ENV` 未设置时会把 `process.env.NODE_ENV` 写成 `development`，之后的构建因此把 Vue、vue-router 与 devtools 的开发代码打进了产物。
+`loadSiteConfig()` 使用 Vite `runnerImport()`。它内部按开发环境解析配置；`NODE_ENV` 未设置时会把 `process.env.NODE_ENV` 写成 `development`，之后的构建因此把 Vue 与 devtools 的开发代码打进了产物。
 
 `kawapress build` 在加载配置之前把未设置的 `NODE_ENV` 设为 `production`，并向 `createBuilder()` 显式传入 `mode: 'production'`。跟踪：独立修复分支。
 
-### 2.2 浏览器只拿到路由清单与 Sidebar 所需的最小页面摘要
+### 2.2 浏览器只拿到页面加载函数
 
 这一条落实 0.1 决策“路由路径清单可以进入浏览器，页面组件与 pageData 按需加载”。
 
-- `virtual:kawapress-pages` 只导出页面路由与按需加载函数，以及每个页面的**路由摘要** `PageRouteMeta`：`path`、`title`、`frontmatter.layout`。不再导出完整 pageData。
-- 完整 pageData 只随页面组件模块加载（现有 `__pageData` 导出），`usePageData()` 继续返回当前页面的完整数据。
-- Core 公开 `PageRouteMeta` 类型，并把它放在 `route.meta.page` 上，供主题生成 Sidebar、上一篇与下一篇。nagi 改为读取路由摘要，不再读取完整 pageData。
-- 需要更多字段的主题或插件，使用 Generator Plugin 的 `vite()` 发布自己的虚拟模块，与 nagi 的 `_meta.json` 虚拟模块、Search 的索引模块同一模式。Core 不提供“扩展路由摘要字段”的 API；等出现真实需求再设计。
+- 进入浏览器的页面表只携带每个页面的加载函数，不携带标题、layout 或其他摘要。完整 pageData 只随页面组件模块加载（现有 `__pageData` 导出），`usePageData()` 继续返回当前页面的完整数据。
+- 页面标题与 layout 属于需要它们的主题，不属于 Core 的路由数据；nagi 用自己的虚拟模块提供自动侧边栏数据。Core 只用 `kawapress/generator` 的页面发现与页面摘要读取能力提供读取手段。方案见 `router-plan.md` 第二节。
 
 ### 2.3 dev 不在首个请求时编译全站
 
-路由摘要只需要 frontmatter 与第一个 h1，不需要完整渲染页面。
+页面表生成不需要渲染页面。
 
-- 新增“页面摘要”读取：只解析 frontmatter 与首个一级标题（与 `resolvePageMetadata()` 使用相同规则），不调用 Markdown 渲染器、不运行插件的 `pageData()`。
-- `virtual:kawapress-pages` 使用页面摘要生成路由摘要。完整编译只在请求某个页面时发生。
+- `kawapress/generator` 公开页面摘要读取：只解析 frontmatter 与首个一级标题（与 `resolvePageMetadata()` 使用相同规则），不调用 Markdown 渲染器、不运行插件的 `pageData()`。
+- 生成侧只列页面文件，浏览器构建的页面表由预渲染阶段按产物清单计算。完整编译只在请求某个页面时发生。
 - 页面摘要与完整编译的标题规则必须一致：两者共用 `resolvePageMetadata()`，并有单元测试比较两者在 frontmatter `title`、h1、二者都缺失与 h1 含行内代码等情况下的结果。
-- 已知限制：插件在 `pageData()` 中修改的 `title` 不会进入路由摘要。路由摘要描述的是作者写下的标题，这一点写进插件开发文档。
+- 已知限制：插件在 `pageData()` 中修改的 `title` 不会进入页面摘要。页面摘要描述的是作者写下的标题，这一点写进插件开发文档。
 
 ### 2.4 侧边栏链接不使用 RouterLink
 
@@ -70,14 +67,14 @@
 - 当前页高亮由侧边栏根据当前路由路径计算一次，再传给每个链接；不再每个链接各自解析路由。
 - 上一篇与下一篇、首页按钮等数量固定的链接保留 RouterLink。
 
-### 2.5 页面清单只写一次、单独成块
+### 2.5 页面表只写一次、单独成文件
 
-500 页时，入口文件中与页面清单有关的内容约 17 KB gzip：页面加载函数表 7.8 KB（以源文件路径为键，浏览器里再换算成路由）、Vite 预加载文件表 4.8 KB、路由摘要 4.5 KB（路由路径作为键与值各出现一次）。
+页面表按路由路径为键，来自产物清单，与首屏 modulepreload 使用同一个依赖计算函数；实现见 `router-plan.md` 2.2。
 
-- `virtual:kawapress-pages` 在生成侧直接以路由路径为键生成页面表，每页一条记录同时给出加载函数与路由摘要；浏览器不再换算源文件路径。
-- 路由摘要的值不再重复 `path`；`PageRouteMeta.path` 由 Core 在建立路由时补上，公开类型不变。
-- 页面清单拆成独立 chunk，与框架代码分开缓存：站点内容变化不让 Vue、vue-router 与主题代码的缓存失效。
-- 页面清单的大小随页数线性增长是所有 SPA 式文档站共有的成本。验收以“每多一页增加的首屏字节数（HTML 与 JS 一起计算）不超过 VitePress”为准。
+- 每个 Markdown 页面是浏览器构建的独立 input，页面 CSS 按页拆分，因此页面表中每页只有自己的 chunk 内容哈希与额外依赖，文件名由路由与哈希算出。
+- 页面表作为带内容哈希的独立文件输出，由 HTML 引用；页面表里没有任何可被静态分析的 `import()`，所以不再有 Vite 预加载依赖表。
+- 站点内容变化不让 app chunk 与入口 chunk 的缓存失效：只有变化的页面 chunk 与页面表换新文件名。
+- 页面表的大小随页数线性增长是所有 SPA 式文档站共有的成本。验收以“每多一页增加的首屏字节数（HTML 与 JS 一起计算）不超过 VitePress”为准。
 
 ### 2.6 Twoslash 浮层只在用到的页面加载
 
@@ -104,7 +101,6 @@ overlayscrollbars 约 9 KB gzip，每页都加载。
 
 ## 三、不做的事
 
-- 不替换 Vue Router。路由运行时约 35 KB，是 0.1 已确认的取舍。
 - 不在本轮优化 CLI 与配置加载（约 800 ms）。它主要来自 Jiti 与 Vite `runnerImport` 的冷启动，需要单独测量后再设计。
 
 ## 四、验收
@@ -123,7 +119,7 @@ overlayscrollbars 约 9 KB gzip，每页都加载。
 | 500 页首页首屏 HTML+JS+CSS gzip | 97.9 KB | 91.0 KB |
 | 每多一页（指南页 HTML+JS gzip） | 47.3 B | 26.6 B |
 
-docs 首页首屏 JS 为 68.8 KB gzip（`app` 66.3 KB、页面清单 1.8 KB、入口 0.2 KB）。“每多一页”一项尚未达标：剩余差距来自页面清单中每页的加载函数与 Vite 动态导入的预加载依赖表（500 页时约 4.8 KB gzip，每页都重复列出启动时早已加载的 `app` chunk 与其 CSS）。
+docs 首页首屏 JS 为 68.8 KB gzip（`app` 66.3 KB、页面清单 1.8 KB、入口 0.2 KB）。“每多一页”一项尚未达标：剩余差距来自页面清单中每页的加载函数与 Vite 动态导入的预加载依赖表（500 页时约 4.8 KB gzip，每页都重复列出启动时早已加载的 `app` chunk 与其 CSS）。这一项由 `router-plan.md` 的自建路由与页面表方案处理，见下文第三轮。
 
 第二轮目标：
 

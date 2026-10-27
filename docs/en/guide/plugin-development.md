@@ -164,7 +164,7 @@ api.pageData((pageData, { file, sourcePath }) => {
 
 Both values stay on the generator side and are never sent to the browser. Copy what the page needs into `pageData`, as above.
 
-A `title` you change in `pageData()` only affects that page's own data. It does not reach the route summaries used for navigation (`route.meta.page`), which describe the title the author wrote in Frontmatter or in the first level-1 heading.
+A `title` you change in `pageData()` only affects that page's own data. It does not reach the page summaries used for navigation, which describe the title the author wrote in Frontmatter or in the first level-1 heading.
 
 ### `pageArtifact()`: Observe the Build Result of Each Page {#page-artifact}
 
@@ -391,20 +391,30 @@ Do not scope plugin styles to one theme's content container either, such as `.na
 
 ### `router()`: Adjust Runtime Routing {#router}
 
-`router()` receives the real vue-router `Router`. It is the right place to add navigation guards:
+`router()` receives the KawaPress `Router`, which keeps the names and the usage of Vue Router wherever the two overlap. It is the right place to add navigation guards: `beforeEach()` cancels a navigation by returning `false`, and a plugin that wants another URL calls `router.push()` itself.
 
 ```ts
 api.router((router) => {
   router.beforeEach((to) => {
-    if (to.path === '/old-notes') {
-      return '/notes'
+    // For example: a draft page is only reachable during local development
+    if (to.path === '/notes/draft' && import.meta.env.PROD) {
+      return false
     }
-    return true
   })
 })
 ```
 
-`router.addRoute()` changes only the runtime routes. It does not generate new static pages automatically.
+`afterEach()` runs once a navigation committed, which suits cleaning up state that belonged to the previous page:
+
+```ts
+api.router((router) => {
+  router.afterEach(() => {
+    closeDialog()
+  })
+})
+```
+
+The `Router` covers what a documentation site needs (navigation, the current route, hooks before and after a navigation). It has no `addRoute()`, named routes, dynamic parameters or redirects. Add a Markdown file for a new page; when you need a list of pages, publish your own virtual module from a Generator Plugin.
 
 ### Runtime Notes {#runtime-notes}
 

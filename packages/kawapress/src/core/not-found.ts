@@ -10,9 +10,6 @@
 /** Route the not-found document is rendered with. */
 export const NOT_FOUND_ROUTE_PATH = '/404'
 
-/** Name of the router record that renders the not-found page. */
-export const NOT_FOUND_ROUTE_NAME = 'not-found'
-
 /**
  * `<meta>` name that only the prerendered not-found document carries. Dev
  * renders every URL at its own path, so its HTML must not be mistaken for the

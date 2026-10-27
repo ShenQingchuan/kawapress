@@ -64,17 +64,6 @@ export interface PageHeader {
   children: PageHeader[]
 }
 
-/**
- * Smallest per-page data every route carries in the browser: enough for a theme
- * to build navigation without loading the page itself.
- */
-export interface PageRouteMeta {
-  path: string
-  title: string
-  /** `frontmatter.layout` when it is a string. */
-  layout?: string
-}
-
 export interface PageData {
   path: string
   title: string

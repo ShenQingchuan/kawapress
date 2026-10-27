@@ -1,5 +1,5 @@
 import type { AssetSize, PageSizeResult } from './measure-size.ts'
-import type { BenchReport, SizeResult } from './report.ts'
+import type { BenchReport, PageLoads, SizeResult } from './report.ts'
 import { describe, expect, it } from 'vitest'
 import { combineAssetSizes } from './measure-size.ts'
 import {
@@ -36,6 +36,17 @@ function pageSize(page: string, htmlGzip = HTML_SIZE.gzip): PageSizeResult {
   }
 }
 
+function pageLoads(hydrationMs: number, clientNavigationMs: number): PageLoads {
+  return {
+    hydration: summarizeRuns([hydrationMs + 20, hydrationMs, hydrationMs + 10]),
+    clientNavigation: summarizeRuns([
+      clientNavigationMs + 10,
+      clientNavigationMs,
+      clientNavigationMs + 5,
+    ]),
+  }
+}
+
 function sizeResult(size: number): SizeResult {
   const growth = GUIDE_HTML_GZIP[size]!
   return {
@@ -53,6 +64,10 @@ function sizeResult(size: number): SizeResult {
         contentVisible: summarizeRuns([2_100, 2_000, 2_200]),
         firstHtml: summarizeRuns([900, 800, 1_000]),
       },
+    },
+    browser: {
+      kawapress: pageLoads(320, 210),
+      vitepress: pageLoads(280, 260),
     },
     assets: {
       kawapress: {
@@ -161,6 +176,20 @@ describe('formatReport', () => {
     expect(markdown).toContain('| Dev first HTML response, all runs | 1.40 s, 1.30 s, 1.50 s |')
   })
 
+  it('reports hydration and client navigation on the built site', () => {
+    const markdown = formatReport(createReport())
+    expect(markdown).toContain('| Hydration done, median of 3 runs | 330 ms | 290 ms | +13.8% |')
+    expect(markdown).toContain('| Hydration done, all runs | 340 ms, 320 ms, 330 ms | 300 ms, 280 ms, 290 ms |')
+    expect(markdown).toContain('| Client navigation, median of 3 runs | 215 ms | 265 ms | -18.9% |')
+    expect(markdown).toContain('| Client navigation, all runs | 220 ms, 210 ms, 215 ms | 270 ms, 260 ms, 265 ms |')
+  })
+
+  it('explains how the browser measurements are taken', () => {
+    const markdown = formatReport(createReport())
+    expect(markdown).toContain('**Hydration done / Client navigation**')
+    expect(markdown).toContain('`__vue_app__`')
+  })
+
   it('counts the HTML document into the first paint size', () => {
     const markdown = formatReport(createReport())
     expect(markdown).toContain('| Home page first paint, HTML + JS + CSS, raw / gzip / brotli | 148.4 kB / 48.8 kB / 41.5 kB | 148.4 kB / 48.8 kB / 41.5 kB | 0.0% |')
@@ -196,6 +225,7 @@ describe('formatReport', () => {
     expect(parsed).toEqual(report)
     expect(parsed.results[0]!.build.kawapress.runsMs).toEqual([21_000, 20_000, 22_000])
     expect(parsed.results[0]!.dev.kawapress.contentVisible.runsMs).toEqual([3_200, 3_000, 3_100])
+    expect(parsed.results[0]!.browser.kawapress.hydration.runsMs).toEqual([340, 320, 330])
   })
 })
 

@@ -1,4 +1,5 @@
-import { NOT_FOUND_ROUTE_NAME, NOT_FOUND_ROUTE_PATH } from './not-found'
+import { decodeUrlPathname } from './base'
+import { NOT_FOUND_ROUTE_PATH } from './not-found'
 
 /**
  * Static hosts ignore the query and no browser ever sends the hash, so the HTML
@@ -13,20 +14,19 @@ import { NOT_FOUND_ROUTE_NAME, NOT_FOUND_ROUTE_PATH } from './not-found'
 export interface HydrationPlanInput {
   /** Whether the served HTML carries the not-found document marker. */
   isNotFoundDocument: boolean
-  /**
-   * Location the visitor opened, in router terms: the site base is already
-   * removed, the query and the hash are still part of it.
-   */
+  /** Location the visitor opened, site base already removed, still percent-encoded. */
   requestedLocation: string
-  /** Route `requestedLocation` resolves to, `null`/`undefined` when nothing matched. */
-  routeName: string | symbol | null | undefined
+  /** Whether the page table has a page for a route path. */
+  hasPage: (path: string) => boolean
 }
 
 export interface HydrationPlan {
-  /** Route the client renders first, so its first render matches the HTML. */
-  hydratePath: string
-  /** Location to move to once the app is hydrated, `undefined` to stay put. */
+  /** Route the client renders first, so its first render matches the served HTML. */
+  startPath: string
+  /** Location adopted after mount without a navigation and without a history entry. */
   adoptPath?: string
+  /** Location the address bar should show after mount, for example a decoded path. */
+  replacePath?: string
 }
 
 /**
@@ -36,30 +36,44 @@ export interface HydrationPlan {
  * for every unknown URL, so its first render has to resolve `/404` too. Every
  * other document was rendered for its path alone, so the query and the hash are
  * dropped for the first render and adopted right afterwards, which is a normal
- * update instead of a mismatch.
+ * update instead of a mismatch. A percent-encoded path was rendered decoded, so
+ * the first render uses the decoded path and the address bar follows it.
  */
 export function resolveHydrationPlan(
-  { isNotFoundDocument, requestedLocation, routeName }: HydrationPlanInput,
+  { isNotFoundDocument, requestedLocation, hasPage }: HydrationPlanInput,
 ): HydrationPlan {
-  if (isNotFoundDocument && routeName === NOT_FOUND_ROUTE_NAME) {
-    return { hydratePath: NOT_FOUND_ROUTE_PATH, adoptPath: requestedLocation }
-  }
-
-  const suffixIndex = requestedLocation.search(/[?#]/)
-  if (suffixIndex === -1) {
-    return { hydratePath: requestedLocation }
-  }
-
+  const path = pathOf(requestedLocation)
+  const suffix = requestedLocation.slice(path.length)
+  const decodedPath = decodeUrlPathname(path)
+  const decodedLocation = `${decodedPath}${suffix}`
+  const wasEncoded = decodedPath !== path
   // A bare `?` or `#` addresses the same path with nothing to adopt.
-  const suffix = requestedLocation.slice(suffixIndex)
-  if (!/[^?#]/.test(suffix)) {
-    return { hydratePath: requestedLocation }
+  const hasSuffix = /[^?#]/.test(suffix)
+  const startPath = decodedPath || '/'
+
+  if (isNotFoundDocument) {
+    return {
+      startPath: NOT_FOUND_ROUTE_PATH,
+      adoptPath: decodedLocation,
+      ...wasEncoded ? { replacePath: decodedLocation } : {},
+    }
   }
 
-  // An empty path is the site root: the router has no current route to resolve
-  // it against on its first navigation.
-  return {
-    hydratePath: requestedLocation.slice(0, suffixIndex) || '/',
-    adoptPath: requestedLocation,
+  if (wasEncoded && hasPage(decodedPath)) {
+    return {
+      startPath,
+      ...hasSuffix ? { adoptPath: decodedLocation } : {},
+      replacePath: decodedLocation,
+    }
   }
+
+  return hasSuffix
+    ? { startPath, adoptPath: `${startPath}${suffix}` }
+    : { startPath }
+}
+
+/** Path part of a location: everything before the query or the hash. */
+function pathOf(location: string): string {
+  const suffixIndex = location.search(/[?#]/)
+  return suffixIndex === -1 ? location : location.slice(0, suffixIndex)
 }

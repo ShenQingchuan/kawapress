@@ -20,12 +20,12 @@ const VUE_PACKAGE_PATH = 'vue/package.json'
 const KAWAPRESS_PACKAGE_NAME = 'kawapress'
 
 /**
- * Packages the browser entry imports before it asks for a page: the router and
- * the head manager. A site installs `kawapress` and not its dependencies, so the
- * site root cannot resolve them by name and they are declared through the chain
- * of packages that leads to them.
+ * Packages the browser entry imports before it asks for a page: the head
+ * manager. A site installs `kawapress` and not its dependencies, so the site root
+ * cannot resolve them by name and they are declared through the chain of
+ * packages that leads to them.
  */
-const CORE_RUNTIME_DEPENDENCIES = ['vue-router', '@unhead/vue', '@unhead/vue/client']
+const CORE_RUNTIME_DEPENDENCIES = ['@unhead/vue', '@unhead/vue/client']
 
 /**
  * Vue is declared by its bare name, not through that chain. `resolve.alias`
@@ -55,10 +55,10 @@ export function createBaseViteConfig(
     ...createDefineOverrides(),
     resolve: {
       alias: resolveVueAliases(root),
-      dedupe: ['vue', 'vue-router'],
+      dedupe: ['vue'],
     },
     ssr: {
-      noExternal: ['vue', 'vue-router', /^@vue\//],
+      noExternal: ['vue', /^@vue\//],
       resolve: {
         conditions: ['module'],
       },

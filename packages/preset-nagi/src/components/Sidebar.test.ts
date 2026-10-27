@@ -14,7 +14,7 @@ const testState = vi.hoisted(() => ({
 }))
 
 vi.mock('kawapress/client', () => ({
-  useRouter: () => ({ currentRoute: testState.route }),
+  useRoute: () => testState.route,
 }))
 
 vi.mock('../composables/useNagiThemeConfig', () => ({

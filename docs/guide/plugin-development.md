@@ -163,7 +163,7 @@ api.pageData((pageData, { file, sourcePath }) => {
 
 这两个值只在生成侧使用，不会发送到浏览器。需要在页面上显示时，像上面这样把需要的部分写进 `pageData`。
 
-需要注意，在 `pageData()` 中修改的 `title` 只影响该页面自己的数据，不会进入用于导航的路由摘要（`route.meta.page`）：路由摘要描述的是作者在 Frontmatter 或第一个一级标题里写下的标题。
+需要注意，在 `pageData()` 中修改的 `title` 只影响该页面自己的数据，不会进入用于导航的页面摘要：页面摘要描述的是作者在 Frontmatter 或第一个一级标题里写下的标题。
 
 ### `pageArtifact()`：观察页面构建结果 {#page-artifact}
 
@@ -390,20 +390,30 @@ export default defineRuntimePlugin({
 
 ### `router()`：调整运行时路由 {#router}
 
-`router()` 接收真实的 vue-router `Router`。它适合添加导航守卫：
+`router()` 接收 KawaPress 的站内 `Router`，名字与用法和 Vue Router 相同的部分保持相同。它适合添加导航守卫：`beforeEach()` 返回 `false` 就取消这次跳转；插件想换一个地址时，自己调用 `router.push()`。
 
 ```ts
 api.router((router) => {
   router.beforeEach((to) => {
-    if (to.path === '/old-notes') {
-      return '/notes'
+    // 例如：草稿页只在本地开发时可访问
+    if (to.path === '/notes/draft' && import.meta.env.PROD) {
+      return false
     }
-    return true
   })
 })
 ```
 
-`router.addRoute()` 只修改运行时的路由，不会自动生成新的静态页面。
+`afterEach()` 在跳转提交后执行，适合清理与上一页有关的状态：
+
+```ts
+api.router((router) => {
+  router.afterEach(() => {
+    closeDialog()
+  })
+})
+```
+
+`Router` 只覆盖文档站需要的能力（跳转、读取当前路由、导航前后钩子），没有 `addRoute()`、命名路由、动态参数与重定向。新增页面请添加 Markdown 文件；如果你需要页面清单，用 Generator Plugin 发布自己的虚拟模块。
 
 ### 运行侧的注意事项 {#runtime-notes}
 

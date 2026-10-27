@@ -2,12 +2,11 @@ import type { OutletRegistry } from '../../core/outlet'
 import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import consola from 'consola'
-import { pageManifest } from 'virtual:kawapress-pages'
-import { NOT_FOUND_ROUTE_NAME } from '../../core/not-found'
+import { pageModules, pages } from 'virtual:kawapress-pages'
 import { createKawapressApp } from '../app'
 import { getRenderedOutlets } from '../outlet'
 
-export { pageManifest }
+export { pageModules, pages }
 export { site } from 'virtual:kawapress-site'
 
 export interface RenderResult {
@@ -17,8 +16,8 @@ export interface RenderResult {
   htmlAttrs: string
   /** Outlets the rendered page actually mounted. */
   outlets: string[]
-  /** Module ids of the page module and every SFC the render used. */
-  modules: string[]
+  /** Module id of the rendered page, the id the client manifest knows it by. */
+  pageModuleId: string | undefined
 }
 
 // The registry only depends on runtime plugin setup, so any render returns the
@@ -36,33 +35,26 @@ export function getOutletRegistry(): OutletRegistry {
 
 export async function render(url: string): Promise<RenderResult> {
   const head = createHead()
-  const { app, router, outlets } = await createKawapressApp({ head, pageManifest })
+  const { app, router, outlets } = await createKawapressApp({ head, pages })
   latestOutletRegistry = outlets
 
   app.config.errorHandler = (error) => {
     consola.error('KawaPress SSR error:', error)
   }
 
+  // One render, one navigation: the router looks the path up in the page table
+  // and loads that page, instead of rebuilding a matcher for every request.
   await router.push(url)
-  await router.isReady()
-  const found = router.currentRoute.value.name !== NOT_FOUND_ROUTE_NAME
+  const current = router.currentRoute.value
   const ssrContext: Record<string, unknown> = {}
   const html = await renderToString(app, ssrContext)
   const { headTags, htmlAttrs } = await head.render()
   return {
     html,
-    found,
+    found: current.found,
     head: headTags,
     htmlAttrs,
     outlets: getRenderedOutlets(ssrContext),
-    modules: getRenderedModules(ssrContext),
+    pageModuleId: pageModules[current.path],
   }
-}
-
-/**
- * `@vitejs/plugin-vue` pushes every SFC it renders into `ssrContext.modules`, so
- * prerendering can tell which page chunks and page CSS this render needed.
- */
-function getRenderedModules(context: Record<string, unknown>): string[] {
-  return context.modules instanceof Set ? [...context.modules] as string[] : []
 }

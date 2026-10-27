@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePageData, useRouter, useSite } from 'kawapress/client'
+import { usePageData, useRoute, useSite } from 'kawapress/client'
 import { computed, nextTick, onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'vue'
 
 interface Labels {
@@ -32,7 +32,7 @@ const CHINESE_LABELS: Labels = {
   moreActions: '更多 Markdown 操作',
 }
 
-const router = useRouter()
+const route = useRoute()
 const site = useSite()
 const page = usePageData()
 const root = useTemplateRef<HTMLElement>('root')
@@ -69,7 +69,7 @@ const primaryLabel = computed(() => (
 ))
 const linkLabel = computed(() => linkStatus.value || labels.value.copyLink)
 const markdownPath = computed(() => markdownUrl(
-  router.currentRoute.value.path,
+  route.value.path,
   site.value.localeIndex,
   site.value.base,
 ))
@@ -229,7 +229,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleDocumentKeydown)
 })
 
-watch(() => router.currentRoute.value.path, () => {
+watch(() => route.value.path, () => {
   clearTransientState()
   closeMenu()
 }, { flush: 'sync' })

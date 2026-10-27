@@ -1,10 +1,13 @@
 import { renderNotFoundDocumentMeta } from '../core/not-found'
+import { PAGE_TABLE_META } from '../core/page-manifest'
 import { KAWA_DEFAULT_TOKENS, KAWA_LAYER_ORDER } from '../core/tokens'
 
 export interface HtmlTemplateOptions {
   head: string
   appHtml: string
   clientEntryUrl: string
+  /** URL of the page table the client reads before it creates the router. */
+  pageTableUrl?: string
   cssUrls?: string[]
   /** Page chunk JS, preloaded so hydration does not wait for a waterfall. */
   modulepreloadUrls?: string[]
@@ -17,6 +20,12 @@ export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
   const cssLinks = (options.cssUrls ?? [])
     .map(href => `<link rel="stylesheet" href="${href}">`)
     .join('\n')
+  const pageTableLinks = options.pageTableUrl === undefined
+    ? ''
+    : [
+        `<link rel="modulepreload" href="${options.pageTableUrl}">`,
+        `<meta name="${PAGE_TABLE_META}" content="${options.pageTableUrl}">`,
+      ].join('\n    ')
   const modulepreloadLinks = (options.modulepreloadUrls ?? [])
     .map(href => `<link rel="modulepreload" href="${href}">`)
     .join('\n')
@@ -39,6 +48,7 @@ export function renderHtmlTemplate(options: HtmlTemplateOptions): string {
     ${notFoundMeta}${kawaStyles}
     ${options.head}
     ${cssLinks}
+    ${pageTableLinks}
     ${modulepreloadLinks}
   </head>
   <body>

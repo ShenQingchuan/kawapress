@@ -7,7 +7,7 @@ description: 了解 KawaPress 主题的架构位置、组件约定和配置边�
 
 在 KawaPress 中，主题不只是颜色和字体。它决定页面内容放在哪里，也决定导航栏、侧边栏、页脚和未找到页面怎样组成完整界面。
 
-KawaPress 不内置这些界面。它只负责创建 Vue App、Vue Router 和 Markdown 页面，再把页面交给主题显示。
+KawaPress 不内置这些界面。它只负责创建 Vue App、站内路由和 Markdown 页面，再把页面交给主题显示。
 
 ## 主题是一个普通 Plugin {#a-theme-is-a-regular-plugin}
 
@@ -67,7 +67,7 @@ import { RouterView } from 'kawapress/client'
 
 ### `NotFound` 只负责未匹配的页面 {#notfound-handles-unmatched-routes}
 
-当 Vue Router 找不到对应路由时，`RouterView` 会显示全局 `NotFound`：
+当路由在页面表里找不到对应页面时，`RouterView` 会显示全局 `NotFound`：
 
 ```vue
 <script setup lang="ts">
@@ -323,7 +323,8 @@ const layout = computed(() =>
 | `useSite()` | 当前语言下的站点标题、`base`、`lang`、`dir` 和首页链接。 |
 | `useThemeConfig()` | 当前语言合并后的主题配置。 |
 | `useLocale()` | 当前语言、语言列表和对应页面链接。 |
-| `useRouter()` | KawaPress 使用的 Vue Router 实例。 |
+| `useRoute()` | 当前路由：`path`、`fullPath`、`query`、`hash` 与是否命中页面。 |
+| `useRouter()` | 站内路由：`push()`、`replace()`、`beforeEach()` 与 `afterEach()`。 |
 | `RouterLink`、`RouterView` | 站内导航与当前路由内容。 |
 | `KawaOutlet` | 插件注册进当前 Outlet 的界面。 |
 | `withBase()` | 为动态的公共资源地址加上部署路径。 |
@@ -332,23 +333,11 @@ const layout = computed(() =>
 
 ### 列出全站页面做导航 {#list-pages-for-navigation}
 
-`usePageData()` 只返回当前页面。要列出其他页面，例如自动侧边栏、上一篇与下一篇，请读取每个路由的元数据 `route.meta.page`，它的类型是 `PageRouteMeta`：
+`usePageData()` 只返回当前页面，`kawapress/client` 也不提供“列出全站页面”的 API：页面表只带加载函数，标题与 layout 属于主题自己的数据。
 
-```ts
-import { useRouter } from 'kawapress/client'
-import { computed } from 'vue'
+nagi 的做法可以参考：它的 Generator Plugin 扫描一遍 Markdown 源文件，用 `createPageSummaryReader()` 读出每页写下的标题与 `layout`（不渲染页面、不执行 `pageData()`），再通过自己的虚拟模块交给运行侧。手写 Sidebar 覆盖的路径不进入这份列表，所以官方文档这类全手写配置的站点不会多算一遍。
 
-const router = useRouter()
-const pages = computed(() =>
-  router.getRoutes()
-    .map(route => route.meta.page)
-    .filter(page => page !== undefined),
-)
-```
-
-每个 `PageRouteMeta` 只有三个字段：`path`（公开路由）、`title`（页面标题）和可选的 `layout`（Frontmatter 中的 `layout` 字符串）。这些摘要随路由清单一起进入浏览器，体积很小；页面的正文、其余 Frontmatter 字段和标题目录只在该页面被访问时才加载。
-
-路由摘要来自作者写下的 Frontmatter 和第一个一级标题，不经过 Markdown 渲染，也不执行插件的 `pageData()`。需要更多字段时，按 Generator Plugin 的方式用 `vite()` 发布自己的虚拟模块，例如 nagi 的 `_meta.json` 模块。
+需要自己实现时，同样用 Generator Plugin 的 `vite()` 发布一个只含标准 JSON 的虚拟模块，不要在浏览器里读源文件或反推文件名。
 
 ## 在 Runtime Plugin 中导入主题样式 {#import-theme-styles-from-the-runtime-plugin}
 

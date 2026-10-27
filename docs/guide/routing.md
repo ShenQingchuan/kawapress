@@ -178,7 +178,7 @@ export default nagi({
 })
 ```
 
-`base` 必须以 `/` 开头。KawaPress 会统一处理末尾的 `/`，并让 Vite 资源、Vue Router、预渲染页面和 Markdown 中以 `/` 开头的链接使用同一个部署前缀。
+`base` 必须以 `/` 开头。KawaPress 会统一处理末尾的 `/`，并让 Vite 资源、客户端路由、预渲染页面和 Markdown 中以 `/` 开头的链接使用同一个部署前缀。
 
 页面内容里仍然写逻辑路由，不要到处手动重复 `/my-docs/`：
 
@@ -192,35 +192,41 @@ export default nagi({
 
 第一次打开页面时，KawaPress 会在服务端渲染当前路由，再由浏览器完成 hydration。访客可以立即看到完整内容，不需要等待客户端先生成页面。
 
-浏览器接管以后，站内普通链接会交给 Vue Router：
+浏览器接管以后，站内普通链接会交给 KawaPress 自带的文档站路由：
 
 ```text
 首次访问
   → 服务端渲染当前页面
   → 浏览器 hydration
   → 点击站内链接
-  → Vue Router 加载并显示目标页面
+  → 路由加载并显示目标页面
 ```
 
 这意味着首次访问和构建使用相同的 SSR 语义，而后续跳转不需要整页刷新。外部链接、下载链接、带 `target` 的链接以及配合修饰键打开新标签页的操作，仍然保留浏览器原本的行为。
 
 地址栏里带有查询串或锚点时，例如 `/guide/routing?from=search#links`，静态托管仍然只按路径返回同一份 HTML，浏览器也不会把锚点发给服务器。所以 KawaPress 先按路径完成 hydration，再切换到地址栏里的完整 URL：地址栏始终是访客打开的那一条，历史记录不会多出一项，页面照常停在目标标题上。在这次切换之前，读取 `route.query` 与 `route.hash` 的代码看到的还是空值，切换之后才是真实值；需要它们参与首屏输出时，请放到 `watch` 或 `onMounted` 里读取。
 
-## 为什么使用 Vue Router {#why-vue-router}
+## 为什么自带路由 {#why-a-built-in-router}
 
-VitePress 没有把 Vue Router 作为运行时依赖。它在客户端维护了一套专门面向文档站的[轻量路由实现](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts)，直接负责页面模块加载、浏览器历史、滚动位置和路由前后钩子。功能集中、依赖更少，也方便 VitePress 精确控制自己的页面加载流程。
+文档站的路由本质上是一张“路径 → 页面”的表，不需要匹配器、嵌套路由、命名路由或动态参数。KawaPress 因此没有引入 Vue Router，而是自带了一套只覆盖文档站需求的路由：页面表是纯数据，页面由一个统一的加载函数取回，URL 与浏览器历史由路由自己维护。
 
-KawaPress 选择使用 Vue 官方的 [Vue Router](https://router.vuejs.org/)。Markdown 文件仍然自动变成路由，不需要用户手写路由表；区别在于，KawaPress 会把这些页面交给真正的 Vue Router 实例管理：SSR 使用 memory history，浏览器使用 web history，Runtime Plugin 也能直接使用导航守卫和路由记录。
+这和 VitePress 的选择一致：它也维护了一套专门面向文档站的[轻量路由实现](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts)。区别只在于 KawaPress 把这套能力作为公开 API 交给主题和插件，而不是留在框架内部。
 
-| 关注点 | VitePress 的轻量路由 | KawaPress 的 Vue Router |
-| --- | --- | --- |
-| 运行时代价 | 不需要携带 Vue Router，能力只覆盖文档站所需范围 | 多一个通用依赖，也会带上文档站暂时用不到的能力 |
-| 扩展方式 | 使用 VitePress 自己定义的路由与页面加载钩子 | 使用 Vue Router 的标准实例、导航守卫和路由记录 API |
-| 维护取舍 | 自己控制并维护整套路由行为 | 复用 Vue 生态的成熟实现，同时适配 KawaPress 的 SSR 与 SSG 边界 |
+自带路由覆盖的能力：
 
-这不是“功能越多越好”。VitePress 优先追求小而专用；KawaPress 更看重统一的 Vue 扩展边界，让主题和 Runtime Plugin 不必再学习一套框架私有 Router。
+| 能力 | 说明 |
+| --- | --- |
+| 页面跳转 | `useRouter()` 的 `push()`、`replace()` |
+| 读取当前路由 | `useRoute()` 的 `path`、`fullPath`、`query`、`hash` |
+| 导航守卫 | `beforeEach()` 返回 `false` 取消本次跳转，`afterEach()` 在跳转完成后执行 |
+| 站内链接 | `RouterLink` 输出普通 `<a>`，全局点击拦截负责拦截站内跳转 |
+| 页面容器 | `RouterView` 渲染当前页面，未命中时渲染 `NotFound` |
 
-静态构建会根据构建时发现的 Markdown 文件生成页面。`router.addRoute()` 更适合添加只在客户端运行期间需要的路由；如果一个页面需要支持直接访问和预渲染，请把它创建为 Markdown 文件。
+不提供的能力：嵌套路由、命名路由、动态参数、`addRoute()`、`getRoutes()`、别名、守卫中返回新地址改跳、`scrollBehavior`、`isReady`、`resolve()`。这些能力在文档站里都不是必需的；需要时再按真实需求增加，而不是先背上一整套通用路由的复杂度。
+
+对主题和插件来说，`useRoute()`、`useRouter()`、`RouterLink`、`RouterView` 的名字与用法和 Vue Router 相同的部分保持相同，因此已经熟悉 Vue Router 的人不需要再学一套新概念。
+
+页面表来自构建时发现的 Markdown 文件，所以一个页面必须先是 Markdown 文件，才能被直接访问和预渲染。
 
 ## 未找到的页面 {#not-found-pages}
 

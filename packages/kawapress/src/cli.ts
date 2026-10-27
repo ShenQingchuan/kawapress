@@ -2,6 +2,10 @@ import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { defineCommand, runMain } from 'citty'
 import { version } from '../package.json'
+import {
+  ensureProductionNodeEnv,
+  warnAboutReplacedNodeEnv,
+} from './server/build-node-env'
 
 const dev = defineCommand({
   meta: { name: 'dev', description: 'Start the dev server' },
@@ -22,6 +26,11 @@ const dev = defineCommand({
 const build = defineCommand({
   meta: { name: 'build', description: 'Build the static site' },
   async run() {
+    // Pinned before `./server/build` is imported: that import chain reaches
+    // `@vue/compiler-core` through Vite's Vue plugin, and Vue picks its
+    // development or production compiler the moment the module is required.
+    // A later fix-up could no longer strip template comments from the output.
+    warnAboutReplacedNodeEnv(ensureProductionNodeEnv(process.env))
     const { buildSite } = await import('./server/build')
     await buildSite(process.cwd())
   },

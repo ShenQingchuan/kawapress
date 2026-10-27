@@ -81,7 +81,6 @@
     "sirv": "catalog:node",
     "tinyglobby": "catalog:node",
     "vite": "catalog:node",
-    "vue": "catalog:frontend",
-    "vue-router": "catalog:frontend"
+    "vue": "catalog:frontend"
   }
 }

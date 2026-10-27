@@ -8,7 +8,7 @@ const testState = vi.hoisted(() => ({
   unmountedHook: undefined as (() => void) | undefined,
   page: { value: undefined } as { value: { headers: PageHeader[], path: string } | undefined },
   getScrollElement: (() => null) as () => HTMLElement | null,
-  router: { currentRoute: { value: { hash: '' } } },
+  route: { value: { hash: '' } },
   routeWatch: undefined as {
     source: () => readonly unknown[]
     callback: (value: readonly unknown[], previous: readonly unknown[]) => void
@@ -17,7 +17,7 @@ const testState = vi.hoisted(() => ({
 
 vi.mock('kawapress/client', () => ({
   usePageData: () => testState.page as Ref<typeof testState.page.value>,
-  useRouter: () => testState.router,
+  useRoute: () => testState.route,
 }))
 
 vi.mock('vue', async (importOriginal) => {

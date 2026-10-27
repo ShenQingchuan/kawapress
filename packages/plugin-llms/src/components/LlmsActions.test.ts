@@ -27,7 +27,7 @@ const testState = vi.hoisted(() => ({
 }))
 
 vi.mock('kawapress/client', () => ({
-  useRouter: () => ({ currentRoute: testState.route }),
+  useRoute: () => testState.route,
   useSite: () => testState.site,
   usePageData: () => testState.page,
 }))

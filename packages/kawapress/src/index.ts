@@ -58,13 +58,13 @@ export type {
 } from './core/outlet'
 export { resolveDocumentTitle, resolvePageMetadata } from './core/page-metadata'
 export type { PageMetadata } from './core/page-metadata'
+export type { Route, RouteGuard, RouteHook, Router } from './core/router'
 export type {
   LocaleConfig,
   LocaleDirection,
   LocaleLink,
   PageData,
   PageHeader,
-  PageRouteMeta,
   ResolvedSiteData,
   SiteConfig,
   SiteData,

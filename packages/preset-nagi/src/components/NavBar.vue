@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter, useSite } from 'kawapress/client'
+import { useRoute, useSite } from 'kawapress/client'
 import { onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import AppearanceSwitch from './AppearanceSwitch.vue'
@@ -10,7 +10,7 @@ import ThemeableImage from './ThemeableImage.vue'
 
 const site = useSite()
 const theme = useNagiThemeConfig()
-const router = useRouter()
+const route = useRoute()
 const screenOpen = shallowRef(false)
 
 let desktopQuery: MediaQueryList | undefined
@@ -21,7 +21,7 @@ function closeScreenOnDesktop(): void {
   }
 }
 
-watch(() => router.currentRoute.value.fullPath, () => {
+watch(() => route.value.fullPath, () => {
   screenOpen.value = false
 })
 
