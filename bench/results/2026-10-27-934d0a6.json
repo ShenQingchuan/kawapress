@@ -1,0 +1,447 @@
+{
+  "generatedAt": "2026-10-27T04:05:27.923Z",
+  "environment": {
+    "cpuModel": "Apple M2 Pro",
+    "cores": 10,
+    "memoryGiB": 16,
+    "os": "Darwin 24.6.0 (arm64)",
+    "nodeVersion": "v26.10.0"
+  },
+  "tools": {
+    "kawapressVersion": "0.0.1",
+    "kawapressGitSha": "934d0a6",
+    "vitepressVersion": "1.6.4"
+  },
+  "settings": {
+    "sizes": [
+      50,
+      500
+    ],
+    "runs": 3,
+    "lighthouse": false
+  },
+  "results": [
+    {
+      "size": 50,
+      "build": {
+        "kawapress": {
+          "runsMs": [
+            2021.109625,
+            1790.037209,
+            1802.6743749999996
+          ],
+          "medianMs": 1802.6743749999996
+        },
+        "vitepress": {
+          "runsMs": [
+            2165.5456250000007,
+            2200.092584000002,
+            2204.4789999999994
+          ],
+          "medianMs": 2200.092584000002
+        }
+      },
+      "dev": {
+        "kawapress": {
+          "contentVisible": {
+            "runsMs": [
+              1322.7285000000002,
+              1205.7288330000001,
+              1191.6265829999993
+            ],
+            "medianMs": 1205.7288330000001
+          },
+          "firstHtml": {
+            "runsMs": [
+              1252.903042,
+              1176.28625,
+              1162.6145829999987
+            ],
+            "medianMs": 1176.28625
+          }
+        },
+        "vitepress": {
+          "contentVisible": {
+            "runsMs": [
+              1434.8542500000003,
+              1419.7319580000003,
+              1418.1785000000018
+            ],
+            "medianMs": 1419.7319580000003
+          },
+          "firstHtml": {
+            "runsMs": [
+              627.5017919999991,
+              618.3864160000012,
+              614.4479170000013
+            ],
+            "medianMs": 618.3864160000012
+          }
+        }
+      },
+      "browser": {
+        "kawapress": {
+          "hydration": {
+            "runsMs": [
+              176.90000009536743,
+              46.60000002384186,
+              189.5
+            ],
+            "medianMs": 176.90000009536743
+          },
+          "clientNavigation": {
+            "runsMs": [
+              13.100000023841858,
+              95.20000004768372,
+              12.600000023841858
+            ],
+            "medianMs": 13.100000023841858
+          }
+        },
+        "vitepress": {
+          "hydration": {
+            "runsMs": [
+              219.70000004768372,
+              212.20000004768372,
+              235.19999992847443
+            ],
+            "medianMs": 219.70000004768372
+          },
+          "clientNavigation": {
+            "runsMs": [
+              27.5,
+              77.19999992847443,
+              19.600000023841858
+            ],
+            "medianMs": 27.5
+          }
+        }
+      },
+      "assets": {
+        "kawapress": {
+          "home": {
+            "page": "/",
+            "html": {
+              "files": 1,
+              "raw": 6858,
+              "gzip": 2399,
+              "brotli": 1954
+            },
+            "js": {
+              "files": 5,
+              "raw": 166046,
+              "gzip": 58680,
+              "brotli": 52224
+            },
+            "css": {
+              "files": 1,
+              "raw": 79802,
+              "gzip": 13930,
+              "brotli": 12388
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 252706,
+              "gzip": 75009,
+              "brotli": 66566
+            }
+          },
+          "guide": {
+            "page": "/guide/page-0001",
+            "html": {
+              "files": 1,
+              "raw": 36466,
+              "gzip": 5472,
+              "brotli": 4436
+            },
+            "js": {
+              "files": 5,
+              "raw": 175670,
+              "gzip": 60101,
+              "brotli": 53380
+            },
+            "css": {
+              "files": 1,
+              "raw": 79802,
+              "gzip": 13930,
+              "brotli": 12388
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 291938,
+              "gzip": 79503,
+              "brotli": 70204
+            }
+          }
+        },
+        "vitepress": {
+          "home": {
+            "page": "/",
+            "html": {
+              "files": 1,
+              "raw": 12965,
+              "gzip": 3390,
+              "brotli": 2730
+            },
+            "js": {
+              "files": 4,
+              "raw": 169057,
+              "gzip": 61555,
+              "brotli": 54986
+            },
+            "css": {
+              "files": 2,
+              "raw": 112811,
+              "gzip": 20210,
+              "brotli": 17396
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 294833,
+              "gzip": 85155,
+              "brotli": 75112
+            }
+          },
+          "guide": {
+            "page": "/guide/page-0001",
+            "html": {
+              "files": 1,
+              "raw": 36962,
+              "gzip": 5420,
+              "brotli": 4381
+            },
+            "js": {
+              "files": 4,
+              "raw": 168150,
+              "gzip": 61096,
+              "brotli": 54606
+            },
+            "css": {
+              "files": 2,
+              "raw": 112811,
+              "gzip": 20210,
+              "brotli": 17396
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 317923,
+              "gzip": 86726,
+              "brotli": 76383
+            }
+          }
+        }
+      }
+    },
+    {
+      "size": 500,
+      "build": {
+        "kawapress": {
+          "runsMs": [
+            10151.848042000001,
+            9938.773083,
+            9972.817334
+          ],
+          "medianMs": 9972.817334
+        },
+        "vitepress": {
+          "runsMs": [
+            12670.092208000002,
+            12764.714000000007,
+            12401.115458999993
+          ],
+          "medianMs": 12670.092208000002
+        }
+      },
+      "dev": {
+        "kawapress": {
+          "contentVisible": {
+            "runsMs": [
+              1360.1702090000035,
+              1278.2691659999982,
+              1282.2972500000033
+            ],
+            "medianMs": 1282.2972500000033
+          },
+          "firstHtml": {
+            "runsMs": [
+              1286.0196670000005,
+              1244.0139160000035,
+              1253.2797080000018
+            ],
+            "medianMs": 1253.2797080000018
+          }
+        },
+        "vitepress": {
+          "contentVisible": {
+            "runsMs": [
+              2496.069292,
+              2424.8798749999987,
+              2467.379666000008
+            ],
+            "medianMs": 2467.379666000008
+          },
+          "firstHtml": {
+            "runsMs": [
+              1683.4798330000049,
+              1617.8142499999958,
+              1663.1374159999978
+            ],
+            "medianMs": 1663.1374159999978
+          }
+        }
+      },
+      "browser": {
+        "kawapress": {
+          "hydration": {
+            "runsMs": [
+              151.5,
+              175.5,
+              170.10000002384186
+            ],
+            "medianMs": 170.10000002384186
+          },
+          "clientNavigation": {
+            "runsMs": [
+              142.60000002384186,
+              19.59999990463257,
+              16.5
+            ],
+            "medianMs": 19.59999990463257
+          }
+        },
+        "vitepress": {
+          "hydration": {
+            "runsMs": [
+              519.5999999046326,
+              508.7999999523163,
+              511.5
+            ],
+            "medianMs": 511.5
+          },
+          "clientNavigation": {
+            "runsMs": [
+              105.5,
+              100.30000007152557,
+              143.79999995231628
+            ],
+            "medianMs": 105.5
+          }
+        }
+      },
+      "assets": {
+        "kawapress": {
+          "home": {
+            "page": "/",
+            "html": {
+              "files": 1,
+              "raw": 6859,
+              "gzip": 2401,
+              "brotli": 1960
+            },
+            "js": {
+              "files": 5,
+              "raw": 245054,
+              "gzip": 68506,
+              "brotli": 58267
+            },
+            "css": {
+              "files": 1,
+              "raw": 79802,
+              "gzip": 13930,
+              "brotli": 12388
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 331715,
+              "gzip": 84837,
+              "brotli": 72615
+            }
+          },
+          "guide": {
+            "page": "/guide/page-0001",
+            "html": {
+              "files": 1,
+              "raw": 185710,
+              "gzip": 9645,
+              "brotli": 6842
+            },
+            "js": {
+              "files": 5,
+              "raw": 254678,
+              "gzip": 69938,
+              "brotli": 59431
+            },
+            "css": {
+              "files": 1,
+              "raw": 79802,
+              "gzip": 13930,
+              "brotli": 12388
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 520190,
+              "gzip": 93513,
+              "brotli": 78661
+            }
+          }
+        },
+        "vitepress": {
+          "home": {
+            "page": "/",
+            "html": {
+              "files": 1,
+              "raw": 59681,
+              "gzip": 11397,
+              "brotli": 7957
+            },
+            "js": {
+              "files": 4,
+              "raw": 169058,
+              "gzip": 61555,
+              "brotli": 54986
+            },
+            "css": {
+              "files": 2,
+              "raw": 112811,
+              "gzip": 20210,
+              "brotli": 17396
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 341550,
+              "gzip": 93162,
+              "brotli": 80339
+            }
+          },
+          "guide": {
+            "page": "/guide/page-0001",
+            "html": {
+              "files": 1,
+              "raw": 231139,
+              "gzip": 17385,
+              "brotli": 12146
+            },
+            "js": {
+              "files": 4,
+              "raw": 168150,
+              "gzip": 61095,
+              "brotli": 54605
+            },
+            "css": {
+              "files": 2,
+              "raw": 112811,
+              "gzip": 20210,
+              "brotli": 17396
+            },
+            "firstPaint": {
+              "files": 7,
+              "raw": 512100,
+              "gzip": 98690,
+              "brotli": 84147
+            }
+          }
+        }
+      }
+    }
+  ]
+}
