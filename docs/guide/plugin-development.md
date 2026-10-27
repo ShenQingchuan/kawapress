@@ -252,6 +252,55 @@ api.markdown((markdown) => {
 
 这个函数是纯函数，运行侧同样可以用，从 `kawapress/client` 导入即可。
 
+### 列出全部页面、读取页面标题 {#page-list-and-title}
+
+想自己做导航、索引或搜索数据，先要知道站点有哪些页面。`kawapress/generator` 的 `listMarkdownPages()` 使用的规则和 KawaPress 自己完全一样：跳过以 `.` 开头的目录以及 `dist`、`node_modules`，排除 `publicDir`，按名字排序。
+
+```ts
+import { resolve } from 'node:path'
+import { listMarkdownPages } from 'kawapress/generator'
+
+let srcDir = '.'
+
+api.config((config) => {
+  srcDir = config.srcDir ?? '.'
+})
+
+api.vite((config) => {
+  config.plugins ??= []
+  config.plugins.push({
+    name: 'your-plugin:pages',
+    async configResolved(resolved) {
+      // sourceRoot 是页面所在的目录；publicDir 里放的是原样复制的资源，不算页面
+      const pages = await listMarkdownPages({
+        sourceRoot: resolve(resolved.root, srcDir),
+        publicDir: resolved.publicDir,
+      })
+      // 每项形如
+      // { file: '/site/src/guide/intro.md', sourcePath: '/guide/intro.md', routePath: '/guide/intro' }
+      console.log(pages.map(page => page.routePath))
+    },
+  })
+})
+```
+
+每个页面的标题和 `layout` 用 `createPageSummaryReader()` 读：
+
+```ts
+import { readFile } from 'node:fs/promises'
+import { createPageSummaryReader } from 'kawapress/generator'
+
+const reader = createPageSummaryReader()
+const source = await readFile(page.file, 'utf8')
+const { title, layout } = reader.read(source, page.file)
+```
+
+它只解析 Markdown，不会渲染页面：`pageData()` handler 不会执行，Markdown 插件、Shiki、Twoslash、MathJax 都不参与，所以列出整站也不需要先把页面编译一遍。标题的规则和页面本身一致：Frontmatter 里写了 `title` 就用它，否则取第一个一级标题的文字；`layout` 就是 Frontmatter 里写的那个字符串，没写就是 `undefined`。
+
+同一个文件、同样的内容会直接用上次的结果，反复读整站很便宜。主题自动生成侧边栏时就是这样读标题的。
+
+开发服务器把改动的文件报成绝对路径，判断它是不是页面用 `isMarkdownPage()`，换回路由路径用 `markdownFileToRoutePath()`。
+
 ## 运行侧 API {#runtime-api}
 
 Runtime Plugin 在网站运行时工作，它的代码会进入站点的 Vite 模块图，所以可以静态导入 `.vue`、CSS 和普通 Vue 插件。
