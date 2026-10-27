@@ -13,6 +13,7 @@ import {
 } from '@shikijs/transformers'
 import { createTransformerFactory } from '@shikijs/twoslash'
 import { addPageComponent, definePlugin } from 'kawapress'
+import { useRuntimeDependencies } from 'kawapress/generator'
 import { createHighlighter } from 'shiki'
 import { createTwoslasher } from 'twoslash-vue'
 import { rendererFloatingVue, TWOSLASH_MENU_TAG } from './renderer-floating-vue'
@@ -40,6 +41,7 @@ export type ShikiPluginOptions = ShikiPluginBaseOptions & (
 
 const require = createRequire(import.meta.url)
 
+const PLUGIN_NAME = '@kawapress/plugin-shiki'
 const V_PRE_TRANSFORMER_NAME = 'kawapress:v-pre'
 const RUNTIME_DEPENDENCIES = ['floating-vue']
 const TWOSLASH_MENU_COMPONENT = 'KawaTwoslashMenu'
@@ -67,7 +69,7 @@ export function shikiPlugin(options: ShikiPluginOptions = {}): KawaPressPlugin {
   const transformers = createTransformers(options)
 
   return definePlugin({
-    name: '@kawapress/plugin-shiki',
+    name: PLUGIN_NAME,
     setup(api) {
       api.markdown(async (markdown) => {
         const highlighter = await createHighlighter({
@@ -81,18 +83,7 @@ export function shikiPlugin(options: ShikiPluginOptions = {}): KawaPressPlugin {
           }, transformers)
       })
       api.vite((config) => {
-        const noExternal = config.ssr?.noExternal
-        if (noExternal === true) {
-          return
-        }
-
-        config.ssr ??= {}
-        config.ssr.noExternal = [
-          ...(Array.isArray(noExternal)
-            ? noExternal
-            : noExternal ? [noExternal] : []),
-          ...RUNTIME_DEPENDENCIES,
-        ]
+        useRuntimeDependencies(config, PLUGIN_NAME, RUNTIME_DEPENDENCIES)
       })
     },
   })

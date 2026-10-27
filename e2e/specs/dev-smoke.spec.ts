@@ -50,3 +50,38 @@ test('the dev server hydrates a page opened with a query and a hash', async ({ p
     'the dev server has to adopt the requested URL as well',
   ).toHaveAttribute('href', `${sitePath('/en/guide/routing')}?from=test#linking-between-pages`)
 })
+
+/**
+ * A cold optimizer cache is the normal first visit, and the dev server starts
+ * with one (see the webServer command). Every package the page eventually needs
+ * has to be pre-bundled before the page asks for it: when Vite only discovers a
+ * package while the page loads, it swaps its optimizer output and reloads the
+ * whole document, which loses in-page state and can land in the middle of any
+ * interaction.
+ */
+test('the dev server loads each page once on a cold dependency cache', async ({ page }) => {
+  const documentLoads: string[] = []
+  page.on('load', () => documentLoads.push(page.url()))
+
+  // A theme page: the scrollbar runtime is imported after hydration.
+  const gettingStarted = sitePath('/guide/getting-started')
+  await page.goto(gettingStarted)
+  await expect(page.locator('article h1')).toContainText('快速开始')
+
+  // A page with Twoslash blocks: the popup runtime is imported by that page only.
+  const markdownExtensions = sitePath('/guide/markdown-extensions')
+  await page.goto(markdownExtensions)
+  await expect(page.locator('article h1')).toContainText('Markdown 语法扩展')
+
+  // The optimizer batches discoveries for a moment, so a reload that it causes
+  // arrives after the render above.
+  await page.waitForTimeout(3_000)
+
+  expect(
+    documentLoads,
+    'the dev server must not reload a page to optimize a dependency',
+  ).toEqual([
+    `${devOrigin}${gettingStarted}`,
+    `${devOrigin}${markdownExtensions}`,
+  ])
+})
