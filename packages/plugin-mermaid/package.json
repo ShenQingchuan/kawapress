@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-mermaid",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Mermaid diagrams for KawaPress Markdown, rendered by Pele with zoom and code views",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",

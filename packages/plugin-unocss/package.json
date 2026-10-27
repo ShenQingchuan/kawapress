@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-unocss",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "UnoCSS integration for KawaPress",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",

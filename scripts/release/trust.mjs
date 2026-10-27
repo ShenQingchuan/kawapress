@@ -74,11 +74,27 @@ export function planTrustChange(existing) {
   }
 }
 
+/**
+ * Asks npm for two-factor approval once, with the terminal fully attached. npm only
+ * offers its browser step when stdin and stdout are both a terminal, so this call
+ * cannot capture its output. Approving with "skip two-factor for 5 minutes" ticked lets
+ * every later call, including the ones that capture output, go through.
+ */
+export async function approveTwoFactor(name, registry) {
+  logStep('npm needs two-factor approval once')
+  console.log('Open the link npm prints, approve, and tick "skip two-factor for the next 5 minutes".')
+  const args = ['trust', 'list', name]
+  if (registry)
+    args.push(`--registry=${registry}`)
+  await run('npm', args)
+}
+
+/** Reads the trusted publishers of one package. */
 async function readTrust(name, registry) {
   const args = ['trust', 'list', name, '--json']
   if (registry)
     args.push(`--registry=${registry}`)
-  const result = await run('npm', args, { interactive: true })
+  const result = await run('npm', args, { capture: true })
   return parseTrustList(result.stdout)
 }
 
@@ -90,6 +106,9 @@ async function readTrust(name, registry) {
 export async function syncTrust(names, options = {}) {
   const { apply = false, registry, pauseMs = TRUST_COMMAND_PAUSE_MS } = options
   logStep(`${apply ? 'Configuring' : 'Checking'} npm trusted publishers for ${desiredTrust.repository}`)
+
+  if (names.length > 0)
+    await approveTwoFactor(names[0], registry)
 
   let changed = 0
   for (const [index, name] of names.entries()) {
