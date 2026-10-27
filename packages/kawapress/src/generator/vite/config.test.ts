@@ -2,7 +2,7 @@ import type { InlineConfig } from 'vite'
 import process from 'node:process'
 import { afterEach, describe, expect, it } from 'vitest'
 import { resolveSiteConfig } from '../config'
-import { createBaseViteConfig } from './config'
+import { createBaseViteConfig, CSS_TARGET } from './config'
 
 const HYDRATION_DETAILS_FLAG = '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__'
 const initialE2eFlag = process.env.KAWAPRESS_E2E
@@ -47,5 +47,13 @@ describe('createBaseViteConfig define overrides', () => {
     const config = await createBaseConfig()
 
     expect(config.define?.[HYDRATION_DETAILS_FLAG]).toBeUndefined()
+  })
+})
+
+describe('createBaseViteConfig CSS target', () => {
+  it('targets browsers that understand light-dark() natively', async () => {
+    const config = await createBaseConfig()
+
+    expect(config.build?.cssTarget).toEqual(CSS_TARGET)
   })
 })

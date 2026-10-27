@@ -212,6 +212,8 @@ export default defineConfig({
 
 一个站点只应该安装一个负责 `Layout` 和 `NotFound` 的主题。其他界面能力可以继续作为普通 Plugin 加入。
 
+想看看这些规则落在真实文件里是什么样子，可以读仓库里的[参考主题](https://github.com/ShenQingchuan/kawapress/tree/main/e2e/fixtures/reference-theme)。它渲染了全部四个 Outlet，把每个官方 UI 插件都跑了起来，并由端到端测试持续检查。以后遇到插件没有出现在预期位置，照着它对照一眼，通常就能找到原因。
+
 ## `themeConfig` 由主题定义 {#the-theme-defines-themeconfig}
 
 KawaPress 不解释 `themeConfig` 里的字段。主题可以根据自己的组件和交互，定义一套带类型的配置：
@@ -407,7 +409,7 @@ nagi 的做法可以参考：它的 Generator Plugin 扫描一遍 Markdown 源�
 | `--kawa-radius` | 控件默认圆角 |
 | `--kawa-shadow-overlay` | 浮层阴影 |
 
-主题覆盖 Token 时只需要重写变量，不用复制插件样式：
+主题覆盖 Token 时只需要重写变量，不用复制插件样式。值可以直接写成 `light-dark()`，构建时会原样保留，不需要在同一处再声明 `color-scheme`：
 
 ```css
 @layer kawa.theme {

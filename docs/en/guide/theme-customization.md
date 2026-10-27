@@ -212,6 +212,8 @@ export default defineConfig({
 
 A site should install only one theme responsible for `Layout` and `NotFound`. Other interface features can continue to use regular Plugins.
 
+If you want to see all of this in real files, the repository ships a tested reference theme: [`e2e/fixtures/reference-theme`](https://github.com/ShenQingchuan/kawapress/tree/main/e2e/fixtures/reference-theme). It renders all four outlets and runs every official UI plugin under them, and the end-to-end suite keeps it working — a useful page to open whenever a plugin does not show up where you expected.
+
 ## The Theme Defines `themeConfig` {#the-theme-defines-themeconfig}
 
 KawaPress does not interpret fields inside `themeConfig`. A theme defines a typed configuration for its own components and behavior:
@@ -407,7 +409,7 @@ The default tokens use `light-dark()`, and `color-scheme: light dark` is declare
 | `--kawa-radius` | Default control radius |
 | `--kawa-shadow-overlay` | Shadow for floating surfaces |
 
-To restyle a token, redeclare it; there is no need to copy plugin styles:
+To restyle a token, redeclare it; there is no need to copy plugin styles. A `light-dark()` value works as written: the build keeps it unchanged, so the rule does not need its own `color-scheme`:
 
 ```css
 @layer kawa.theme {

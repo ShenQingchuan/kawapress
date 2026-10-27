@@ -421,9 +421,9 @@ Core 在 `<head>` 最前面声明层级顺序，dev 与构建一致：
 - UnoCSS 生成的工具类不进任何层，因为它们写在站点作者的模板里，属于站点 CSS。
 - 插件选择器只基于自己的 `.kawa-*` class 以及 ARIA 和原生属性（如 `[aria-selected="true"]`、`[open]`），不限定在某个主题的容器（如 `.nagi-doc`）内。不引入 `data-kawa-part` 一类新属性，不提供界面替换适配器。
 - 主题在外层包裹 Outlet 时，插件可能在某些页面不渲染内容（例如 `llms: false`），主题可用 `:empty` 隐藏空容器。
-- `light-dark()` 与 `@layer` 需要现代浏览器；nagi 在此之前已经依赖 `light-dark()`，没有新增门槛。
+- 站点 CSS 的最低目标是原生支持 `light-dark()` 的浏览器：Chrome 与 Edge 123、Firefox 120、Safari 17.5。KawaPress 的基础 Vite 配置把 `build.cssTarget` 固定为这组版本，压缩时不把 `light-dark()` 改写成依赖 `color-scheme` 的辅助变量，主题覆盖 Token 时不必在同一规则里声明 `color-scheme`。JavaScript 沿用 Vite 默认目标。
 
-仓库内用一个只依赖公开 API 的最小参考主题与 E2E 矩阵验证官方 UI 插件在 nagi 之外同样可用；不对外发布兼容性测试库。
+仓库内的最小参考主题 `e2e/fixtures/reference-theme` 只依赖公开 API，E2E 在它下面运行全部官方 UI 插件，验证它们在 nagi 之外同样可用；不对外发布兼容性测试库。
 
 ## 七、Markdown 管线
 

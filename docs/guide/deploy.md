@@ -71,6 +71,10 @@ KawaPress 会为每个页面生成独立 HTML。例如 `/guide/routing` 对应 `
 - 未找到页面时返回 `dist/404.html`；
 - 不要把所有未知路径都回退到 `index.html`，KawaPress 不是只生成一个入口的 SPA。
 
+## 支持的浏览器 {#supported-browsers}
+
+站点的样式依靠 CSS 的 `light-dark()` 同时提供浅色和深色外观，所以读者需要使用 2024 年 5 月以后发布的浏览器：Chrome 与 Edge 123、Firefox 120、Safari 17.5 或更新版本。更早的浏览器仍然能打开页面、阅读正文，只是颜色可能显示不全。
+
 ## 配置缓存 {#configure-caching}
 
 构建后的静态资源使用内容哈希文件名，可以长期缓存：

@@ -37,3 +37,11 @@ export const devOrigin = `http://localhost:${devPort}`
 export const pluginsPort = Number(process.env.E2E_PLUGINS_PORT ?? 4174)
 
 export const pluginsOrigin = `http://localhost:${pluginsPort}`
+
+/**
+ * The reference theme site (`e2e/fixtures/reference-site`) installs the same
+ * official plugins under a theme that never imports nagi.
+ */
+export const referencePort = Number(process.env.E2E_REFERENCE_PORT ?? 4175)
+
+export const referenceOrigin = `http://localhost:${referencePort}`

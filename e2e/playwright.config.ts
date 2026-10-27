@@ -6,6 +6,8 @@ import {
   pluginsPort,
   previewOrigin,
   previewPort,
+  referenceOrigin,
+  referencePort,
   sitePath,
 } from './support/site'
 
@@ -76,6 +78,18 @@ export default defineConfig({
         NODE_ENV: 'production',
       },
     },
+    {
+      // The same official plugins under a theme that never imports nagi.
+      command: `pnpm --dir ./fixtures/reference-site build && pnpm --dir ./fixtures/reference-site preview --port ${referencePort}`,
+      url: `${referenceOrigin}${sitePath('/')}`,
+      timeout: 180_000,
+      reuseExistingServer: false,
+      stderr: 'pipe',
+      env: {
+        KAWAPRESS_E2E: '1',
+        NODE_ENV: 'production',
+      },
+    },
   ],
   use: {
     // The code copy spec reads the clipboard back from the page.
@@ -86,7 +100,12 @@ export default defineConfig({
     {
       name: 'preview',
       use: { baseURL: previewOrigin },
-      testIgnore: [/dev-smoke\.spec\.ts/, /comments\.spec\.ts/, /sidebar-pages\.spec\.ts/],
+      testIgnore: [
+        /dev-smoke\.spec\.ts/,
+        /comments\.spec\.ts/,
+        /sidebar-pages\.spec\.ts/,
+        /reference-theme\//,
+      ],
     },
     {
       name: 'dev-smoke',
@@ -97,6 +116,11 @@ export default defineConfig({
       name: 'plugins-site',
       use: { baseURL: pluginsOrigin },
       testMatch: [/comments\.spec\.ts/, /sidebar-pages\.spec\.ts/],
+    },
+    {
+      name: 'reference-theme',
+      use: { baseURL: referenceOrigin },
+      testMatch: /reference-theme\/.*\.spec\.ts/,
     },
   ],
 })
