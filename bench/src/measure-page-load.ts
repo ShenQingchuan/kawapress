@@ -143,13 +143,17 @@ async function measureRun(
  * of the benchmark.
  */
 async function clickSidebarLink(page: Page, options: MeasurePageLoadOptions): Promise<void> {
-  await page.evaluate(({ hrefSuffix, heading }) => {
+  await page.evaluate(({ route, heading }) => {
     const marks = (window as unknown as { __bench: BrowserMarks }).__bench
+    // VitePress writes the `.html` file name into its links, KawaPress the route
+    // alone, so a link matches when its path is the route, with or without it.
+    const pathOf = (href: string): string => (href.split(/[?#]/)[0] ?? '')
+      .replace(/\.html$/, '')
     const link = [...document.querySelectorAll<HTMLAnchorElement>('a[href]')]
-      .find(anchor => (anchor.getAttribute('href') ?? anchor.href).endsWith(hrefSuffix))
+      .find(anchor => pathOf(anchor.getAttribute('href') ?? anchor.href).endsWith(route))
 
     if (!link) {
-      throw new Error(`no anchor points at ${hrefSuffix}`)
+      throw new Error(`no anchor points at ${route}`)
     }
 
     marks.clientNavigation = {}
@@ -165,7 +169,7 @@ async function clickSidebarLink(page: Page, options: MeasurePageLoadOptions): Pr
 
     link.click()
     check()
-  }, { hrefSuffix: options.targetRoute, heading: options.expectHeading })
+  }, { route: options.targetRoute, heading: options.expectHeading })
 
   await page.waitForFunction(
     () => (window as unknown as { __bench?: BrowserMarks }).__bench?.clientNavigation?.done === true,
