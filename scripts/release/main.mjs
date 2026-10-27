@@ -91,7 +91,9 @@ export async function main(argv = process.argv.slice(2)) {
   }
   else {
     await runQualityChecks()
-    await requireCleanWorkingTree()
+    // A dry run may legitimately leave build output behind; a real publish may not.
+    if (options.mode === 'publish')
+      await requireCleanWorkingTree()
   }
 
   let stagingDir

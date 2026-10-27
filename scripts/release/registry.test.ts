@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { findMissingPackages } from './registry.mjs'
+import { findMissingPackages, packageExistsOnNpm } from './registry.mjs'
 
 /** Registry stub: `versionByName` maps a package name to its published version, or null. */
 function createRunner(versionByName: Record<string, string | null>) {
@@ -55,5 +55,17 @@ describe('findMissingPackages', () => {
     await expect(findMissingPackages(['kawapress'], { run: runner as never }))
       .rejects
       .toThrow('403 Forbidden')
+  })
+})
+
+describe('packageExistsOnNpm', () => {
+  it('is true when npm reports a version', async () => {
+    const { runner } = createRunner({ kawapress: '0.0.1' })
+    await expect(packageExistsOnNpm('kawapress', { run: runner as never })).resolves.toBe(true)
+  })
+
+  it('is false when npm answers 404', async () => {
+    const { runner } = createRunner({ 'create-kawapress': null })
+    await expect(packageExistsOnNpm('create-kawapress', { run: runner as never })).resolves.toBe(false)
   })
 })

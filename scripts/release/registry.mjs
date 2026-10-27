@@ -10,6 +10,22 @@ function isNotFound(result) {
   return /E404|404 Not Found/i.test(result.stderr)
 }
 
+/**
+ * True when npm knows the package. `npm view` answers 404 for an unknown name, which is
+ * the only reliable signal: `npm dist-tag ls` answers 401 for names that do not exist.
+ */
+export async function packageExistsOnNpm(name, options = {}) {
+  const { registry = defaultRegistry, run: runCommand = run } = options
+  const args = ['view', name, 'version', '--json', `--registry=${registry}`]
+  const result = await runCommand('npm', args, { allowFailure: true, capture: true })
+
+  if (result.exitCode === 0)
+    return true
+  if (isNotFound(result))
+    return false
+  throw new CommandError('npm', args, result)
+}
+
 /** `dist.integrity` of a published version, or null when the version does not exist. */
 export async function getPublishedIntegrity(name, version, registry) {
   const args = [
@@ -62,6 +78,9 @@ export async function getPublishedTags(name, registry) {
 
   if (result.exitCode !== 0) {
     if (isNotFound(result))
+      return null
+    // An unpublished package answers 401 here instead of 404; only a real failure throws.
+    if (!await packageExistsOnNpm(name, { registry }))
       return null
     throw new CommandError('npm', args, result)
   }
@@ -184,20 +203,8 @@ export async function inspectRegistry(packages, registry, tag) {
  * attached to an existing package, and CI must never publish a partial release.
  */
 export async function findMissingPackages(names, options = {}) {
-  const { registry = defaultRegistry, run: runCommand = run } = options
-
-  const results = await Promise.all(names.map(async (name) => {
-    const args = ['view', name, 'version', '--json', `--registry=${registry}`]
-    const result = await runCommand('npm', args, { allowFailure: true, capture: true })
-
-    if (result.exitCode === 0)
-      return null
-    if (isNotFound(result))
-      return name
-    throw new CommandError('npm', args, result)
-  }))
-
-  return results.filter(name => typeof name === 'string')
+  const exists = await Promise.all(names.map(name => packageExistsOnNpm(name, options)))
+  return names.filter((name, index) => !exists[index])
 }
 
 /** Logs how many packages still have to be bootstrapped. */
