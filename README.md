@@ -135,6 +135,7 @@ A logical plugin is installed once and can provide both generator and runtime be
 - [Markdown Extensions](https://shenqingchuan.github.io/kawapress/en/guide/markdown-extensions)
 - [Internationalization](https://shenqingchuan.github.io/kawapress/en/guide/internationalization)
 - [Plugin System](https://shenqingchuan.github.io/kawapress/en/plugins/plugin-system)
+- [Official Plugins](https://shenqingchuan.github.io/kawapress/en/plugins/overview)
 - [Theme Customization](https://shenqingchuan.github.io/kawapress/en/guide/theme-customization)
 
 ## Contributing

@@ -16,6 +16,9 @@ hero:
     - theme: alt
       text: 了解 KawaPress
       link: /guide/what-is-kawapress
+    - theme: alt
+      text: 探索插件
+      link: /plugins/overview
 features:
   - icon: ✍️
     title: 专注内容
@@ -28,5 +31,7 @@ features:
     details: nagi（凪）为你准备好响应式布局、明暗模式、代码高亮与多语言切换等多种内置能力。
   - icon: 🧩
     title: 自由扩展
-    details: 用 Plugin 与 Preset 编写能力和主题，不需要依赖内核中的特殊入口。
+    details: 用 Plugin 与 Preset 编写能力和主题，官方插件与你写的插件用的是同一套接口。
+    link: /plugins/overview
+    linkText: 浏览官方插件
 ---

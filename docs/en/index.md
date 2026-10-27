@@ -16,6 +16,9 @@ hero:
     - theme: alt
       text: What is KawaPress?
       link: /en/guide/what-is-kawapress
+    - theme: alt
+      text: Explore Plugins
+      link: /en/plugins/overview
 features:
   - icon: ✍️
     title: Focus on content
@@ -28,5 +31,7 @@ features:
     details: nagi (凪) includes responsive layouts, dark mode, syntax highlighting, and i18n.
   - icon: 🧩
     title: Open to extension
-    details: Build features and themes with Plugins and Presets instead of private core hooks.
+    details: Build features and themes with Plugins and Presets. Official plugins use the same interface as yours.
+    link: /en/plugins/overview
+    linkText: Browse official plugins
 ---

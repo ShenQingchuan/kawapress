@@ -133,8 +133,8 @@ export const pluginSidebars = defineLocalizedSidebars({
   items: [
     {
       text: {
-        zhCN: '插件体系',
-        en: 'Plugin System',
+        zhCN: '编写插件',
+        en: 'Writing Plugins',
       },
       items: [
         {
@@ -159,6 +159,13 @@ export const pluginSidebars = defineLocalizedSidebars({
         en: 'Official Plugins',
       },
       items: [
+        {
+          text: {
+            zhCN: '总览',
+            en: 'Overview',
+          },
+          link: '/plugins/overview',
+        },
         {
           text: {
             zhCN: 'Mermaid 图表',

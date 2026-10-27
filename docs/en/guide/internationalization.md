@@ -142,6 +142,96 @@ export default nagi({
 
 Write links with the default-language path. The helper adds `/en` for the English sidebar.
 
+## Top Navigation and Section Sidebars {#top-navigation-and-sections}
+
+As a site grows, you can split it into sections, such as "Guide" and "Plugins". Put a link for each section at the top, and give each section its own sidebar.
+
+Configure the top links with `themeConfig.nav`:
+
+```ts
+import { nagi } from 'kawapress/nagi'
+
+export default nagi({
+  themeConfig: {
+    nav: [
+      { text: 'Guide', link: '/guide/getting-started', activeMatch: '/guide' },
+      { text: 'Plugins', link: '/plugins/overview', activeMatch: '/plugins' },
+    ],
+  },
+})
+```
+
+Each item has three fields:
+
+| Field | Description |
+| --- | --- |
+| `text` | The text shown on the link. |
+| `link` | The page the link opens, as a site path such as `/guide/getting-started`. |
+| `activeMatch` | Optional. A path prefix. When the current page is below this prefix, the item is highlighted. Without it, the item is highlighted only on the page in `link`. |
+
+"Guide" above sets `activeMatch: '/guide'`, so it stays highlighted on every page under `/guide/`, not only on "Getting Started".
+
+On a narrow screen the links do not crowd the top bar. They appear in the area that opens with the menu button, above the language list.
+
+### Give each section its own sidebar {#sidebar-per-section}
+
+`sidebar` can be an object that maps a path prefix to a sidebar. The sidebar for the prefix that contains the current page is shown:
+
+```ts
+export default nagi({
+  themeConfig: {
+    nav: [
+      { text: 'Guide', link: '/guide/getting-started', activeMatch: '/guide' },
+      { text: 'Plugins', link: '/plugins/overview', activeMatch: '/plugins' },
+    ],
+    sidebar: {
+      '/guide/': [
+        {
+          text: 'Introduction',
+          items: [{ text: 'Getting Started', link: '/guide/getting-started' }],
+        },
+      ],
+      '/plugins/': [
+        {
+          text: 'Official Plugins',
+          items: [{ text: 'Overview', link: '/plugins/overview' }],
+        },
+      ],
+    },
+  },
+})
+```
+
+A page that matches no prefix falls back to the sidebar nagi generates from your directories. The home page uses `layout: home`, which never shows a sidebar.
+
+### Write them for each language {#per-locale-navigation}
+
+`nav` and `sidebar` are theme configuration, so each language can override them. Point the links at the pages of that language:
+
+```ts
+export default nagi({
+  themeConfig: {
+    nav: [
+      { text: 'Guide', link: '/guide/getting-started', activeMatch: '/guide' },
+    ],
+  },
+  locales: {
+    root: { label: 'English', lang: 'en' },
+    zh: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      themeConfig: {
+        nav: [
+          { text: '指南', link: '/zh/guide/getting-started', activeMatch: '/zh/guide' },
+        ],
+      },
+    },
+  },
+})
+```
+
+The accessible name of the navigation area is "Main navigation" by default. Change it with `navLinksLabel`.
+
 ## Right-to-Left Languages {#right-to-left-languages}
 
 For a right-to-left language such as Arabic or Hebrew, set `dir: 'rtl'`:

@@ -135,6 +135,7 @@ KawaPress 把扩展边界分得很清楚：
 - [Markdown 语法扩展](https://shenqingchuan.github.io/kawapress/guide/markdown-extensions)
 - [国际化](https://shenqingchuan.github.io/kawapress/guide/internationalization)
 - [插件体系](https://shenqingchuan.github.io/kawapress/plugins/plugin-system)
+- [官方插件总览](https://shenqingchuan.github.io/kawapress/plugins/overview)
 - [主题定制](https://shenqingchuan.github.io/kawapress/guide/theme-customization)
 
 ## 参与贡献
