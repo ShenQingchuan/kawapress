@@ -4,7 +4,7 @@ description: KawaPress 是一个以 Vue 为核心、面向文档与内容型网�
 
 # KawaPress 是什么？
 
-KawaPress 是一个以 Vue 为核心的[静态站点生成器](https://en.wikipedia.org/wiki/Static_site_generator)（SSG），主要用于构建文档和其他内容型网站。
+KawaPress 是一个以 Vue 为核心的[静态站点生成器](https://en.wikipedia.org/wiki/Static_site_generator)（SSG），主要用于构建文档和其他内容型网站。KawaPress 的目标是替代 [VitePress](https://vitepress.dev/)，通过更好的插件体系设计带来更好的开发体验。
 
 简单来说，你用 Markdown 编写内容，KawaPress 负责把这些内容编译成 Vue 页面、应用主题，并在构建时生成可以直接部署的静态 HTML。部署完成后不需要额外运行 Node.js 服务器，普通的静态托管服务就足够了。
 

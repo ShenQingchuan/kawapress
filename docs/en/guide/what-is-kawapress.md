@@ -4,7 +4,7 @@ description: KawaPress is a Vue-first static site generator for documentation an
 
 # What is KawaPress?
 
-KawaPress is a Vue-first [Static Site Generator](https://en.wikipedia.org/wiki/Static_site_generator) (SSG) for documentation and other content-focused websites.
+KawaPress is a Vue-first [Static Site Generator](https://en.wikipedia.org/wiki/Static_site_generator) (SSG) for documentation and other content-focused websites. It aims to replace [VitePress](https://vitepress.dev/) through a better plugin system that improves the developer experience.
 
 You write content in Markdown. KawaPress compiles it into Vue pages, applies a theme, and generates static HTML during the build. The deployed site does not require a Node.js server and can run on any static hosting service.
 
