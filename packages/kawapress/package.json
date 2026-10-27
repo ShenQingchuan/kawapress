@@ -63,7 +63,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
-    "@kawapress/preset-nagi": "workspace:*",
+    "@kawapress/preset-nagi": "workspace:^",
     "@mdit-vue/plugin-component": "catalog:markdown",
     "@mdit-vue/plugin-frontmatter": "catalog:markdown",
     "@mdit-vue/plugin-headers": "catalog:markdown",

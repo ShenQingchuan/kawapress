@@ -172,13 +172,16 @@ export function classifyPackage({ integrity, publishedIntegrity, publishedTags, 
   return 'available'
 }
 
-/** Packages that this run will leave alone because npm already has their version. */
+/** Packages that this run leaves alone because npm already has their version. */
 export function isSkippedState(state) {
   return state === 'published'
 }
 
-/** Classifies every package, see `classifyPackage`. */
-export async function inspectRegistry(packages, registry, tag) {
+/**
+ * Classifies every package, see `classifyPackage`. Each package carries its own
+ * dist-tag, because every package has its own version.
+ */
+export async function inspectRegistry(packages, registry) {
   logStep('Checking npm version availability')
   const states = new Map()
 
@@ -196,24 +199,23 @@ export async function inspectRegistry(packages, registry, tag) {
     })
     states.set(packageInfo.name, state)
 
-    if (isSkippedState(state)) {
-      logWarning(
-        `${packageInfo.name}@${packageInfo.version} is already on npm with other contents; skipping it. Bump the version to publish its current source.`,
-      )
+    if (isSkippedState(state))
       continue
-    }
 
-    const current = publishedTags?.[tag]
+    const current = publishedTags?.[packageInfo.tag]
     if (current && compareSemver(parseSemver(current), parseSemver(packageInfo.version)) > 0) {
       throw new Error(
-        `Refusing to move dist-tag ${tag} backwards from ${current} to ${packageInfo.version} for ${packageInfo.name}.`,
+        `Refusing to move dist-tag ${packageInfo.tag} backwards from ${current} to ${packageInfo.version} for ${packageInfo.name}.`,
       )
     }
   }
 
   const available = [...states.values()].filter(state => state === 'available').length
   const identical = [...states.values()].filter(state => state === 'identical').length
-  const skipped = [...states.values()].filter(isSkippedState).length
+  const skippedNames = packages
+    .filter(packageInfo => isSkippedState(states.get(packageInfo.name)))
+    .map(packageInfo => `${packageInfo.name}@${packageInfo.version}`)
+  const skipped = skippedNames.length
   const pending = states.size - available - identical - skipped
   const details = [
     identical ? `${identical} identical` : '',
@@ -221,6 +223,10 @@ export async function inspectRegistry(packages, registry, tag) {
     pending ? `${pending} awaiting npm metadata` : '',
   ].filter(Boolean).join('; ')
   logSuccess(`${available} versions available${details ? `; ${details}` : ''}`)
+  if (skipped > 0) {
+    console.log(`  Unchanged, left alone: ${skippedNames.join(', ')}`)
+    console.log('  If you changed the source of one of these, raise its version to publish it.')
+  }
   return states
 }
 

@@ -3,22 +3,17 @@
 import process from 'node:process'
 
 import { checkAuthentication } from './auth.mjs'
-import {
-  checkCiReleaseEnvironment,
-  findCommittedVersionProblems,
-  formatMissingPackagesError,
-  isOidcPublishingAvailable,
-} from './ci.mjs'
+import { checkCiReleaseEnvironment, formatMissingPackagesError, isOidcPublishingAvailable } from './ci.mjs'
 import { parseArguments, printUsage } from './cli.mjs'
 import { minNpmVersionForTrustedPublishing } from './constants.mjs'
 import { assertGitClean, checkGit, requireCleanWorkingTree } from './git.mjs'
 import { copyReleaseWorkspace, packAndValidate, removeStagingDir } from './pack.mjs'
-import { assertVersionIsNotOlder, discoverPackages, readLockstepVersion, updateWorkspaceVersions } from './packages.mjs'
+import { applyBumps, discoverPackages, parseBumps } from './packages.mjs'
 import { confirmPublish, dryRunPublish, filterPublishOrder, publishPackages, sortForPublish } from './publish.mjs'
 import { runQualityChecks } from './quality.mjs'
 import { findMissingPackages, inspectRegistry, isSkippedState, logMissingPackages } from './registry.mjs'
 import { logStep, logSuccess } from './runtime.mjs'
-import { compareSemver, defaultTag, parseSemver, tagNameForVersion, validateTag } from './semver.mjs'
+import { defaultTag, parseSemver, validateTag } from './semver.mjs'
 import { checkNpmVersion, checkToolchain } from './toolchain.mjs'
 import { printTrustCommands } from './trust.mjs'
 
@@ -31,28 +26,29 @@ export async function main(argv = process.argv.slice(2)) {
     printUsage()
     return
   }
-  if (!options.version)
-    throw new Error('A release version is required. Use --version <semver>.')
 
-  parseSemver(options.version)
-  options.tag ??= defaultTag(options.version)
-  validateTag(options.tag)
+  if (options.tag)
+    validateTag(options.tag)
 
   const packages = await discoverPackages()
   const packageNames = packages.map(packageInfo => packageInfo.manifest.name)
-  const committedVersion = readLockstepVersion(packages)
 
   if (options.mode === 'prepare')
-    return prepareRelease(options, packages, committedVersion)
+    return prepareRelease(options, packages)
 
-  const ci = isOidcPublishingAvailable(process.env)
-  // A bootstrap only reserves names on npm. The staged copy gets `options.version`, so it
-  // may be a placeholder below the committed version (for example 0.0.1 for a new package).
-  if (options.mode !== 'bootstrap') {
-    rejectVersionMismatch({ ci, committedVersion, options })
-    assertVersionIsNotOlder(options.version, committedVersion)
+  // A bootstrap only reserves names on npm, so it pins every package to a placeholder
+  // version. A real release publishes each package at the version it already declares.
+  const versionOverride = options.mode === 'bootstrap' ? options.version : undefined
+  if (options.mode === 'bootstrap') {
+    if (!versionOverride)
+      throw new Error('Bootstrap needs a placeholder version. Use --version <semver>, for example 0.0.1.')
+    parseSemver(versionOverride)
+  }
+  else if (options.version) {
+    throw new Error('--version only applies to --bootstrap. Set each package version with release:prepare.')
   }
 
+  const ci = isOidcPublishingAvailable(process.env)
   printPackagePlan(packages, options)
 
   logStep('Checking release prerequisites')
@@ -60,7 +56,7 @@ export async function main(argv = process.argv.slice(2)) {
 
   if (ci) {
     await checkNpmVersion(minNpmVersionForTrustedPublishing)
-    await checkCiReleaseEnvironment({ version: options.version })
+    await checkCiReleaseEnvironment()
   }
   else {
     await checkGit(publishingModes.has(options.mode))
@@ -102,25 +98,25 @@ export async function main(argv = process.argv.slice(2)) {
 
   let stagingDir
   try {
-    stagingDir = await copyReleaseWorkspace(packages, options.version)
-    const packedPackages = await packAndValidate(packages, stagingDir, options.version)
+    stagingDir = await copyReleaseWorkspace(packages, versionOverride)
+    const packedPackages = (await packAndValidate(packages, stagingDir, versionOverride))
+      .map(packed => ({ ...packed, tag: options.tag ?? defaultTag(packed.version) }))
     const publishOrder = filterPublishOrder(sortForPublish(packedPackages), bootstrapTargets)
-    const registryStates = await inspectRegistry(publishOrder, options.registry, options.tag)
+    const registryStates = await inspectRegistry(publishOrder, options.registry)
 
     if (options.mode === 'dry-run') {
       await dryRunPublish(
         publishOrder.filter(packageInfo => !isSkippedState(registryStates.get(packageInfo.name))),
         options,
       )
-      console.log(`\nDry-run complete. Nothing was published and package versions were not changed.`)
-      console.log(`To publish: pnpm release --version ${options.version} --tag ${options.tag} --publish`)
+      console.log('\nDry-run complete. Nothing was published and package versions were not changed.')
       return
     }
 
     if (options.mode === 'bootstrap') {
       await confirmPublish(options, publishOrder, registryStates)
       await publishPackages(publishOrder, registryStates, options)
-      console.log(`\nBootstrapped ${publishOrder.length} package(s) at ${options.version} with dist-tag ${options.tag}.`)
+      console.log(`\nBootstrapped ${publishOrder.length} package(s) at ${versionOverride}.`)
       printTrustCommands(packageNames)
       return
     }
@@ -128,66 +124,56 @@ export async function main(argv = process.argv.slice(2)) {
     await requireCleanWorkingTree()
     await confirmPublish(options, publishOrder, registryStates)
     await publishPackages(publishOrder, registryStates, options)
-
-    if (ci) {
-      console.log(`\nPublished ${publishOrder.length} packages as ${options.version} with dist-tag ${options.tag} from GitHub Actions.`)
-      console.log(`Check the provenance badge on https://www.npmjs.com/package/kawapress/v/${options.version}`)
-      return
-    }
-
-    await updateWorkspaceVersions(packages, options.version)
-    console.log(`\nPublished ${packages.length} packages as ${options.version} with dist-tag ${options.tag}.`)
-    console.log('Package versions were updated locally. Commit those package.json changes, then create the Git tag.')
+    printPublishSummary(publishOrder, registryStates, ci)
   }
   finally {
     await removeStagingDir(stagingDir)
   }
 }
 
-/** Rewrites the lockstep version of every public package so the bump can be committed. */
-async function prepareRelease(options, packages, committedVersion) {
-  if (compareSemver(parseSemver(options.version), parseSemver(committedVersion)) <= 0) {
-    throw new Error(
-      `Package versions are already ${committedVersion}. Choose a version higher than ${committedVersion}.`,
-    )
-  }
+/** Lists what this run published, and what it left alone. */
+function printPublishSummary(publishOrder, states, ci) {
+  const published = publishOrder.filter(packageInfo => !isSkippedState(states.get(packageInfo.name)))
+  console.log(`\nPublished ${published.length} package(s)${ci ? ' from GitHub Actions' : ''}:`)
+  for (const packageInfo of published)
+    console.log(`  ${packageInfo.name}@${packageInfo.version} (dist-tag ${packageInfo.tag})`)
+  if (ci && published.length > 0)
+    console.log(`Check the provenance badge on https://www.npmjs.com/package/${published[0].name}/v/${published[0].version}`)
+}
 
-  printPackagePlan(packages, options)
+/** Rewrites the version of the named packages so the bump can be committed. */
+async function prepareRelease(options, packages) {
+  if (options.bumps.length === 0)
+    throw new Error('Name the packages to release, for example: pnpm release:prepare kawapress=0.3.0 plugin-mermaid=0.2.1')
+
+  const bumps = parseBumps(packages, options.bumps)
+  // New sites get `kawapressVersion` from create-kawapress, so it has to ship with every
+  // kawapress release or it keeps pointing at the old version.
+  if (bumps.has('kawapress') && !bumps.has('create-kawapress')) {
+    throw new Error('kawapress changes the version create-kawapress writes into new sites, so release both: add create-kawapress=<version>.')
+  }
 
   logStep('Checking release prerequisites')
   await checkToolchain()
   await assertGitClean('The working tree must be clean before the version bump.')
 
-  await updateWorkspaceVersions(packages, options.version)
-  logSuccess(`${packages.length} package.json files now declare version ${options.version}`)
+  const changed = await applyBumps(packages, bumps)
+  logSuccess(`${changed.length} package.json file(s) changed`)
+  for (const [name, version] of bumps)
+    console.log(`  ${name} → ${version}`)
 
-  const tag = tagNameForVersion(options.version)
   console.log('\nNext steps:')
-  console.log(`  1. review the diff: git diff --stat`)
-  console.log(`  2. git commit -am "chore: 发布 ${options.version}" && git push origin main`)
+  console.log('  1. review the diff: git diff')
+  console.log('  2. git commit -am "chore: 发布 <简述>" && git push origin main')
   console.log('  3. wait for the CI workflow on main to pass')
-  console.log(`  4. git tag ${tag} && git push origin ${tag}`)
+  console.log('  4. git tag v<name> && git push origin v<name>   (any unused tag that starts with v)')
   console.log('  5. the Release workflow publishes on its own; check npm when it finishes')
-}
-
-function rejectVersionMismatch({ ci, committedVersion, options }) {
-  if (!ci)
-    return
-
-  const problems = findCommittedVersionProblems({
-    committedVersion,
-    mode: options.mode,
-    releaseVersion: options.version,
-  })
-  if (problems.length > 0)
-    throw new Error(problems.join('\n'))
 }
 
 function printPackagePlan(packages, options) {
   console.log('\nRelease plan')
   console.log(`  mode:     ${options.mode}`)
-  console.log(`  version:  ${options.version}`)
-  console.log(`  dist-tag: ${options.mode === 'prepare' ? '(not published)' : options.tag}`)
+  console.log(`  dist-tag: ${options.tag ?? '(per package: latest, or the prerelease name)'}`)
   console.log(`  registry: ${options.registry}`)
   console.log(`  packages: ${packages.length}`)
 }

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import {
   findCiEnvironmentProblems,
-  findCommittedVersionProblems,
   formatMissingPackagesError,
   isOidcPublishingAvailable,
 } from './ci.mjs'
@@ -19,7 +18,6 @@ const taggedRun = {
   env: taggedEnv,
   headCommit: 'aaaa1111',
   tagCommit: 'aaaa1111',
-  version: '0.1.0',
 }
 
 describe('isOidcPublishingAvailable', () => {
@@ -47,12 +45,20 @@ describe('findCiEnvironmentProblems', () => {
     expect(problems.join('\n')).toContain('must run for a tag')
   })
 
-  it('rejects a tag that does not match the release version', () => {
+  it('accepts any v-prefixed tag, because the tag only starts the release', () => {
     const problems = findCiEnvironmentProblems({
       ...taggedRun,
-      env: { ...taggedEnv, GITHUB_REF_NAME: 'v0.2.0' },
+      env: { ...taggedEnv, GITHUB_REF_NAME: 'v2026-05-30-mermaid' },
     })
-    expect(problems.join('\n')).toContain('does not match release version 0.1.0')
+    expect(problems).toEqual([])
+  })
+
+  it('rejects a tag without the v prefix', () => {
+    const problems = findCiEnvironmentProblems({
+      ...taggedRun,
+      env: { ...taggedEnv, GITHUB_REF_NAME: 'release-1' },
+    })
+    expect(problems.join('\n')).toContain('must start with "v"')
   })
 
   it('rejects a checkout that is not the commit that triggered the run', () => {
@@ -76,34 +82,6 @@ describe('findCiEnvironmentProblems', () => {
       env: { ...taggedEnv, GITHUB_ACTIONS: 'false' },
     })
     expect(problems.join('\n')).toContain('GITHUB_ACTIONS is not "true"')
-  })
-})
-
-describe('findCommittedVersionProblems', () => {
-  it('is happy when the committed version is the release version', () => {
-    expect(findCommittedVersionProblems({
-      committedVersion: '0.1.0',
-      mode: 'publish',
-      releaseVersion: '0.1.0',
-    })).toEqual([])
-  })
-
-  it('tells CI to commit the bump before tagging', () => {
-    const problems = findCommittedVersionProblems({
-      committedVersion: '0.0.1',
-      mode: 'publish',
-      releaseVersion: '0.1.0',
-    })
-    expect(problems.join('\n')).toContain('pnpm release:prepare --version 0.1.0')
-  })
-
-  it('words the bootstrap hint around the version that was passed', () => {
-    const problems = findCommittedVersionProblems({
-      committedVersion: '0.1.0',
-      mode: 'bootstrap',
-      releaseVersion: '0.0.1',
-    })
-    expect(problems.join('\n')).toContain('pnpm release --version 0.0.1 --bootstrap')
   })
 })
 

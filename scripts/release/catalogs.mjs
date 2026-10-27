@@ -63,7 +63,7 @@ export function expectedCatalogRange(catalogs, dependency, specifier) {
   return expected
 }
 
-/** `workspace:` specifier → the exact range pnpm must write into the tarball. */
+/** `workspace:` specifier → the range pnpm writes into the tarball, given the version of the package it points at. */
 export function expectedWorkspaceRange(specifier, version) {
   if (specifier === 'workspace:*')
     return version

@@ -52,7 +52,7 @@ export function filterPublishOrder(publishOrder, targets) {
 }
 
 export async function dryRunPublish(packages, options) {
-  logStep(`Simulating npm publish with dist-tag ${options.tag}`)
+  logStep('Simulating npm publish')
 
   for (const packageInfo of packages) {
     await run('npm', [
@@ -62,12 +62,12 @@ export async function dryRunPublish(packages, options) {
       '--access',
       'public',
       '--tag',
-      options.tag,
+      packageInfo.tag,
       '--registry',
       options.registry,
       '--json',
     ], { capture: true })
-    logSuccess(`${packageInfo.name}@${packageInfo.version}`)
+    logSuccess(`${packageInfo.name}@${packageInfo.version} (dist-tag ${packageInfo.tag})`)
   }
 }
 
@@ -78,12 +78,14 @@ export async function confirmPublish(options, packages, states) {
     throw new Error('Publish mode needs an interactive terminal or the explicit --yes flag.')
 
   const pending = packages.filter(packageInfo => states.get(packageInfo.name) === 'available')
-  console.log(`\nThis will publish ${pending.length} package(s) as ${options.version} with dist-tag ${options.tag}.`)
+  console.log(`\nThis will publish ${pending.length} package(s):`)
+  for (const packageInfo of pending)
+    console.log(`  ${packageInfo.name}@${packageInfo.version} (dist-tag ${packageInfo.tag})`)
   const readline = createInterface({ input: process.stdin, output: process.stdout })
-  const answer = await readline.question(`Type ${options.version} to continue: `)
+  const answer = await readline.question('Type "publish" to continue: ')
   readline.close()
 
-  if (answer.trim() !== options.version)
+  if (answer.trim() !== 'publish')
     throw new Error('Release cancelled.')
 }
 
@@ -93,7 +95,7 @@ export async function confirmPublish(options, packages, states) {
  * alone, dist-tag included.
  */
 export async function publishPackages(allPackages, states, options) {
-  logStep(`Publishing to npm with dist-tag ${options.tag}`)
+  logStep('Publishing to npm')
   const packages = allPackages.filter(packageInfo => !isSkippedState(states.get(packageInfo.name)))
 
   for (const packageInfo of packages) {
@@ -104,7 +106,7 @@ export async function publishPackages(allPackages, states, options) {
         '--access',
         'public',
         '--tag',
-        options.tag,
+        packageInfo.tag,
         '--registry',
         options.registry,
       ])
@@ -117,13 +119,13 @@ export async function publishPackages(allPackages, states, options) {
       }
     }
     else {
-      await ensureDistTag(packageInfo, options.tag, options.registry)
+      await ensureDistTag(packageInfo, packageInfo.tag, options.registry)
     }
   }
 
   // npm publish 已通过 --tag 设置标签；registry 同步较慢，统一并发等待。
   logStep('Waiting for the registry to report dist-tags')
-  await Promise.all(packages.map(packageInfo => waitForDistTag(packageInfo, options.tag, options.registry)))
+  await Promise.all(packages.map(packageInfo => waitForDistTag(packageInfo, packageInfo.tag, options.registry)))
 
   for (const packageInfo of allPackages) {
     const state = states.get(packageInfo.name)

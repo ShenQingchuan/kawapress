@@ -317,7 +317,7 @@ importers:
   packages/kawapress:
     dependencies:
       '@kawapress/preset-nagi':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../preset-nagi
       '@mdit-vue/plugin-component':
         specifier: catalog:markdown
@@ -377,7 +377,7 @@ importers:
   packages/plugin-code-block:
     dependencies:
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
     devDependencies:
       happy-dom:
@@ -393,7 +393,7 @@ importers:
         specifier: catalog:markdown
         version: 1.0.2(markdown-it@14.3.0)
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
     devDependencies:
       markdown-exit:
@@ -424,7 +424,7 @@ importers:
         specifier: catalog:markdown
         version: 1.0.2(markdown-it@14.3.0)
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
     devDependencies:
       markdown-exit:
@@ -437,7 +437,7 @@ importers:
         specifier: catalog:markdown
         version: 1.0.3(markdown-it@14.3.0)
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
     devDependencies:
       markdown-exit:
@@ -447,7 +447,7 @@ importers:
   packages/plugin-image-zoom:
     dependencies:
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
     devDependencies:
       happy-dom:
@@ -516,7 +516,7 @@ importers:
         specifier: catalog:markdown
         version: 1.1.1(markdown-it@14.3.0)
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
       markdown-exit:
         specifier: catalog:markdown
@@ -525,7 +525,7 @@ importers:
   packages/plugin-mermaid:
     dependencies:
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
       pele:
         specifier: catalog:frontend
@@ -593,7 +593,7 @@ importers:
         specifier: catalog:frontend
         version: 5.2.2(vue@3.5.41(typescript@6.0.3))
       kawapress:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kawapress
       mdast-util-from-markdown:
         specifier: catalog:markdown
@@ -659,31 +659,31 @@ importers:
   packages/preset-nagi:
     dependencies:
       '@kawapress/plugin-code-block':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-code-block
       '@kawapress/plugin-code-group':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-code-group
       '@kawapress/plugin-container':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-container
       '@kawapress/plugin-github-alerts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-github-alerts
       '@kawapress/plugin-llms':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-llms
       '@kawapress/plugin-search':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-search
       '@kawapress/plugin-shiki':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-shiki
       '@kawapress/plugin-sitemap':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-sitemap
       '@kawapress/plugin-unocss':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-unocss
       '@unhead/vue':
         specifier: catalog:frontend

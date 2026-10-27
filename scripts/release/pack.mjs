@@ -17,10 +17,11 @@ import {
 import { logStep, logSuccess, pathExists, readJson, run, writeJson } from './runtime.mjs'
 
 /**
- * Copies the workspace into a temporary directory and pins every public package to
- * `version` there, so the tarballs come out correct without touching the real tree.
+ * Copies the workspace into a temporary directory so the tarballs come out correct
+ * without touching the real tree. Packages keep their own version; a bootstrap passes
+ * `versionOverride` to pin every package to a placeholder version instead.
  */
-export async function copyReleaseWorkspace(packages, version) {
+export async function copyReleaseWorkspace(packages, versionOverride) {
   const stagingDir = await mkdtemp(join(tmpdir(), 'kawapress-release-'))
   const rootFiles = [
     'LICENSE',
@@ -43,9 +44,11 @@ export async function copyReleaseWorkspace(packages, version) {
   for (const packageInfo of packages) {
     const stagedPackageDir = join(stagingDir, packageInfo.relativeDirectory)
     const stagedManifestPath = join(stagedPackageDir, 'package.json')
-    const stagedManifest = await readJson(stagedManifestPath)
-    stagedManifest.version = version
-    await writeJson(stagedManifestPath, stagedManifest)
+    if (versionOverride) {
+      const stagedManifest = await readJson(stagedManifestPath)
+      stagedManifest.version = versionOverride
+      await writeJson(stagedManifestPath, stagedManifest)
+    }
 
     for (const readme of readmeFiles)
       await cp(join(rootDir, readme), join(stagedPackageDir, readme))
@@ -69,9 +72,14 @@ function collectExportTargets(value, targets = []) {
   return targets
 }
 
-export async function validatePackedPackage(packageInfo, packed, stagingDir, version, catalogs) {
+/**
+ * `versions` maps every public package name to the version this release gives it;
+ * a `workspace:` dependency must resolve against the version of the package it points at.
+ */
+export async function validatePackedPackage(packageInfo, packed, stagingDir, versions, catalogs) {
   if (packed.name !== packageInfo.manifest.name)
     throw new Error(`Packed the wrong package: expected ${packageInfo.manifest.name}, got ${packed.name}.`)
+  const version = versions.get(packed.name)
   if (packed.version !== version)
     throw new Error(`${packed.name} packed as ${packed.version}, expected ${version}.`)
 
@@ -107,12 +115,18 @@ export async function validatePackedPackage(packageInfo, packed, stagingDir, ver
         continue
 
       let expected
-      if (specifier.startsWith('workspace:'))
-        expected = expectedWorkspaceRange(specifier, version)
-      else if (specifier.startsWith('catalog:'))
+      if (specifier.startsWith('workspace:')) {
+        const dependencyVersion = versions.get(name)
+        if (!dependencyVersion)
+          throw new Error(`${packed.name} depends on ${name} through ${specifier}, but ${name} is not a public package.`)
+        expected = expectedWorkspaceRange(specifier, dependencyVersion)
+      }
+      else if (specifier.startsWith('catalog:')) {
         expected = expectedCatalogRange(catalogs, name, specifier)
-      else
+      }
+      else {
         continue
+      }
 
       if (packedDependencies[name] !== expected) {
         throw new Error(
@@ -148,7 +162,11 @@ export async function validatePackedPackage(packageInfo, packed, stagingDir, ver
 }
 
 /** Packs every public package in the staging copy and returns validated artifacts. */
-export async function packAndValidate(packages, stagingDir, version) {
+export async function packAndValidate(packages, stagingDir, versionOverride) {
+  const versions = new Map(packages.map(packageInfo => [
+    packageInfo.manifest.name,
+    versionOverride ?? packageInfo.manifest.version,
+  ]))
   logStep('Packing exact npm tarballs')
   const artifactsDir = join(stagingDir, 'artifacts')
   const catalogs = await readCatalogs()
@@ -194,7 +212,7 @@ export async function packAndValidate(packages, stagingDir, version) {
       packageInfo,
       packed,
       stagingDir,
-      version,
+      versions,
       catalogs,
     ))
   }

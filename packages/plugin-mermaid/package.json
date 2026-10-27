@@ -41,7 +41,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "peerDependencies": {
-    "kawapress": "workspace:*",
+    "kawapress": "workspace:^",
     "vue": "catalog:frontend"
   },
   "dependencies": {

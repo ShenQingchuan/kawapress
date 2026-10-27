@@ -1,6 +1,6 @@
 name: Release
 
-# Cutting a release: bump the versions on main, wait for CI, then push the v* tag.
+# Cutting a release: bump the versions of the packages to release on main, wait for CI, then push a v* tag.
 # The tag starts this workflow; publishing then runs without manual steps.
 on:
   push:
@@ -17,13 +17,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Read the version from the tag
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
       # The docs show the last commit time of each page, and the release checks need tags.
       - name: Checkout
         uses: actions/checkout@v6
@@ -47,9 +41,7 @@ jobs:
 
       # Lint, typecheck, test, build, then pack and validate every tarball.
       - name: Verify the release
-        env:
-          RELEASE_VERSION: ${{ steps.version.outputs.version }}
-        run: pnpm release --version "$RELEASE_VERSION" --dry-run
+        run: pnpm release --dry-run
 
   publish:
     needs: verify
@@ -85,6 +77,4 @@ jobs:
       # No NODE_AUTH_TOKEN: npm mints a short-lived token from the OIDC token and
       # attaches provenance on its own, because the repository is public.
       - name: Publish to npm
-        env:
-          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
-        run: pnpm release --version "$RELEASE_VERSION" --publish --yes
+        run: pnpm release --publish --yes

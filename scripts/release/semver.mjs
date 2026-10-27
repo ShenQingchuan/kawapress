@@ -1,4 +1,4 @@
-/** Semver parsing, comparison, and Git tag naming for the lockstep release. */
+/** Semver parsing, comparison, range checks, and Git tag naming for releases. */
 
 import { semverPattern } from './constants.mjs'
 
@@ -80,14 +80,12 @@ export function validateTag(tag) {
     throw new Error(`Invalid npm dist-tag: ${tag}`)
 }
 
-/** The Git tag that marks a release, e.g. `0.1.0` → `v0.1.0`. */
-export function tagNameForVersion(version) {
-  return `v${version}`
-}
-
-/** Inverse of `tagNameForVersion`; rejects tags the release workflow never handles. */
-export function versionFromTagName(tagName) {
-  if (!tagName.startsWith('v') || tagName.length === 1)
-    throw new Error(`Release tags must look like v1.2.3, got ${tagName || '(empty)'}.`)
-  return tagName.slice(1)
+/**
+ * The Git tag only starts the release workflow; it does not name a version.
+ * Returns a problem description, or null for a tag the workflow accepts.
+ */
+export function findReleaseTagProblem(tagName) {
+  if (!tagName?.startsWith('v') || tagName.length === 1)
+    return `Release tags must start with "v" (for example v0.3.0), got ${tagName || '(empty)'}.`
+  return null
 }

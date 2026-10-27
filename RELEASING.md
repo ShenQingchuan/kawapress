@@ -1,6 +1,6 @@
 # 发布 KawaPress
 
-KawaPress 的 17 个公开包共用同一个版本号，由 `scripts/release.mjs` 一起打包、校验、按依赖顺序发布。npm 上已经有这个版本号的包会被跳过，所以新增的包可以用已发过的版本号单独首发。
+KawaPress 有 17 个公开包，每个包有自己的版本号，各发各的。一次发布由 `scripts/release.mjs` 把全部包打包、校验，然后只发布「npm 上还没有这个版本」的包，其余的原样跳过，按依赖顺序发布。所以要发哪个包，只需要提高它自己的版本号。
 
 真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `ShenQingchuan/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。推送 `v*` tag 之后全程自动，不需要人工介入。
 
@@ -47,7 +47,7 @@ pnpm release --bootstrap --version 0.0.1
 
 **占位版本固定用 `0.0.1`，不要用要正式发布的版本号。**
 
-- 占位用 `--version` 指定的版本，不要求等于仓库里已提交的版本，所以新包的 `package.json` 里可以直接写将来要发的 `0.1.0`。
+- 占位只在 `--bootstrap` 时用 `--version` 指定，所有缺失的包都会被临时当作这个版本打包，不要求等于仓库里已提交的版本，所以新包的 `package.json` 里可以直接写将来要发的 `0.1.0`。
 - 如果占位直接用 `0.1.0`，这个版本号就被一次「本地打包」永久占住了。之后 CI 用 Node 22 重新打包同样的代码，压缩结果大概率不是逐字节相同，npm 会直接拒绝：「0.1.0 已存在且内容不同」。而且 trusted publishing 要求配置好后 2 天内有一次**通过 CI 的成功发布**，被「已存在」跳过的包就永远等不到这一次发布。
 - 占位包里 `kawapress` 等依赖会变成 `0.0.1`，那是 npm 上真实存在的早期版本，占位包不会因此装不上。
 - 结论：**占位发 `0.0.1`，带真实内容的第一个版本（例如 `0.1.0`）一定留给 CI 去发。**
@@ -93,33 +93,38 @@ pnpm release:lock --apply    # 真正修改；第一次会在浏览器里做两�
 
 ## 二、每次发版的固定动作
 
-以 `0.1.0` 为例：
+以「发 `plugin-mermaid` 的 0.2.1」为例：
 
 ```sh
-# 1. 改版本号（只改 packages/*/package.json，不发布）
-pnpm release:prepare --version 0.1.0
+# 1. 改版本号（只改 package.json，不发布）。可以一次写多个包。
+pnpm release:prepare plugin-mermaid=0.2.1
 
 # 2. 提交并推 main
-git commit -am "chore: 发布 0.1.0"
+git commit -am "chore: 发布 plugin-mermaid 0.2.1"
 git push origin main
 
 # 3. 等 main 上的 CI 变绿（Actions → CI）
 
 # 4. 打 tag，推 tag —— 这一步触发发布工作流，之后全自动
-git tag v0.1.0
-git push origin v0.1.0
+git tag v2026-05-30-mermaid
+git push origin v2026-05-30-mermaid
 
 # 5. 等 Actions → Release 跑完，核对结果
-npm view kawapress version                # 应该看到 0.1.0
-open https://www.npmjs.com/package/kawapress/v/0.1.0   # 页面上有 provenance 徽章
+npm view @kawapress/plugin-mermaid version
 ```
+
+几条规则：
+
+- 包名可以写目录名（`plugin-mermaid`）或完整的 npm 名（`@kawapress/plugin-mermaid`）。
+- 新版本必须高于该包当前的版本。
+- **tag 只负责启动工作流，不表示版本号**：任何以 `v` 开头、没用过的名字都行，例如 `v2026-05-30`、`v0.3.0`。每次发布用一个新 tag。发布哪些包、发哪个版本，由已提交的各 `package.json` 决定。
+- 同时发布 `kawapress` 时必须带上 `create-kawapress`，因为 `create-kawapress` 里的 `kawapressVersion` 记着新建站点要装的核心版本。`release:prepare` 会自动把它改成 `kawapress` 的新版本，并要求你同时给 `create-kawapress` 一个新版本。
+- 包与包之间的依赖用 `workspace:^`，发布后变成 `^<对方当时的版本>`。所以插件只要不跨过核心的大版本（0.x 阶段是不跨过小版本），就不用跟着核心一起发版。
 
 `release.yml` 里有两个 job：
 
 - `verify`：跑 lint / typecheck / test / 构建文档，再打 17 个 tarball 并逐个校验（README、不含测试文件、`workspace:`/`catalog:` 都换成了真实范围、导出目标存在），然后 `npm publish --dry-run` 一遍。它没有任何发布权限，也不需要 token。
 - `publish`：`verify` 通过后自动启动，跑在 `npm` 环境里，同一个 tag、同一套校验，真实发布。
-
-tag 和版本的对应关系写死在工作流里：tag 必须是 `v<包版本>`，而且必须指向这次提交，否则一开场就会失败。
 
 ### 版本号已经在 npm 上时
 
@@ -134,7 +139,7 @@ tag 和版本的对应关系写死在工作流里：tag 必须是 `v<包版本>`
 
 "内容不一致"不等于源码有改动：同样的源码在不同机器上打出的 tarball 不一定逐字节相同。想把某个包的新源码发出去，必须升版本号。
 
-这条规则让新增的包可以用已发过的版本号首发。例如其余包都是 `0.1.0` 时，新包直接发 `0.1.0`，其它包全部跳过。
+这条规则让每次发布只动改过版本号的包：没提高版本号的包，哪怕源码改了也会被跳过，运行日志会列出这些「原样跳过」的包。想发布它的新源码，就提高它的版本号。
 
 ### 版本号怎么选
 
@@ -150,7 +155,7 @@ tag 和版本的对应关系写死在工作流里：tag 必须是 `v<包版本>`
 - **报 `missing from npm`**：有包在 npm 上还不存在，回到第一节第 3 步补。
 - **报 `already exists with different contents`**：这个版本号已经被别人（或自己手工）发过、且内容和这次打包不一样。这种情况下同一个版本号永远发不上去，只能换一个新版本号。
 - **报 dist-tag 倒退**：说明 registry 上 `latest` 已经指向更高的版本，脚本拒绝把它挪回去。检查是不是重复发了旧版本。
-- **tag 打错了**：`git push origin :v0.1.0` 删掉远程 tag，本地 `git tag -d v0.1.0`，改好再打。已经发出去的 npm 版本删不掉（npm 也不建议删），只能发新版本。
+- **tag 打错了**：`git push origin :<tag>` 删掉远程 tag，本地 `git tag -d <tag>`，改好再打。已经发出去的 npm 版本删不掉（npm 也不建议删），只能发新版本。
 
 ### 本地还能手工发布吗
 
@@ -158,12 +163,12 @@ tag 和版本的对应关系写死在工作流里：tag 必须是 `v<包版本>`
 
 ```sh
 npm login
-pnpm release --version <版本> --publish     # 会要求手输版本号确认
+pnpm release --publish     # 会要求手输 publish 确认
 ```
 
 这条路径和 CI 完全一致（同样的暂存、打包、校验、依赖顺序、dist-tag 保护），唯一区别是认证靠你的 npm 登录态，发布产物没有 provenance。正式版本请走 CI。
 
-想先看一遍再决定？`pnpm release --version 0.1.0 --dry-run`：跑全部质量检查和 tarball 校验，只是不推送。
+想先看一遍再决定？`pnpm release --dry-run`：跑全部质量检查和 tarball 校验，只是不推送。
 
 ---
 

@@ -3,10 +3,9 @@ import { describe, expect, it } from 'vitest'
 import {
   compareSemver,
   defaultTag,
+  findReleaseTagProblem,
   parseSemver,
-  tagNameForVersion,
   validateTag,
-  versionFromTagName,
 } from './semver.mjs'
 
 function compare(left: string, right: string) {
@@ -63,14 +62,15 @@ describe('validateTag', () => {
   })
 })
 
-describe('release tags', () => {
-  it('maps a version to its Git tag and back', () => {
-    expect(tagNameForVersion('0.1.0')).toBe('v0.1.0')
-    expect(versionFromTagName('v0.1.0')).toBe('0.1.0')
+describe('findReleaseTagProblem', () => {
+  it('accepts any tag that starts with v', () => {
+    expect(findReleaseTagProblem('v0.3.0')).toBeNull()
+    expect(findReleaseTagProblem('v2026-05-30')).toBeNull()
   })
 
-  it('rejects tags that are not v prefixed', () => {
-    expect(() => versionFromTagName('0.1.0')).toThrow('Release tags must look like v1.2.3')
-    expect(() => versionFromTagName('v')).toThrow('Release tags must look like v1.2.3')
+  it('rejects tags the release workflow never handles', () => {
+    expect(findReleaseTagProblem('0.3.0')).toContain('must start with "v"')
+    expect(findReleaseTagProblem('v')).toContain('must start with "v"')
+    expect(findReleaseTagProblem('')).toContain('(empty)')
   })
 })

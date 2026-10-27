@@ -37,7 +37,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "peerDependencies": {
-    "kawapress": "workspace:*"
+    "kawapress": "workspace:^"
   },
   "dependencies": {
     "unocss": "catalog:node"
