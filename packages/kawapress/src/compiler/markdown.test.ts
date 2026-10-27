@@ -1,4 +1,5 @@
 import type { MarkdownExit } from 'markdown-exit'
+import { mathjaxPlugin } from '@kawapress/plugin-mathjax'
 import { shikiPlugin } from '@kawapress/plugin-shiki'
 import { nagi } from '@kawapress/preset-nagi'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -135,6 +136,29 @@ titleTemplate: '%s · KawaPress'
       level: 1,
       slug: 'hello-world',
     })
+  })
+
+  it('keeps the text the author wrote as the plain-text heading title', async () => {
+    const compiler = await createMarkdownCompiler({
+      pluginRunner: await createGeneratorPluginRunner([mathjaxPlugin()]),
+    })
+    const { pageData } = await compileMarkdownToVue(
+      compiler,
+      '# Energy $E=mc^2$ and `x`\n\n## Read the [*guide*](/guide)\n',
+      '/guide/formula-title',
+    )
+
+    expect(pageData.title).toBe('Energy $E=mc^2$ and x')
+    expect(pageData.headers).toMatchObject([
+      {
+        level: 1,
+        title: 'Energy $E=mc^2$ and x',
+        slug: 'energy-and-x',
+        children: [
+          { level: 2, title: 'Read the guide', slug: 'read-the-guide' },
+        ],
+      },
+    ])
   })
 
   it('keeps custom heading anchors in rendered HTML and page data', async () => {

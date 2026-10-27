@@ -27,6 +27,12 @@ describe('page summary', () => {
     expect(summary.title).toBe('Run md.parse() with emphasis and a link')
   })
 
+  it('keeps a formula in the heading title as written', () => {
+    const summary = summarize('# Energy $E=mc^2$ and `x`\n')
+
+    expect(summary.title).toBe('Energy $E=mc^2$ and x')
+  })
+
   it('removes a custom heading id', () => {
     const summary = summarize('# Markdown Extensions {#markdown-extensions}\n')
 
@@ -77,6 +83,7 @@ describe('page summary', () => {
       '# Heading only\n',
       'No title and no heading.\n',
       '# Run `code` and *emphasis*\n',
+      '# Energy $E=mc^2$ and `x`\n',
       '# Link to [the guide](/guide/start)\n',
       '# Custom id {#custom-id}\n',
       '{"title":"JSON frontmatter"}\n',

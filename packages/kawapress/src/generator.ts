@@ -4,6 +4,7 @@
  */
 export { createPageSummaryReader } from './compiler/page-summary'
 export type { PageSummaryReader } from './compiler/page-summary'
+export { resolveHeadingTitle } from './core/heading-title'
 export type { PageSummary } from './core/page-manifest'
 export { parseGitLog, readGitLastUpdated } from './generator/git'
 export type { ReadGitLastUpdatedOptions } from './generator/git'

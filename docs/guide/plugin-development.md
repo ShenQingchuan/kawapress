@@ -295,7 +295,7 @@ const source = await readFile(page.file, 'utf8')
 const { title, layout } = reader.read(source, page.file)
 ```
 
-它只解析 Markdown，不会渲染页面：`pageData()` handler 不会执行，Markdown 插件、Shiki、Twoslash、MathJax 都不参与，所以列出整站也不需要先把页面编译一遍。标题的规则和页面本身一致：Frontmatter 里写了 `title` 就用它，否则取第一个一级标题的文字；`layout` 就是 Frontmatter 里写的那个字符串，没写就是 `undefined`。
+它只解析 Markdown，不会渲染页面：`pageData()` handler 不会执行，Markdown 插件、Shiki、Twoslash、MathJax 都不参与，所以列出整站也不需要先把页面编译一遍。标题的规则和页面本身一致：Frontmatter 里写了 `title` 就用它，否则取第一个一级标题的纯文本（格式标记去掉，公式按源码原样保留）；`layout` 就是 Frontmatter 里写的那个字符串，没写就是 `undefined`。
 
 同一个文件、同样的内容会直接用上次的结果，反复读整站很便宜。主题自动生成侧边栏时就是这样读标题的。
 

@@ -45,6 +45,7 @@ export type {
 } from './core/dead-links'
 export { normalizeFrontmatterSource } from './core/frontmatter'
 export type { HeadAttrs, HeadConfig, HeadTag } from './core/head'
+export { resolveHeadingTitle } from './core/heading-title'
 export { assertJsonSerializable, parseJson, stringifyJson } from './core/json'
 export type { JsonOperationOptions } from './core/json'
 export { resolveLocaleIndex } from './core/locale'

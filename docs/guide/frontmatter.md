@@ -73,6 +73,8 @@ titleTemplate: '%s · KawaPress 指南'
 
 上面的浏览器标签标题是“配置站点 · KawaPress 指南”。页面标题也会用于站内搜索。
 
+`title` 没写时，页面标题取第一个一级标题的文字，并去掉 Markdown 格式：`**加粗**`、`[链接](/guide)` 只留下文字，行内代码去掉反引号；公式和行内 HTML 这类写法不是格式，会按你写的原样保留。所以标题 `# Energy $E=mc^2$` 的页面标题是 `Energy $E=mc^2$`。
+
 ## 页面 head {#page-head}
 
 需要给某一页单独加 `<head>` 标签时，写进 frontmatter 的 `head`。它和站点配置里的 `head` 一样，每一项都是 `[标签名, 属性, 内容?]`：

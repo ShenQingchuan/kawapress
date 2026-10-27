@@ -296,7 +296,7 @@ const source = await readFile(page.file, 'utf8')
 const { title, layout } = reader.read(source, page.file)
 ```
 
-It only parses Markdown and never renders a page: no `pageData()` handler runs, and Markdown plugins, Shiki, Twoslash and MathJax stay out of it, so listing a whole site does not compile it first. The title follows the same rule as the page itself: `title` from the frontmatter when it is there, otherwise the text of the first level-one heading. `layout` is the string written in the frontmatter, or `undefined`.
+It only parses Markdown and never renders a page: no `pageData()` handler runs, and Markdown plugins, Shiki, Twoslash and MathJax stay out of it, so listing a whole site does not compile it first. The title follows the same rule as the page itself: `title` from the frontmatter when it is there, otherwise the plain text of the first level-one heading, which drops formatting markup while formulas stay as written. `layout` is the string written in the frontmatter, or `undefined`.
 
 The same file with the same content reuses the previous result, so reading a whole site repeatedly stays cheap. The theme reads titles exactly this way when it builds the automatic sidebar.
 
