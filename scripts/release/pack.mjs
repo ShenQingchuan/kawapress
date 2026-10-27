@@ -178,11 +178,13 @@ export async function packAndValidate(packages, stagingDir, versionOverride) {
   const artifactsDir = join(stagingDir, 'artifacts')
   const catalogs = await readCatalogs()
   await mkdir(artifactsDir, { recursive: true })
+  // The store from the main install usually has everything, so prefer it. A package that
+  // is missing from it is downloaded; `--offline` would fail the whole release for it.
   await run('pnpm', [
     'install',
     '--frozen-lockfile',
     '--ignore-scripts',
-    '--offline',
+    '--prefer-offline',
   ], { capture: true, cwd: stagingDir })
 
   const result = await run('pnpm', [
