@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-sitemap",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "sitemap.xml output for KawaPress",
   "license": "MIT",
   "homepage": "https://shenqingchuan.github.io/kawapress/",
