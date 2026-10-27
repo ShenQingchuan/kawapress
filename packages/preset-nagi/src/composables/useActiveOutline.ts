@@ -64,6 +64,7 @@ export function useActiveOutline() {
     const root = scrollRoot
     const doc = article
     if (!root || !doc || !window.location.hash) {
+      positionedLink = undefined
       return false
     }
 
@@ -75,13 +76,15 @@ export function useActiveOutline() {
       ? doc.querySelector<HTMLElement>(`#${CSS.escape(header.slug)}`)
       : null
     if (!header || !target) {
+      positionedLink = undefined
       return false
     }
 
     // The URL the visitor opened is adopted right after hydration, which reports
     // a hash the initial load already landed on. Anchoring again would drag a
     // reader who scrolled away in the meantime back up, so only a new anchor
-    // moves the scroll area.
+    // moves the scroll area. Any hash that is not an outline heading resets the
+    // remembered anchor, so returning to it later scrolls again.
     if (header.link === positionedLink) {
       return true
     }
