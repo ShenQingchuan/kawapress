@@ -88,39 +88,10 @@ export const guideSidebars = defineLocalizedSidebars({
         },
         {
           text: {
-            zhCN: '国际化',
-            en: 'Internationalization',
-          },
-          link: '/guide/internationalization',
-        },
-      ],
-    },
-    {
-      text: {
-        zhCN: '自定义',
-        en: 'Customization',
-      },
-      items: [
-        {
-          text: {
             zhCN: '构建时数据加载',
             en: 'Build-Time Data Loading',
           },
           link: '/guide/data-loading',
-        },
-        {
-          text: {
-            zhCN: '主题架构与 Outlet 机制',
-            en: 'Theme Architecture & Outlets',
-          },
-          link: '/guide/theme-architecture',
-        },
-        {
-          text: {
-            zhCN: '主题定制',
-            en: 'Theme Customization',
-          },
-          link: '/guide/theme-customization',
         },
         {
           text: {
@@ -129,19 +100,26 @@ export const guideSidebars = defineLocalizedSidebars({
           },
           link: '/guide/ssr-compatibility',
         },
+        {
+          text: {
+            zhCN: '国际化',
+            en: 'Internationalization',
+          },
+          link: '/guide/internationalization',
+        },
       ],
     },
   ],
 })
 
-/** 「插件」分区：先讲插件体系，再列出官方插件。 */
+/** 「插件」分区：先讲插件体系与主题，再列出官方插件。 */
 export const pluginSidebars = defineLocalizedSidebars({
   locales,
   items: [
     {
       text: {
-        zhCN: '编写插件',
-        en: 'Writing Plugins',
+        zhCN: '编写主题与插件',
+        en: 'Themes & Plugins',
       },
       items: [
         {
@@ -150,6 +128,13 @@ export const pluginSidebars = defineLocalizedSidebars({
             en: 'Plugin System',
           },
           link: '/plugins/plugin-system',
+        },
+        {
+          text: {
+            zhCN: '主题开发与 Outlet 机制',
+            en: 'Theme Development & Outlets',
+          },
+          link: '/plugins/theme-development',
         },
         {
           text: {
