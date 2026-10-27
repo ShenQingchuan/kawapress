@@ -36,11 +36,20 @@ export interface SizeAssets {
   guide: PageSizeResult
 }
 
+/** What the browser needs on the built site: taking over the HTML and the next page. */
+export interface PageLoads {
+  /** Until Vue mounted the app of the served document. */
+  hydration: Measurement
+  /** Until the page of a clicked sidebar link was on screen. */
+  clientNavigation: Measurement
+}
+
 export interface SizeResult {
   /** Number of guide pages; the home page is additional. */
   size: number
   build: Record<SiteKind, Measurement>
   dev: Record<SiteKind, DevMeasurement>
+  browser: Record<SiteKind, PageLoads>
   assets: Record<SiteKind, SizeAssets>
   lighthouse?: Record<SiteKind, LighthouseScore>
 }
@@ -205,6 +214,7 @@ export function formatReport(report: BenchReport): string {
     '- **Dev ready**: the dev server is started, then a headless Chromium opens `/` and the run ends once the home page heading is on screen. The page is retried until the server answers. VitePress dev answers with an empty shell and renders in the browser, so this is the time a reader actually waits. Caches are deleted before every run.',
     '- **Dev first HTML response**: recorded on the same page load as `Dev ready`, at the moment the HTML document for `/` arrived. It is kept because older reports used it; on its own it flatters tools that send a shell and paint later, so compare `Dev ready`. Reports written before the browser measurement are not comparable with these numbers.',
     '- **First paint size**: the built home page and one guide page are measured. The HTML document itself plus every module script, module preload and stylesheet it references are counted, and relative imports of those chunks are followed because the browser downloads them too. The document is included because both generators inline data into it, VitePress its page manifest for example. `HTML + JS + CSS` is everything one first paint downloads; the rows below it break that down. Raw, gzip (level 9) and brotli (quality 11).',
+    '- **Hydration done / Client navigation**: measured on the built site, served by each tool\'s own preview command, in a headless Chromium with a fresh context per run. `Hydration done` starts at the document navigation and ends when Vue marks the container as mounted (`__vue_app__`), a mark both tools set inside `app.mount()`, so neither build output is patched. `Client navigation` clicks the sidebar link of the next page and ends when that page\'s heading is on screen; the page itself watches for it per animation frame, so both measurements carry the same one-frame resolution.',
     '- **Per extra page**: how many bytes one more page adds, taken from the smallest and the largest size of this run: the difference of the guide page\'s HTML and JS, divided by the page difference.',
     '- **Lighthouse**: desktop preset, performance and accessibility of the home page, served by each tool\'s own preview command. Runs only with `--lighthouse`.',
     '- **Δ**: relative difference of KawaPress against VitePress, of the median duration or of the gzip size for the size rows. Negative means KawaPress is smaller or faster.',
@@ -228,6 +238,10 @@ export function formatReport(report: BenchReport): string {
       allRunsRow('Dev ready, all runs', pickDev(result.dev, 'contentVisible')),
       medianRow('Dev first HTML response', pickDev(result.dev, 'firstHtml'), runs),
       allRunsRow('Dev first HTML response, all runs', pickDev(result.dev, 'firstHtml')),
+      medianRow('Hydration done', pickPageLoads(result.browser, 'hydration'), runs),
+      allRunsRow('Hydration done, all runs', pickPageLoads(result.browser, 'hydration')),
+      medianRow('Client navigation', pickPageLoads(result.browser, 'clientNavigation'), runs),
+      allRunsRow('Client navigation, all runs', pickPageLoads(result.browser, 'clientNavigation')),
       assetRow('Home page first paint, HTML + JS + CSS, raw / gzip / brotli', result.assets, 'home', size => size.firstPaint, true),
       assetRow('Home page HTML, raw / gzip / brotli', result.assets, 'home', size => size.html),
       assetRow('Home page JS, raw / gzip / brotli', result.assets, 'home', size => size.js),
@@ -302,6 +316,13 @@ function pickDev(
   metric: keyof DevMeasurement,
 ): Record<SiteKind, Measurement> {
   return { kawapress: dev.kawapress[metric], vitepress: dev.vitepress[metric] }
+}
+
+function pickPageLoads(
+  loads: Record<SiteKind, PageLoads>,
+  metric: keyof PageLoads,
+): Record<SiteKind, Measurement> {
+  return { kawapress: loads.kawapress[metric], vitepress: loads.vitepress[metric] }
 }
 
 /** One size row; the delta compares gzip, the number a visitor actually downloads. */
