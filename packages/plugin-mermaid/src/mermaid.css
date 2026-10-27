@@ -52,6 +52,7 @@
   }
 
   .kawa-mermaid__panes {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
@@ -69,16 +70,28 @@
     .kawa-mermaid[data-view='split'] .kawa-mermaid__panes {
       grid-template-columns:
         minmax(0, var(--kawa-mermaid-split, 50%))
-        0.5rem
         minmax(0, 1fr);
     }
 
+    /*
+     * The divider takes no column of its own, so the code pane and the diagram
+     * pane touch, and nothing of another color shows between them. It is a
+     * hairline on the edge of the diagram pane. A wider invisible strip around
+     * it is the part the pointer grabs, and the line thickens while it is
+     * hovered, focused or dragged.
+     */
     .kawa-mermaid[data-view='split'] .kawa-mermaid__divider {
-      position: relative;
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      bottom: 0;
+      left: var(--kawa-mermaid-split, 50%);
       display: block;
+      width: 0.75rem;
       cursor: col-resize;
       outline: none;
       touch-action: none;
+      transform: translateX(-50%);
     }
 
     .kawa-mermaid__divider::before {
@@ -178,13 +191,36 @@
     min-width: 0;
   }
 
-  /* The code block draws its own frame; inside the diagram block only the block's frame counts. */
+  /*
+   * The code block draws its own frame; inside the diagram block only the
+   * block's frame counts. It fills the pane from top to bottom, and so does the
+   * code area, so the code background has no end halfway down the block.
+   */
+  .kawa-mermaid__code,
+  .kawa-mermaid__code .kawa-code-block {
+    display: flex;
+    flex-direction: column;
+  }
+
   .kawa-mermaid__code .kawa-code-block,
   .kawa-mermaid__code pre.shiki {
-    height: 100%;
     margin: 0;
     border: 0;
     border-radius: 0;
+  }
+
+  .kawa-mermaid__code .kawa-code-block {
+    flex: 1;
+  }
+
+  .kawa-mermaid__code .kawa-code-block__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .kawa-mermaid__code pre.shiki {
+    flex: 1;
   }
 
   /* Everything in this block is Mermaid, so the language label tells nothing. */
