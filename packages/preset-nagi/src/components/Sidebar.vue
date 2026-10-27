@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'kawapress/client'
+import { useRoute } from 'kawapress/client'
 import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'vue'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import { useSidebarItems } from '../composables/useSidebarItems'
@@ -25,10 +25,10 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const router = useRouter()
+const route = useRoute()
 const theme = useNagiThemeConfig()
 const items = useSidebarItems()
-const activePath = computed(() => router.currentRoute.value.path)
+const activePath = computed(() => route.value.path)
 const sidebar = useTemplateRef<HTMLElement>('sidebar')
 const width = shallowRef(NAGI_SIDEBAR_DEFAULT_WIDTH)
 let activePointerId: number | undefined
@@ -121,7 +121,7 @@ function rootFontSize(): number {
   return Number.isFinite(size) && size > 0 ? size : 16
 }
 
-watch(() => router.currentRoute.value.path, () => {
+watch(() => route.value.path, () => {
   if (props.mode === 'drawer') {
     emit('close')
   }

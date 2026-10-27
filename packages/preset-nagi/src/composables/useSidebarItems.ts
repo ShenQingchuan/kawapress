@@ -1,20 +1,20 @@
 import type { ComputedRef } from 'vue'
 import type { NagiSidebarItem, SidebarPages } from '../sidebar'
-import { resolveLocaleIndex, useLocale, useRouter } from 'kawapress/client'
+import { resolveLocaleIndex, useLocale, useRoute } from 'kawapress/client'
 import { sidebarMeta, sidebarPages } from 'virtual:kawapress-nagi-sidebar-meta'
 import { computed } from 'vue'
 import { createSidebar, resolveConfiguredSidebar } from '../sidebar'
 import { useNagiThemeConfig } from './useNagiThemeConfig'
 
 export function useSidebarItems(): ComputedRef<NagiSidebarItem[]> {
-  const router = useRouter()
+  const route = useRoute()
   const theme = useNagiThemeConfig()
   const { localeIndex, locales } = useLocale()
 
   return computed(() => {
     const configured = resolveConfiguredSidebar(
       theme.value.sidebar,
-      router.currentRoute.value.path,
+      route.value.path,
     )
     if (configured !== undefined) {
       return configured

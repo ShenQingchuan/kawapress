@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useLocale, useRouter } from 'kawapress/client'
+import { useLocale, useRoute } from 'kawapress/client'
 import { computed, onUnmounted, shallowRef, useId, useTemplateRef, watch } from 'vue'
 import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import NagiLanguageIcon from './NagiLanguageIcon.vue'
@@ -14,7 +14,7 @@ const emit = defineEmits<{
   navigate: []
 }>()
 
-const router = useRouter()
+const route = useRoute()
 const theme = useNagiThemeConfig()
 const { localeIndex, locales } = useLocale()
 const open = shallowRef(false)
@@ -22,7 +22,7 @@ const root = useTemplateRef<HTMLElement>('root')
 const menuId = useId()
 const isDropdown = computed(() => props.variant === 'dropdown')
 
-watch(() => router.currentRoute.value.fullPath, () => {
+watch(() => route.value.fullPath, () => {
   open.value = false
 })
 
