@@ -132,7 +132,7 @@ export function findSidebarNavigation(
 
 /**
  * Whether a sidebar link points at `routePath`, which is the current route path
- * as vue-router reports it. Query and hash are ignored, a trailing slash is
+ * as `useRoute()` reports it. Query and hash are ignored, a trailing slash is
  * ignored, and links that leave the site never match.
  */
 export function isSidebarLinkActive(link: string, routePath: string): boolean {

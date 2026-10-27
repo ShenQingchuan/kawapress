@@ -17,7 +17,7 @@ export interface BuildNodeEnvChange {
  * Pins `env.NODE_ENV` to "production" and reports what that replaced.
  *
  * The value of `NODE_ENV` at build time is baked into every shipped chunk, because
- * Vite replaces `process.env.NODE_ENV` with the literal string and Vue, vue-router
+ * Vite replaces `process.env.NODE_ENV` with the literal string and Vue
  * and devtools branch on it. The build therefore has to own this variable before
  * anything resolves a Vite config: loading the site config goes through
  * `runnerImport()`, which resolves a serve-like config first and defaults

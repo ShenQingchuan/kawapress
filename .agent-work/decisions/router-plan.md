@@ -1,16 +1,16 @@
 # KawaPress 路由方案：Core 自建文档站路由
 
-本文是 0.1 路由的唯一技术方案。确认后的结论会同步合入 `mvp-0.1-product-plan.md` 2.2、4.4 与第八章，本文保留实现细节与验收要求。
+本文是 0.1 路由的技术方案，已实现并随 0.1.0 发布。产品层面的结论在 `mvp-0.1-product-plan.md` 2.2、4.4 与第八章，本文记录实现细节与验收要求。
 
 ## 一、结论
 
-KawaPress 不再依赖 `vue-router`。Core 会自行实现一套只覆盖文档站需求的路由：页面表是纯数据，页面由统一函数按需加载，对外 API 保留 Vue Router 常用命名与用法的一小部分子集。
+KawaPress 不依赖 `vue-router`。Core 自带一套只覆盖文档站需求的路由：页面表是纯数据，页面由统一函数按需加载，对外 API 保留 Vue Router 常用命名与用法的一小部分子集。
 
 决策理由：
 
 - 文档站路由本质上只是“路径 → 页面模块”的查表映射，不需要匹配器、嵌套路由、命名路由与动态路由。VitePress 一直使用约 250 行代码自建路由；VuePress 2 也在 2.0.0-rc.3 将页面移出 `vue-router` 路由记录，直接原因就是 `vue-router` 会拖慢大型静态站的性能。
-- “每页一条 `vue-router` 路由记录”直接造成了多项已测得的问题：每页一句动态 `import()` 导致 Vite 为每页生成预加载依赖表（500 页时约占 5.7 KB gzip）；匹配器与 `RouterLink` 的开销随页数增长；SSR 每渲染一页都需要重建一次全部路由（#20）；异步首次导航必须配合专门的 history 包装才能保证 hydration 结果与静态 HTML 完全一致（#18）。
-- 现有主题与插件实际只用到三类能力：页面跳转、读取当前路径与 hash、跳转后回调。
+- “每页一条 `vue-router` 路由记录”会造成多项已测得的问题：每页一句动态 `import()` 导致 Vite 为每页生成预加载依赖表（500 页时约占 5.7 KB gzip）；匹配器与 `RouterLink` 的开销随页数增长；SSR 每渲染一页都需要重建一次全部路由（#20）；异步首次导航必须配合专门的 history 包装才能保证 hydration 结果与静态 HTML 完全一致（#18）。
+- 主题与插件实际只用到三类能力：页面跳转、读取当前路径与 hash、跳转后回调。
 
 ## 二、页面表
 
@@ -26,7 +26,7 @@ type PageLoader = () => Promise<PageModule>
 export const pages: Record<string, PageLoader>
 ```
 
-页面表不再附带标题、layout 或其他任何摘要数据。
+页面表不附带标题、layout 或其他任何摘要数据。
 
 - **dev 模式**：每页为 `() => import('<page module id>')`。Vite 按需编译页面，页面 HMR 不经过路由。
 - **build 模式（client）**：页面表模块只导入一个 Core 提供的统一加载函数和一张纯数据表：
@@ -36,12 +36,12 @@ export const pages: Record<string, PageLoader>
 type BuiltPageEntry = string | [hash: string, js: string[], css: string[]]
 ```
 
-  页面 chunk 的文件名由路由与哈希共同决定，Core 用同一个纯函数 `pageChunkFileName(routePath, hash)` 生成。统一加载函数按需为页面插入 `<link rel="modulepreload">` 与 `<link rel="stylesheet">`（已存在的不重复插入，且等 CSS 加载完成后再继续），然后执行 `import(/* @vite-ignore */ withBase(pageChunkFileName(path, hash)))`。页面表中没有任何可被静态分析的 `import()`，因此 Vite 不会再生成预加载依赖表。
+  页面 chunk 的文件名由路由与哈希共同决定，Core 用同一个纯函数 `pageChunkFileName(routePath, hash)` 生成。统一加载函数按需为页面插入 `<link rel="modulepreload">` 与 `<link rel="stylesheet">`（已存在的不重复插入，且等 CSS 加载完成后再继续），然后执行 `import(/* @vite-ignore */ withBase(pageChunkFileName(path, hash)))`。页面表中没有任何可被静态分析的 `import()`，因此 Vite 不会生成预加载依赖表。
 - **build 模式（SSR）**：页面表保持 `() => import('<page module id>')`，SSR 打包产物不需要记录文件名。
 
 ### 2.2 构建阶段如何获取文件名
 
-- 将每个 Markdown 页面作为 client 构建的独立 input（入口名由路由路径推导生成，确保稳定、可读且互不冲突），并配置 `preserveEntrySignatures: 'allow-extension'`。页面各自成为独立 chunk，不再依赖动态 `import()` 触发拆分。VitePress 1.6 采用相同做法（每页一个 input，打包后从产物读取哈希生成 `__VP_HASH_MAP__`），500 页冷构建耗时与我们相当，入口数量本身不是构建耗时的瓶颈。
+- 将每个 Markdown 页面作为 client 构建的独立 input（入口名由路由路径推导生成，确保稳定、可读且互不冲突），并配置 `preserveEntrySignatures: 'allow-extension'`。页面各自成为独立 chunk，不依赖动态 `import()` 触发拆分。VitePress 1.6 采用相同做法（每页一个 input，打包后从产物读取哈希生成 `__VP_HASH_MAP__`），500 页冷构建耗时与我们相当，入口数量本身不是构建耗时的瓶颈。
 - `app` 代码分组按“是否被 `entry-client` 静态导入（直接或间接）”进行判定。这与 VitePress 的 `framework`/`theme` 分组思路一致，避开了会把页面入口也视作初始入口的 `$initial` 标签。页面 chunk 的公共依赖按 Rolldown 默认规则拆成共享 chunk。构建测试会严格锁定 `app` chunk 中不包含任何页面模块。
 - 页面 CSS 保持按页拆分，不采用 VitePress 的全局打包策略 `cssCodeSplit: false`：带有页面级 `<style>` 的页面，会在页面表中记录专属于自己的 CSS 文件。
 - 页面表内容在预渲染阶段根据 client 构建的最终产物清单（`dist/.vite/manifest.json` 中每个 chunk 的 `file`、`imports`、`css`）计算：额外 JS 为页面 chunk 的静态依赖闭包减去 `entry-client` 的静态依赖闭包；额外 CSS 采用相同计算方式。所有文件都来自打包产物，不手写、不猜测。
@@ -51,7 +51,7 @@ type BuiltPageEntry = string | [hash: string, js: string[], css: string[]]
   - 页面表的值只存页面 chunk 的内容哈希：路由已经决定了文件名的其余部分，重复写一遍整条文件名每页要多约 2.8 B gzip。Core 在 client 构建里显式固定 `entryFileNames`（`assets/[name]-[hash].js`），并用 `core/page-chunk.ts` 里同一个 `pageInputName()` 把路由映射成入口名与文件名；浏览器加载页面时也用这个函数。
   - 预渲染会为每一页由路由与哈希反算文件名，并与清单中的 `file` 逐字比对；不一致时直接让构建失败，错误信息给出页面、期望与实际的名称，以及“插件或 vite 配置改动了 `build.rolldownOptions.output.entryFileNames`”。因此文件名不是猜的，而是被产物验证过的。
   - 每个页面都需要的 SFC 导出辅助模块（`\0plugin-vue:export-helper`）归入 `app` chunk，与 VitePress 的做法一致：它只被页面入口引用，独立成 chunk 会让每个页面都多一个额外文件与一次请求。实测 500 页时页面表每页约 10 B gzip。
-- 现有的 `server/page-assets.ts` 继续负责处理首屏 HTML 中的 `modulepreload` 与样式表；它改为同时读取页面表的计算结果，保证首屏直出与后续站内跳转对同一页面拿到完全相同的依赖集合。
+- `server/page-assets.ts` 负责首屏 HTML 中的 `modulepreload` 与样式表，并与页面表使用同一份计算结果，保证首屏直出与后续站内跳转对同一页面拿到完全相同的依赖集合。
 
 ### 2.3 dev 与 build 的差异仅在于页面表生成
 
@@ -105,7 +105,7 @@ interface Router {
 
 浏览器前进与后退：监听 `popstate` 事件，按上述相同流程加载目标页，但不追加新的历史记录。
 
-链接拦截沿用现有 `installLinkInterceptor` 的判定规则（按键修饰符、`target`、`download` 属性、外链、跨域请求、base 之外的路径均不拦截），在此基础上改为查页面表；页面表中不存在的路径交还给浏览器执行整页加载，与当前行为保持一致。
+全局链接拦截器的判定规则：按键修饰符、`target`、`download` 属性、外链、跨域请求、base 之外的路径均不拦截；其余链接查页面表，页面表中不存在的路径交还给浏览器执行整页加载。
 
 ### 3.3 内置组件
 
@@ -116,47 +116,39 @@ interface Router {
 
 - 浏览器启动阶段，按静态 HTML 对应的路径（不含 query 与 hash；404 页面统一对应 `/404`）同步确定当前路由，在 `await` 该页面的加载函数执行完毕后再挂载（mount）应用。首屏渲染的 `currentRoute` 与 SSR 完全一致。
 - 应用挂载完成后，再将地址栏中的 query 与 hash 写入 `currentRoute`。该过程不触发页面重复加载，也不产生新的历史记录。对于 404 页面，挂载完成后将其 `path` 更新为地址栏中的实际路径，`found` 保持为 `false`。
-- 百分号编码的页面路径：挂载完成后通过 `replaceState` 改为解码后的标准路径（取代现有的 `installEncodedPagePathRedirect`）。
-- 移除 `client/hydration.ts` 中的 history 包装层。`core/hydration-plan.ts` 中仅保留纯函数逻辑（负责推导首屏路径与挂载后需补齐的 URL），继续通过单元测试保证覆盖。
+- 百分号编码的页面路径：挂载完成后通过 `replaceState` 改为解码后的标准路径。
+- 不包装 history。`core/hydration-plan.ts` 只有纯函数逻辑（推导首屏路径与挂载后需补齐的 URL），由单元测试覆盖。
 
 ### 3.5 SSR 支持
 
-每次执行 `render(url)` 时直接创建新的路由实例：内部只执行查表与单页加载，不构建任何匹配结构。通过 `found` 字段直接判断是否命中，取代原有的 `NOT_FOUND_ROUTE_NAME` 判断。#20 随之解决。
+每次执行 `render(url)` 时直接创建新的路由实例：内部只执行查表与单页加载，不构建任何匹配结构，因此每页渲染的路由开销与页数无关（#20）。通过 `found` 字段判断是否命中。
 
 ### 3.6 页面滚动
 
-路由层不负责页面滚动，与现状保持一致：由主题层 nagi 统一管理独立的滚动区域、锚点定位与回到顶部逻辑。
+路由层不负责页面滚动：由主题（nagi）统一管理独立的滚动区域、锚点定位与回到顶部逻辑。
 
 ## 四、公开 API
 
 模块 `kawapress/client` 对外导出：`useRoute`、`useRouter`、`RouterLink`、`RouterView`，以及类型定义 `Route`、`Router`。保留的 API 在命名与使用方式上与 Vue Router 完全一致。
 
-Runtime Plugin 的 `router(handler)` 同样注入上述 `Router` 实例。插件生命周期的执行时机保持不变：创建 Vue App 与 Router → 安装核心功能 → 按插件顺序执行 `vueApp` / `router` 钩子 → 首次导航 → 执行 SSR render 或浏览器端 mount。
+Runtime Plugin 的 `router(handler)` 同样注入上述 `Router` 实例。插件生命周期的执行时机：创建 Vue App 与 Router → 安装核心功能 → 按插件顺序执行 `vueApp` / `router` 钩子 → 首次导航 → 执行 SSR render 或浏览器端 mount。
 
-明确不提供的能力：嵌套路由、命名路由、动态参数、`addRoute`、`getRoutes`、路由别名、重定向配置、守卫中返回新地址重定向、`scrollBehavior`、`isReady`、`resolve`。未来仅在出现真实需求时按需增加。
-
-清理移除的项目：`PageRouteMeta`、`route.meta.page`、`client/types/route-meta.d.ts`、`toPageRouteMeta`、`NOT_FOUND_ROUTE_NAME`，以及对 `vue-router` 的全部依赖（包含 Vite 配置中的 `resolve.dedupe`、`ssr.noExternal`、`optimizeDeps` 条目与 catalog 依赖项）。
+明确不提供的能力：嵌套路由、命名路由、动态参数、`addRoute`、`getRoutes`、路由别名、重定向配置、守卫中返回新地址重定向、`scrollBehavior`、`isReady`、`resolve`，也没有 `route.meta`。未来仅在出现真实需求时按需增加。
 
 ## 五、nagi 自动侧边栏数据流
 
 页面的标题与 layout 属于 nagi 自动侧边栏的展示范畴，不属于 Core 的职责。
 
-- 虚拟模块 `virtual:kawapress-nagi-sidebar-meta` 在现有 `_meta.json` 数据之外，增加自动侧边栏所需的页面清单 `{ 路由路径: { title, layout? } }`。
+- 虚拟模块 `virtual:kawapress-nagi-sidebar-meta` 在 `_meta.json` 数据之外，导出自动侧边栏所需的页面清单 `sidebarPages`：`{ 路由路径: { title, layout? } }`。
 - 只为未被手动配置 `themeConfig.sidebar` 覆盖的路由生成条目：凡是命中手动配置路径前缀（包含各 locale）的页面均不进入该清单。官方文档站与性能基准站均采用手动配置 Sidebar，因此该列表在对应构建中保持为空。
-- 标题提取统一复用 Core 已公开的规则：Core 从 `kawapress` 暴露页面摘要读取接口（即现有 `compiler/page-summary.ts` 中的 `createPageSummaryReader`，仅返回 nagi 所需的 `{ title, frontmatter }` 字段），与 Search 模块保持一致，不执行页面的 `pageData()`。页面文件查找同样复用 Core 公开的页面发现规则，不在 nagi 中重复维护一套目录扫描逻辑。
+- 标题提取复用 Core 公开的规则：`kawapress/generator` 的 `createPageSummaryReader()` 返回 `PageSummary`（`title` 与可选的 `layout`），与 Search 使用同一套标题纯文本规则，不执行页面的 `pageData()`。页面文件查找复用同一入口的 `listMarkdownPages()`，nagi 不维护自己的目录扫描逻辑。
 - dev 模式下，当 Markdown 文件的标题、layout、页面增删或 `_meta.json` 发生变化时，该虚拟模块自动失效并触发热更新（HMR）。
-- `useSidebarItems` 改为直接读取该列表；上一篇与下一篇翻页导航沿用侧边栏的计算结果，行为保持不变。
+- `useSidebarItems` 直接读取该列表；上一篇与下一篇翻页导航使用侧边栏的计算结果。
 
-## 六、相关文档同步
+## 六、验收标准
 
-- `docs/guide/routing.md`（中英版）：将原“为什么使用 Vue Router”一节改写为介绍 KawaPress 自建的文档站路由，说明其覆盖的能力范围、不予支持的功能，以及相比 VitePress 和 Vue Router 的设计考量。
-- `theme-customization.md` 与 `plugin-development.md`（中英版）：同步更新 `useRouter`、`RouterLink`、`RouterView` 与 `router()` 的使用说明，删除针对 `route.meta.page` 与 `getRoutes()` 的示例；`router()` 示例调整为在 `beforeEach` 中通过返回 `false` 取消跳转。
-- `mvp-0.1-product-plan.md`：同步修改 2.2、2.1 生命周期图、4.4、第八章中涉及 `PageRouteMeta` 与自动侧边栏的段落，以及第十章的交付范围；`performance-plan.md` 2.2、2.5 中与路由摘要相关的表述统一改为引用本文。
-
-## 七、验收标准
-
-- 项目依赖树中完全剔除 `vue-router`。
-- 现有全部单元测试与 E2E 测试均运行通过（覆盖 base 为 `/` 与 `/kawapress/`，以及 `NODE_ENV` 未设置与显式为 `production` 的组合场景），E2E 测试过程无任何 hydration 警告。
+- 项目依赖树中没有 `vue-router`。
+- 全部单元测试与 E2E 测试均运行通过（覆盖 base 为 `/` 与 `/kawapress/`，以及 `NODE_ENV` 未设置与显式为 `production` 的组合场景），E2E 测试过程无任何 hydration 警告。
 - 新增 E2E 验证：
   - 浏览器后退与前进能正确恢复对应页面；
   - 快速连续点击两个链接后，稳定停留在后点击的页面；
@@ -173,5 +165,5 @@ Runtime Plugin 的 `router(handler)` 同样注入上述 `Router` 实例。插件
   - 500 页站点中，每新增一页所增加的首屏体积（HTML 与 JS）不超过 VitePress；
   - 50 页与 500 页规模下，首页首屏资源总量（HTML + JS + CSS）均不超过 VitePress；
   - 新增两项核心交互指标：hydration 完成耗时（从发起导航到应用 mount 完成）与站内跳转耗时（从点击侧边栏链接到新页面 h1 渲染可见），两者均不慢于 VitePress；
-  - 冷构建耗时与 dev 模式就绪耗时相较当前版本无性能退步。
+  - 冷构建耗时与 dev 模式就绪耗时相较引入本方案之前无性能退步。
 
