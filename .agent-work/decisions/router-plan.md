@@ -44,7 +44,7 @@ type BuiltPageEntry = string | [file: string, js: string[], css: string[]]
 - 将每个 Markdown 页面作为 client 构建的独立 input（入口名由路由路径推导生成，确保稳定、可读且互不冲突），并配置 `preserveEntrySignatures: 'allow-extension'`。页面各自成为独立 chunk，不再依赖动态 `import()` 触发拆分。VitePress 1.6 采用相同做法（每页一个 input，打包后从产物读取哈希生成 `__VP_HASH_MAP__`），500 页冷构建耗时与我们相当，入口数量本身不是构建耗时的瓶颈。
 - `app` 代码分组按“是否被 `entry-client` 静态导入（直接或间接）”进行判定。这与 VitePress 的 `framework`/`theme` 分组思路一致，避开了会把页面入口也视作初始入口的 `$initial` 标签。页面 chunk 的公共依赖按 Rolldown 默认规则拆成共享 chunk。构建测试会严格锁定 `app` chunk 中不包含任何页面模块。
 - 页面 CSS 保持按页拆分，不采用 VitePress 的全局打包策略 `cssCodeSplit: false`：带有页面级 `<style>` 的页面，会在页面表中记录专属于自己的 CSS 文件。
-- 页面表内容在 `generateBundle` 阶段根据最终产物（chunk 的 `fileName`、`imports`、`viteMetadata.importedCss`）反向计算：额外 JS 为页面 chunk 的静态依赖闭包减去 `entry-client` 的静态依赖闭包；额外 CSS 采用相同计算方式。所有文件名均直接取自打包产物，不手写、不猜测。
+- 页面表内容在预渲染阶段根据 client 构建的最终产物清单（`dist/.vite/manifest.json` 中每个 chunk 的 `file`、`imports`、`css`）计算：额外 JS 为页面 chunk 的静态依赖闭包减去 `entry-client` 的静态依赖闭包；额外 CSS 采用相同计算方式。所有文件名均直接取自打包产物，不手写、不猜测。
 - 页面表作为带内容哈希的独立文件输出（`assets/pages-<hash>.js`，`export default` 一个 JSON 对象），由 HTML 引用，不由 `entry-client` 引用：Rolldown 中没有任何钩子能在文件名确定之后再影响入口 chunk 自身的哈希（已用两次构建验证），由入口引用会让入口或页面表的哈希失真。
   - 预渲染阶段生成页面表：它与首屏 `modulepreload` 使用 `server/page-assets.ts` 中同一个依赖计算函数，首屏与站内跳转对同一页面给出相同的依赖集合。
   - 每个 HTML 写入 `<link rel="modulepreload">` 指向页面表，并用 `<meta name="kawapress-pages">` 给出它的地址；client 构建中的 `virtual:kawapress-pages` 读取该地址并 `import()` 页面表，然后才创建路由。
