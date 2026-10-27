@@ -2,7 +2,7 @@
 
 KawaPress 的 16 个公开包永远同一个版本号，由 `scripts/release.mjs` 一起打包、校验、按依赖顺序发布。
 
-真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `ShenQingchuan/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。发布前还需要你在 Actions 里点一下批准。
+真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `ShenQingchuan/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。推送 `v*` tag 之后全程自动，不需要人工介入。
 
 下面分成两部分：**只做一次的准备**，和**每次发版的固定动作**。
 
@@ -10,25 +10,22 @@ KawaPress 的 16 个公开包永远同一个版本号，由 `scripts/release.mjs
 
 ## 一、只做一次的准备
 
-### 1. 创建 GitHub 环境 `npm`，并把自己设成必需审批人
+### 1. 创建 GitHub 环境 `npm`，只允许 `v*` tag 部署
 
-发布 job 跑在名为 `npm` 的 environment 里，这个 environment 要求人工批准，否则工作流会一直等着。
+发布 job 跑在名为 `npm` 的 environment 里。npm 的 trusted publisher 也绑定这个环境名，所以只有跑在这个环境里的发布才会被 npm 接受。环境不设审批人，只限制部署来源：只有 `v*` tag 触发的运行能进入它，其他分支即使改了 `release.yml` 也发不出去。
 
 ```sh
 gh api --method PUT repos/ShenQingchuan/kawapress/environments/npm --input - <<'JSON'
 {
-  "reviewers": [
-    { "type": "User", "id": 46062972 }
-  ]
+  "reviewers": [],
+  "deployment_branch_policy": { "protected_branches": false, "custom_branch_policies": true }
 }
 JSON
+gh api --method POST repos/ShenQingchuan/kawapress/environments/npm/deployment-branch-policies \
+  -f name='v*' -f type=tag
 ```
 
-`46062972` 是 `ShenQingchuan` 的 GitHub 用户 id。命令成功后会返回一段 JSON，里面 `reviewers` 数组能看到自己。
-
-想核对该 id：`gh api users/ShenQingchuan --jq .id`。
-
-> 默认 `prevent_self_review` 是关的，所以推 tag 的人可以批自己这一次部署，不需要第二个人。
+核对：`gh api repos/ShenQingchuan/kawapress/environments/npm/deployment-branch-policies --jq '.branch_policies[] | .name + " " + .type'` 应输出 `v* tag`。
 
 ### 2. 给 npm 账号开两步验证
 
@@ -101,13 +98,11 @@ git push origin main
 
 # 3. 等 main 上的 CI 变绿（Actions → CI）
 
-# 4. 打 tag，推 tag —— 这一步才会触发发布工作流
+# 4. 打 tag，推 tag —— 这一步触发发布工作流，之后全自动
 git tag v0.1.0
 git push origin v0.1.0
 
-# 5. Actions → Release → 点开这次运行 → Review deployments → 批准 `npm` 环境
-
-# 6. 核对结果
+# 5. 等 Actions → Release 跑完，核对结果
 npm view kawapress version                # 应该看到 0.1.0
 open https://www.npmjs.com/package/kawapress/v/0.1.0   # 页面上有 provenance 徽章
 ```
@@ -115,7 +110,7 @@ open https://www.npmjs.com/package/kawapress/v/0.1.0   # 页面上有 provenance
 `release.yml` 里有两个 job：
 
 - `verify`：跑 lint / typecheck / test / 构建文档，再打 16 个 tarball 并逐个校验（README、不含测试文件、`workspace:`/`catalog:` 都换成了真实范围、导出目标存在），然后 `npm publish --dry-run` 一遍。它没有任何发布权限，也不需要 token。
-- `publish`：等 `verify` 通过、你在 `npm` 环境点批准之后才启动，同一个 tag、同一套校验，真实发布。
+- `publish`：`verify` 通过后自动启动，跑在 `npm` 环境里，同一个 tag、同一套校验，真实发布。
 
 tag 和版本的对应关系写死在工作流里：tag 必须是 `v<包版本>`，而且必须指向这次提交，否则一开场就会失败。
 

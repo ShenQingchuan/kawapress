@@ -160,7 +160,7 @@ async function prepareRelease(options, packages, committedVersion) {
   console.log(`  2. git commit -am "chore: 发布 ${options.version}" && git push origin main`)
   console.log('  3. wait for the CI workflow on main to pass')
   console.log(`  4. git tag ${tag} && git push origin ${tag}`)
-  console.log('  5. approve the "npm" environment deployment in GitHub Actions')
+  console.log('  5. the Release workflow publishes on its own; check npm when it finishes')
 }
 
 function rejectVersionMismatch({ ci, committedVersion, options }) {

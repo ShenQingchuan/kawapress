@@ -1,7 +1,7 @@
 name: Release
 
 # Cutting a release: bump the versions on main, wait for CI, then push the v* tag.
-# The tag starts this workflow; publishing needs an approval on the "npm" environment.
+# The tag starts this workflow; publishing then runs without manual steps.
 on:
   push:
     tags:
@@ -54,7 +54,8 @@ jobs:
   publish:
     needs: verify
     runs-on: ubuntu-latest
-    # Manual approval gate: the "npm" environment requires a reviewer.
+    # npm trusts this repository, workflow and environment together; the "npm"
+    # environment only accepts deployments from v* tags.
     environment:
       name: npm
     permissions:
