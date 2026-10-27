@@ -144,9 +144,13 @@
     position: relative;
     min-width: 0;
     min-height: 7.5rem;
-    /* The view switch floats over the top, so the diagram starts below it. */
-    padding: 2.75rem 0 1rem;
-    overflow: auto;
+    /*
+     * No padding here. Pele clips a zoomed diagram to the box it draws into, so
+     * padding on this element would turn into a hard edge that cuts the diagram
+     * off below the view switch. The room for the switch lives inside the box
+     * instead, see `.kawa-mermaid__stage > :is(div, p)`.
+     */
+    overflow: hidden;
 
     /* The zoom buttons sit at the top left, because the view switch owns the top right. */
     --pele-zoom-top: 0.5rem;
@@ -161,7 +165,7 @@
    * narrow the pane gets.
    */
   .kawa-mermaid__stage > :is(div, p) {
-    padding-inline: 3rem;
+    padding: 2.75rem 3rem 1rem;
   }
 
   /* Room for the zoom buttons, which are taller than a flat diagram. */
