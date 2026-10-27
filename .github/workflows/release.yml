@@ -1,0 +1,89 @@
+name: Release
+
+# Cutting a release: bump the versions on main, wait for CI, then push the v* tag.
+# The tag starts this workflow; publishing needs an approval on the "npm" environment.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Read the version from the tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # The docs show the last commit time of each page, and the release checks need tags.
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # Trusted publishing needs npm >= 11.5.1; the npm bundled with Node 22 is older.
+      - name: Install the pinned npm
+        run: npm install -g npm@11.19.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Lint, typecheck, test, build, then pack and validate every tarball.
+      - name: Verify the release
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: pnpm release --version "$RELEASE_VERSION" --dry-run
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    # Manual approval gate: the "npm" environment requires a reviewer.
+    environment:
+      name: npm
+    permissions:
+      contents: read
+      # The OIDC token is what lets npm publish without a long-lived token.
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install the pinned npm
+        run: npm install -g npm@11.19.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # No NODE_AUTH_TOKEN: npm mints a short-lived token from the OIDC token and
+      # attaches provenance on its own, because the repository is public.
+      - name: Publish to npm
+        env:
+          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+        run: pnpm release --version "$RELEASE_VERSION" --publish --yes
