@@ -50,11 +50,18 @@ export async function copyReleaseWorkspace(packages, versionOverride) {
       await writeJson(stagedManifestPath, stagedManifest)
     }
 
-    for (const readme of readmeFiles)
-      await cp(join(rootDir, readme), join(stagedPackageDir, readme))
+    await addMissingReadmes(stagedPackageDir)
   }
 
   return stagingDir
+}
+
+/** A package's own README wins. Only a package without one gets the repository README. */
+export async function addMissingReadmes(packageDir, sourceDir = rootDir) {
+  for (const readme of readmeFiles) {
+    if (!await pathExists(join(packageDir, readme)))
+      await cp(join(sourceDir, readme), join(packageDir, readme))
+  }
 }
 
 function collectExportTargets(value, targets = []) {

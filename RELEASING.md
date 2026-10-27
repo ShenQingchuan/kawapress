@@ -120,6 +120,7 @@ npm view @kawapress/plugin-mermaid version
 - 新版本必须高于该包当前的版本。
 - **tag 只负责启动工作流，不表示版本号**：任何以 `v` 开头、没用过的名字都行，例如 `v2026-05-30`、`v0.3.0`。每次发布用一个新 tag。发布哪些包、发哪个版本，由已提交的各 `package.json` 决定。
 - 同时发布 `kawapress` 时必须带上 `create-kawapress`，因为 `create-kawapress` 里的 `kawapressVersion` 记着新建站点要装的核心版本。`release:prepare` 会自动把它改成 `kawapress` 的新版本，并要求你同时给 `create-kawapress` 一个新版本。
+- **每个包可以有自己的 README**：在 `packages/<目录>/` 下放 `README.md` 和 `README.zh-CN.md`，发布时原样打进包里。缺哪个就用仓库根目录的同名文件补上，所以没写的包不受影响。
 - 包与包之间的依赖用 `workspace:^`，发布后变成 `^<对方当时的版本>`。所以插件只要不跨过核心的大版本（0.x 阶段是不跨过小版本），就不用跟着核心一起发版。
 
 `release.yml` 里有两个 job：
