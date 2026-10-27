@@ -21,6 +21,7 @@ gh api --method PUT repos/ShenQingchuan/kawapress/environments/npm --input - <<'
     { "type": "User", "id": 46062972 }
   ]
 }
+JSON
 ```
 
 `46062972` 是 `ShenQingchuan` 的 GitHub 用户 id。命令成功后会返回一段 JSON，里面 `reviewers` 数组能看到自己。
