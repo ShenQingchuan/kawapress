@@ -17,7 +17,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['packages/**/*.test.ts', 'bench/src/**/*.test.ts'],
+    include: ['packages/**/*.test.ts', 'bench/src/**/*.test.ts', 'scripts/**/*.test.ts'],
     testTimeout: 30_000,
     // Node 25+ exposes an empty global localStorage that shadows happy-dom's.
     execArgv: ['--no-experimental-webstorage'],
