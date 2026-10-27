@@ -38,6 +38,26 @@ describe('renderHtmlTemplate', () => {
     expect(html).toContain('<link rel="modulepreload" href="/assets/page.js">')
   })
 
+  it('points the client at the page table before any page chunk', () => {
+    const html = renderHtmlTemplate({
+      ...baseOptions,
+      pageTableUrl: '/assets/pages-abc123.js',
+    })
+    const head = html.slice(html.indexOf('<head>'), html.indexOf('</head>'))
+
+    expect(head).toContain('<link rel="modulepreload" href="/assets/pages-abc123.js">')
+    expect(head).toContain('<meta name="kawapress-pages" content="/assets/pages-abc123.js">')
+    expect(head.indexOf('kawapress-pages')).toBeLessThan(
+      head.indexOf('<link rel="modulepreload" href="/assets/page.js">'),
+    )
+  })
+
+  it('writes no page table tag for a document that has no table', () => {
+    const html = renderHtmlTemplate(baseOptions)
+
+    expect(html).not.toContain('kawapress-pages')
+  })
+
   it('preloads page modules after the stylesheets', () => {
     const html = renderHtmlTemplate({
       ...baseOptions,
