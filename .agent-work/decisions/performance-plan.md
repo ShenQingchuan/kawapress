@@ -121,6 +121,23 @@ overlayscrollbars 约 9 KB gzip，每页都加载。
 
 docs 首页首屏 JS 为 68.8 KB gzip（`app` 66.3 KB、页面清单 1.8 KB、入口 0.2 KB）。“每多一页”一项尚未达标：剩余差距来自页面清单中每页的加载函数与 Vite 动态导入的预加载依赖表（500 页时约 4.8 KB gzip，每页都重复列出启动时早已加载的 `app` chunk 与其 CSS）。这一项由 `router-plan.md` 的自建路由与页面表方案处理，见下文第三轮。
 
+第三轮（`router-plan.md`：Core 自建路由、页面表、页面作为构建入口，并修复 `NODE_ENV` 未设置时生产构建使用 Vue 开发版编译器的问题）结果（`bench/results/2026-10-27-b704cf4.md`，3 次中位数）：
+
+| 指标 | KawaPress | VitePress |
+|---|---|---|
+| 50 页冷构建 | 1.82 s | 2.15 s |
+| 500 页冷构建 | 10.05 s | 12.01 s |
+| 50 页 dev 就绪（浏览器中可见） | 1.21 s | 1.42 s |
+| 500 页 dev 就绪（浏览器中可见） | 1.25 s | 2.42 s |
+| 50 页 hydration 完成 | 178 ms | 250 ms |
+| 500 页 hydration 完成 | 174 ms | 518 ms |
+| 500 页站内跳转 | 97 ms | 96 ms |
+| 50 页首页首屏 HTML+JS+CSS gzip | 73.0 KB | 83.2 KB |
+| 500 页首页首屏 HTML+JS+CSS gzip | 81.1 KB | 91.0 KB |
+| 每多一页（指南页 HTML+JS gzip） | 26.8 B | 26.6 B |
+
+docs 首页首屏 JS 为 63.6 KB gzip（`app` 62.7 KB、页面表 0.7 KB、入口 0.2 KB）。“每多一页”与 VitePress 持平（差 0.2 B，在多次运行的波动范围内），其中页面表约 10 B，其余为 HTML 中的侧边栏与 nagi 的侧边栏配置。全部指标达到或优于 VitePress。
+
 第二轮目标：
 
 - 500 页冷构建不超过 VitePress 的 1.5 倍。
