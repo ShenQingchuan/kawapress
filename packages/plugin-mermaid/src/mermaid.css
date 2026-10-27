@@ -61,7 +61,7 @@
   }
 
   /*
-   * Side by side: the diagram on the left, the source on the right, and a
+   * Side by side: the source on the left, the diagram on the right, and a
    * draggable divider between them. The divider only exists where the screen is
    * wide enough to drag it; narrow screens stack the two panes instead.
    */
@@ -102,7 +102,12 @@
     }
   }
 
+  /* Stacked on a narrow screen: the diagram first, the source below it. */
   @media (max-width: 39.999rem) {
+    .kawa-mermaid[data-view='split'] .kawa-mermaid__stage {
+      order: -1;
+    }
+
     .kawa-mermaid[data-view='split'] .kawa-mermaid__code {
       border-top: 1px solid var(--kawa-c-divider);
     }
@@ -126,13 +131,24 @@
     position: relative;
     min-width: 0;
     min-height: 7.5rem;
-    padding: 1rem;
+    /* The view switch floats over the top, so the diagram starts below it. */
+    padding: 2.75rem 0 1rem;
     overflow: auto;
 
     /* The zoom buttons sit at the top left, because the view switch owns the top right. */
     --pele-zoom-top: 0.5rem;
     --pele-zoom-right: auto;
     --pele-zoom-left: 0.5rem;
+  }
+
+  /*
+   * The zoom buttons are placed against the left edge of the element Pele draws
+   * into, so the side room lives on that element, and on the server drawing
+   * that it replaces. The diagram then keeps clear of the buttons however
+   * narrow the pane gets.
+   */
+  .kawa-mermaid__stage > :is(div, p) {
+    padding-inline: 3rem;
   }
 
   /* Room for the zoom buttons, which are taller than a flat diagram. */
@@ -184,6 +200,8 @@
   .kawa-mermaid__code .kawa-code-block pre {
     padding-top: 1.25rem;
     padding-right: 3rem;
+    /* Keeps the last line above the copy button in the bottom right corner. */
+    padding-bottom: 3rem;
   }
 
   .kawa-mermaid__code .kawa-code-block__copy {

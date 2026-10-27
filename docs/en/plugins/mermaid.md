@@ -51,7 +51,7 @@ Every diagram has three buttons at its top right:
 | --- | --- |
 | Diagram | Only the drawn diagram |
 | Code | Only the Mermaid source |
-| Side by side | The diagram on the left and the source on the right; stacked on narrow screens |
+| Side by side | The source on the left and the diagram on the right, with a divider in the middle that you can drag. Stacked on narrow screens, with the diagram on top |
 
 Use "Side by side" when readers should see how the diagram is written. Keep the default "Diagram" when you only want the picture.
 

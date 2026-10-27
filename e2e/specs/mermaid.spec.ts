@@ -35,7 +35,8 @@ test('the three views switch between diagram, code and side by side', async ({ p
 
   const stageBox = await stage.boundingBox()
   const codeBox = await code.boundingBox()
-  expect(stageBox!.x).toBeLessThan(codeBox!.x)
+  // The source is on the left and the diagram on the right.
+  expect(codeBox!.x).toBeLessThan(stageBox!.x)
   expect(Math.abs(stageBox!.y - codeBox!.y)).toBeLessThan(2)
 
   await expect(block.getByRole('button', { name: '并排', exact: true }))

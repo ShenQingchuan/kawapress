@@ -20,7 +20,7 @@ const enhanced = shallowRef(false)
 const stage = useTemplateRef<HTMLElement>('stage')
 const panes = useTemplateRef<HTMLElement>('panes')
 
-/** Share of the width that the diagram takes in the side-by-side view, in percent. */
+/** Share of the width that the code (the left pane) takes in the side-by-side view, in percent. */
 const SPLIT_MIN = 20
 const SPLIT_MAX = 80
 const SPLIT_STEP = 5
@@ -164,16 +164,8 @@ function resetSplit(): void {
       class="kawa-mermaid__panes"
       :style="{ '--kawa-mermaid-split': `${split}%` }"
     >
-      <div
-        v-show="current !== 'code'"
-        ref="stage"
-        class="kawa-mermaid__stage"
-        :class="{ 'is-enhanced': enhanced }"
-      >
-        <p v-if="error !== undefined" class="kawa-mermaid__error" role="alert">
-          {{ error }}
-        </p>
-        <slot name="diagram" />
+      <div v-show="current !== 'diagram'" class="kawa-mermaid__code">
+        <slot name="code" />
       </div>
       <div
         v-show="current === 'split'"
@@ -192,8 +184,16 @@ function resetSplit(): void {
         @pointerup="onSplitPointerEnd"
         @pointercancel="onSplitPointerEnd"
       />
-      <div v-show="current !== 'diagram'" class="kawa-mermaid__code">
-        <slot name="code" />
+      <div
+        v-show="current !== 'code'"
+        ref="stage"
+        class="kawa-mermaid__stage"
+        :class="{ 'is-enhanced': enhanced }"
+      >
+        <p v-if="error !== undefined" class="kawa-mermaid__error" role="alert">
+          {{ error }}
+        </p>
+        <slot name="diagram" />
       </div>
     </div>
   </figure>
