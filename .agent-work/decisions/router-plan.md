@@ -33,7 +33,7 @@ export const pages: Record<string, PageLoader>
 
 ```ts
 // 路由路径 → 页面 chunk 文件名；有额外依赖时为 [文件名, 额外 JS, 额外 CSS]
-type BuiltPageEntry = string | [hash: string, js: string[], css: string[]]
+type BuiltPageEntry = string | [file: string, js: string[], css: string[]]
 ```
 
   统一加载函数按需为页面插入 `<link rel="modulepreload">` 与 `<link rel="stylesheet">`（已存在的不重复插入，且等 CSS 加载完成后再继续），然后执行 `import(/* @vite-ignore */ withBase(file))`。页面表中没有任何可被静态分析的 `import()`，因此 Vite 不会再生成预加载依赖表。
@@ -48,7 +48,7 @@ type BuiltPageEntry = string | [hash: string, js: string[], css: string[]]
 - 页面表作为带内容哈希的独立文件输出（`assets/pages-<hash>.js`，`export default` 一个 JSON 对象），由 HTML 引用，不由 `entry-client` 引用：Rolldown 中没有任何钩子能在文件名确定之后再影响入口 chunk 自身的哈希（已用两次构建验证），由入口引用会让入口或页面表的哈希失真。
   - 预渲染阶段生成页面表：它与首屏 `modulepreload` 使用 `server/page-assets.ts` 中同一个依赖计算函数，首屏与站内跳转对同一页面给出相同的依赖集合。
   - 每个 HTML 写入 `<link rel="modulepreload">` 指向页面表，并用 `<meta name="kawapress-pages">` 给出它的地址；client 构建中的 `virtual:kawapress-pages` 读取该地址并 `import()` 页面表，然后才创建路由。
-  - 页面 chunk 的文件名由路由路径经一个单射的、只产生安全字符的函数派生（同一函数用于构建 input 名与浏览器端还原文件名），页面表的值因此只需要内容哈希：`{ 路由: 哈希 }`，有额外依赖时为 `[哈希, 额外 JS, 额外 CSS]`。
+  - 页面表的值直接使用产物中的完整文件名，不从路由路径推导文件名，因此不依赖 `entryFileNames` 等输出命名配置。实测 500 页时页面表每页约 12.9 B gzip。
 - 现有的 `server/page-assets.ts` 继续负责处理首屏 HTML 中的 `modulepreload` 与样式表；它改为同时读取页面表的计算结果，保证首屏直出与后续站内跳转对同一页面拿到完全相同的依赖集合。
 
 ### 2.3 dev 与 build 的差异仅在于页面表生成
