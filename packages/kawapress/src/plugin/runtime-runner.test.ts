@@ -1,8 +1,26 @@
+import type { Route, Router } from '../core/router'
 import { describe, expect, it } from 'vitest'
 import { createSSRApp } from 'vue'
-import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineRuntimePlugin } from '../api/plugin'
 import { createRuntimePluginRunner } from './runtime-runner'
+
+/** Router stub: the runner only hands it to the handlers. */
+function createFakeRouter(): Router {
+  const route: Route = {
+    path: '/',
+    fullPath: '/',
+    query: {},
+    hash: '',
+    found: true,
+  }
+  return {
+    currentRoute: { value: route } as Router['currentRoute'],
+    push: async () => {},
+    replace: async () => {},
+    beforeEach: () => () => {},
+    afterEach: () => () => {},
+  }
+}
 
 describe('createRuntimePluginRunner', () => {
   it('runs setup and handlers serially against the same Vue app and router', async () => {
@@ -20,11 +38,7 @@ describe('createRuntimePluginRunner', () => {
           })
           api.router((router) => {
             calls.push('router:first')
-            router.addRoute({
-              name: 'plugin-route',
-              path: '/plugin',
-              component: {},
-            })
+            router.beforeEach(() => false)
           })
         },
       }),
@@ -36,16 +50,13 @@ describe('createRuntimePluginRunner', () => {
             calls.push(`vueApp:second:${String(app.config.globalProperties.first)}`)
           })
           api.router((router) => {
-            calls.push(`router:second:${String(router.hasRoute('plugin-route'))}`)
+            calls.push(`router:second:${router.currentRoute.value.path}`)
           })
         },
       }),
     ])
     const app = createSSRApp({})
-    const router = createRouter({
-      history: createMemoryHistory(),
-      routes: [],
-    })
+    const router = createFakeRouter()
 
     await runner.runVueApp(app)
     await runner.runRouter(router)
@@ -56,7 +67,7 @@ describe('createRuntimePluginRunner', () => {
       'vueApp:first',
       'vueApp:second:true',
       'router:first',
-      'router:second:true',
+      'router:second:/',
     ])
   })
 

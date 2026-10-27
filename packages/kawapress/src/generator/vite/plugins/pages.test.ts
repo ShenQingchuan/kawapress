@@ -6,69 +6,76 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMarkdownPageLoader } from '../../../compiler/page-loader'
 import { createGeneratorPluginRunner } from '../../../plugin/generator-runner'
 import {
-  PAGE_MANIFEST_MODULE_ID,
-  renderPagesModule,
+  PAGES_MODULE_ID,
+  renderBuiltPagesModule,
+  renderImportPagesModule,
   virtualPagesPlugin,
 } from './pages'
 
-const RESOLVED_ID = `\0${PAGE_MANIFEST_MODULE_ID}`
+const RESOLVED_ID = `\0${PAGES_MODULE_ID}`
 
-describe('renderPagesModule', () => {
-  it('writes one record per page, keyed by route path', () => {
-    const source = renderPagesModule([
-      { path: '/guide/intro', id: '/src/guide/intro.md', summary: { title: 'Intro' } },
-      { path: '/', id: '/src/index.md', summary: { title: 'Home', layout: 'home' } },
+describe('renderImportPagesModule', () => {
+  it('writes one loader and one module id per page, keyed by route path', () => {
+    const source = renderImportPagesModule([
+      { path: '/guide/intro', id: '/src/guide/intro.md' },
+      { path: '/', id: '/src/index.md' },
     ])
 
     expect(source).toBe([
-      'export const pageManifest = {',
-      '  "/guide/intro": { title: "Intro", load: () => import("/src/guide/intro.md") },',
-      '  "/": { title: "Home", layout: "home", load: () => import("/src/index.md") },',
+      'export const pages = {',
+      '  "/guide/intro": () => import("/src/guide/intro.md"),',
+      '  "/": () => import("/src/index.md"),',
+      '}',
+      'export const pageModules = {',
+      '  "/guide/intro": "/src/guide/intro.md",',
+      '  "/": "/src/index.md",',
       '}',
       '',
     ].join('\n'))
   })
 
   it('keeps the order of the pages it is given', () => {
-    const source = renderPagesModule([
-      { path: '/b', id: '/b.md', summary: { title: 'B' } },
-      { path: '/a', id: '/a.md', summary: { title: 'A' } },
+    const source = renderImportPagesModule([
+      { path: '/b', id: '/b.md' },
+      { path: '/a', id: '/a.md' },
     ])
 
     expect(source.indexOf('"/b"')).toBeLessThan(source.indexOf('"/a"'))
   })
 
-  it('writes the route path once per record', () => {
-    const source = renderPagesModule([
-      { path: '/guide/intro', id: '/src/guide/intro.md', summary: { title: 'Intro' } },
-    ])
-
-    expect(source.match(/"\/guide\/intro"/g)).toHaveLength(1)
-  })
-
-  it('escapes titles that would otherwise break out of the module', () => {
-    const source = renderPagesModule([{
+  it('escapes ids that would otherwise break out of the module', () => {
+    const source = renderImportPagesModule([{
       path: '/quotes',
-      id: '/src/quotes.md',
-      summary: { title: 'He said "hi" \\ and </script>' },
+      id: '/src/quo"tes.md',
     }])
 
-    expect(source).toContain('title: "He said \\"hi\\" \\\\ and \\u003C/script>"')
-    expect(source).not.toContain('</script>')
+    expect(source).toContain('import("/src/quo\\"tes.md")')
   })
 
-  it('produces a module that evaluates to the manifest', async () => {
-    const source = renderPagesModule([
-      { path: '/guide/intro', id: '/src/guide/intro.md', summary: { title: 'Intro' } },
-      { path: '/', id: '/src/index.md', summary: { title: 'Home', layout: 'home' } },
-    ])
+  it('produces a module whose loaders import the page', async () => {
     const module = await import(
-      `data:text/javascript,${encodeURIComponent(source)}`,
-    ) as { pageManifest: Record<string, { title: string, layout?: string, load: () => unknown }> }
+      `data:text/javascript,${encodeURIComponent(renderImportPagesModule([
+        { path: '/guide/intro', id: '/src/guide/intro.md' },
+      ]))}`,
+    ) as {
+      pages: Record<string, () => Promise<unknown>>
+      pageModules: Record<string, string>
+    }
 
-    expect(Object.keys(module.pageManifest)).toEqual(['/guide/intro', '/'])
-    expect(module.pageManifest['/']).toMatchObject({ title: 'Home', layout: 'home' })
-    expect(module.pageManifest['/guide/intro']?.load).toBeTypeOf('function')
+    expect(Object.keys(module.pages)).toEqual(['/guide/intro'])
+    expect(module.pages['/guide/intro']).toBeTypeOf('function')
+    expect(module.pageModules['/guide/intro']).toBe('/src/guide/intro.md')
+  })
+})
+
+describe('renderBuiltPagesModule', () => {
+  it('reads the table URL from the HTML and waits for the table before exporting', () => {
+    const source = renderBuiltPagesModule()
+
+    expect(source).toContain('readPageTableUrl()')
+    expect(source).toContain('await loadPageTable(')
+    // A static `import()` would let Vite write a preload dependency table again.
+    expect(source).not.toContain('import(')
   })
 })
 
@@ -100,30 +107,58 @@ describe('virtualPagesPlugin', () => {
       pageLoader,
       pageRoutes: { routes: async () => [], invalidate },
     })
-    const load = plugin.load as (id: string) => Promise<string | undefined>
+    const load = plugin.load as (
+      this: unknown,
+      id: string,
+    ) => Promise<string | undefined>
 
     return {
       invalidate,
-      async source() {
-        return await load(RESOLVED_ID) ?? ''
-      },
       plugin,
+      /** Source the plugin serves for the dev server and the SSR build. */
+      async source() {
+        return await load.call(devContext(), RESOLVED_ID) ?? ''
+      },
+      /** Source the plugin serves for the browser bundle of a build. */
+      async browserSource() {
+        return await load.call(buildContext('client'), RESOLVED_ID) ?? ''
+      },
     }
   }
 
-  it('keys the manifest by route path and imports the Markdown modules', async () => {
+  it('keys the table by route path and imports the Markdown modules', async () => {
     const { source } = await createPlugin()
 
     expect(await source()).toBe([
-      'export const pageManifest = {',
-      '  "/guide/one": { title: "One", load: () => import("/src/guide/one.md") },',
-      '  "/": { title: "Home", layout: "home", load: () => import("/src/index.md") },',
+      'export const pages = {',
+      '  "/guide/one": () => import("/src/guide/one.md"),',
+      '  "/": () => import("/src/index.md"),',
+      '}',
+      'export const pageModules = {',
+      '  "/guide/one": "/src/guide/one.md",',
+      '  "/": "/src/index.md",',
       '}',
       '',
     ].join('\n'))
   })
 
-  it('reloads a browser that saw the manifest before a page was added or removed', async () => {
+  it('reads the page table file in the browser build instead of importing pages', async () => {
+    const { browserSource } = await createPlugin()
+
+    expect(await browserSource()).toContain('loadPageTable')
+    expect(await browserSource()).not.toContain('() => import(')
+  })
+
+  it('keeps importing pages for the SSR build', async () => {
+    const { plugin } = await createPlugin()
+    const load = plugin.load as (this: unknown, id: string) => Promise<string | undefined>
+
+    const source = await load.call(buildContext('ssr'), RESOLVED_ID)
+
+    expect(source).toContain('() => import("/src/guide/one.md")')
+  })
+
+  it('reloads a browser that saw the table before a page was added or removed', async () => {
     const { invalidate, plugin } = await createPlugin()
     const server = createFakeDevServer()
     const configureServer = plugin.configureServer as (server: ViteDevServer) => void
@@ -139,7 +174,7 @@ describe('virtualPagesPlugin', () => {
     expect(server.send).toHaveBeenCalledWith({ type: 'full-reload' })
   })
 
-  it('stays quiet about a page change while no browser holds the manifest', async () => {
+  it('stays quiet about a page change while no browser holds the table', async () => {
     const { invalidate, plugin } = await createPlugin()
     const server = createFakeDevServer({ loaded: false })
     const configureServer = plugin.configureServer as (server: ViteDevServer) => void
@@ -151,6 +186,14 @@ describe('virtualPagesPlugin', () => {
     expect(server.send).not.toHaveBeenCalled()
   })
 })
+
+function devContext() {
+  return { environment: { name: 'client', config: { command: 'serve' } } }
+}
+
+function buildContext(environment: 'client' | 'ssr') {
+  return { environment: { name: environment, config: { command: 'build' } } }
+}
 
 /**
  * The watcher events are asynchronous in Vite, so the fake collects handlers
