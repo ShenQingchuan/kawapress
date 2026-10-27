@@ -7,12 +7,14 @@ import {
   resolveSiteDataByPath,
 } from './locale'
 
-interface TestThemeConfig {
-  menu?: string
-  outline?: string
+declare module 'kawapress' {
+  interface ThemeConfig {
+    menu?: string
+    outline?: string
+  }
 }
 
-const site: SiteData<TestThemeConfig> = {
+const site: SiteData = {
   title: 'KawaPress',
   base: '/kawapress/',
   head: [['meta', { name: 'theme-color', content: '#ffffff' }]],

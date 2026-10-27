@@ -165,6 +165,48 @@ api.pageData((pageData, { file, sourcePath }) => {
 
 需要注意，在 `pageData()` 中修改的 `title` 只影响该页面自己的数据，不会进入用于导航的页面摘要：页面摘要描述的是作者在 Frontmatter 或第一个一级标题里写下的标题。
 
+### 给类型加上你的字段 {#extend-types}
+
+`pageData()` 写进去的字段，读的人也应该看到它的类型。KawaPress 把三个类型留给插件扩展：
+
+| 类型 | 用在哪里 |
+| --- | --- |
+| `PageData` | `usePageData()` 和 `pageData()` 拿到的页面数据 |
+| `PageFrontmatter` | 页面 Frontmatter。作者写的任意键仍然允许，类型是 `unknown` |
+| `ThemeConfig` | 站点和每种语言的 `themeConfig` |
+
+在插件包里用 `declare module 'kawapress'` 加上你的字段：
+
+```ts
+// src/index.ts
+declare module 'kawapress' {
+  interface PageData {
+    /** 最后一次提交的时间，毫秒。 */
+    lastUpdated?: number
+  }
+
+  interface PageFrontmatter {
+    /** 写 `false` 可以隐藏这一页的更新时间。 */
+    lastUpdated?: boolean
+  }
+}
+```
+
+站点 `import` 了你的插件之后，所有地方都能直接用：
+
+```ts
+const page = usePageData()
+page.value?.lastUpdated // number | undefined，不需要写 as
+```
+
+几个插件各自加的字段会合并到同一个类型里。没有安装的插件，它的字段就不会出现。
+
+写的时候注意三点：
+
+- **字段都写成可选。** 站点可能没有安装你的插件，Frontmatter 也是作者手写的，值不一定存在。
+- **类型只是编译期的帮助。** `PageFrontmatter` 里的类型描述作者「应该」怎么写，不保证运行时一定如此。读取时仍然要判断，比如 `comments !== false`。
+- **只能放 JSON 可表示的值。** 理由和上面的 `pageData()` 一样。
+
 ### `pageArtifact()`：观察页面构建结果 {#page-artifact}
 
 `pageArtifact()` 在一个页面完成 Markdown 编译和全部 `pageData()` 之后调用。handler 只能读取结果，不能修改页面的源文件、数据或路由。

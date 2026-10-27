@@ -4,6 +4,5 @@ export type {
   LastUpdatedDateOptions,
   LastUpdatedEditLinkOptions,
   LastUpdatedLabels,
-  LastUpdatedPageData,
   LastUpdatedPluginOptions,
 } from './types'

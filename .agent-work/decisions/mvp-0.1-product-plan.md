@@ -298,7 +298,7 @@ Preset 规则：
 - Preset 自己不直接参与插件生命周期；需要生成侧或运行侧能力时，包含对应的逻辑插件。
 - `definePreset()` 统一处理配置覆盖与插件追加，Preset 作者不手写合并逻辑。
 - `defineConfig()` 始终是无需 Preset 的底层配置入口。
-- Core 公开 `PresetConfig<ResolvedThemeConfig>` 类型辅助器，默认把 Preset 的完整主题配置映射为用户可选的 `Partial<ResolvedThemeConfig>`，并同时应用到顶层与各 locale 的 `themeConfig`。Preset 作者只定义一次完整主题配置字段，不重复维护可选输入类型。
+- 主题配置的类型由接口合并提供，见第八章“类型扩展点”。Preset 与主题把自己的字段加到 `ThemeConfig` 上，不再使用类型参数或 `PresetConfig` 辅助器。
 
 示意实现：
 
@@ -600,24 +600,24 @@ Mermaid 图表由独立逻辑插件包 `@kawapress/plugin-mermaid` 提供，nagi
 核心配置至少包含：
 
 ```ts
-interface LocaleConfig<ThemeConfig> {
+interface LocaleConfig {
   label: string
   lang?: string
   dir?: 'ltr' | 'rtl'
   link?: string
   title?: string
   head?: HeadConfig[]
-  themeConfig?: ThemeConfig
+  themeConfig?: Partial<ThemeConfig>
 }
 
-interface KawaPressConfig<ThemeConfig extends object = object> {
+interface KawaPressConfig {
   title?: string
   base?: string
   srcDir?: string
   publicDir?: string
   head?: HeadConfig[]
-  themeConfig?: ThemeConfig
-  locales?: Record<string, LocaleConfig<ThemeConfig>>
+  themeConfig?: Partial<ThemeConfig>
+  locales?: Record<string, LocaleConfig>
   plugins?: KawaPressPlugin[]
   deadLinks?: false | DeadLinkConfig
 }
@@ -625,7 +625,28 @@ interface KawaPressConfig<ThemeConfig extends object = object> {
 
 `head` 与 `deadLinks` 的规则见 `0.2-core-plan.md` 第一、二节。
 
-`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型使用 ThemeConfig 泛型，使 Preset 能为顶层与各语言的 `themeConfig` 提供同一份类型推断，Core 不解释主题私有字段。`base` 表示站点部署路径，归一化为以 `/` 开头和结尾的绝对路径；Vite 资源、站内路由、Markdown 根路径链接、站点与 locale 首页链接、开发 SSR 和预渲染 HTML 必须统一使用它，保证 GitHub Pages 等子路径部署可用。
+`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型通过可合并的 `ThemeConfig` 接口为顶层与各语言的 `themeConfig` 提供同一份类型，Core 不解释主题私有字段。`base` 表示站点部署路径，归一化为以 `/` 开头和结尾的绝对路径；Vite 资源、站内路由、Markdown 根路径链接、站点与 locale 首页链接、开发 SSR 和预渲染 HTML 必须统一使用它，保证 GitHub Pages 等子路径部署可用。
+
+### 类型扩展点
+
+Core 把三个接口留给插件与主题扩展，用 TypeScript 的接口合并，不使用泛型参数：
+
+| 接口 | 含义 |
+|---|---|
+| `PageData` | 页面数据，`pageData()` 与 `usePageData()` 共用同一个类型 |
+| `PageFrontmatter` | 页面 Frontmatter。保持开放：作者写的任意键允许，类型为 `unknown`；Core 自己读的 `title`、`description`、`titleTemplate`、`head` 有精确类型 |
+| `ThemeConfig` | 站点与各 locale 的 `themeConfig`，初始为空 |
+
+插件或主题在自己的包里用 `declare module 'kawapress'` 添加它读写的字段，例如 `@kawapress/plugin-last-updated` 给 `PageData` 加 `lastUpdated`、`editLink`，各官方插件给 `PageFrontmatter` 加 `comments`、`imageZoom`、`llms`、`search`、`sitemap` 等，nagi 给 `ThemeConfig` 与 `PageFrontmatter` 加自己的字段。同一个站点装了哪些包，类型里就有哪些字段，多个包的字段互不覆盖。
+
+规则：
+
+- 声明写在包的默认入口所引用的文件里，站点 `import` 插件工厂时增强自动生效，用户不需要写 `.d.ts` 或改 `tsconfig`。
+- 所有贡献字段都必须是可选的：站点可能没有装对应的包，Frontmatter 由作者手写。
+- 类型只描述“应该怎么写”，不保证运行时的值。读取方仍然要在使用前判断，沿用现有的 `!== false`、`typeof` 等写法；Core 不因此增加运行时校验，字段 schema 与构建校验仍留到 0.3。
+- 贡献字段与 `pageData` 一样，只能是严格 JSON 可序列化的值。
+- 这三个接口定义在 `core/extension-points.ts`，主入口 `kawapress` 用 `export *` 导出。增强写成 `declare module 'kawapress'`，必须写在导入了 `kawapress` 的文件里；在 `core` 内部的测试里增强同一个接口时，要把模块名写成接口所在的文件，而不是 `./site` 这类再导出它的文件。回归测试 `extension-points.test.ts` 随 `pnpm typecheck` 一起编译，增强一旦没有到达读取方就会编译失败。
+- 插件不再导出形如 `LastUpdatedPageData` 的子类型，也不再要求读取方手写类型断言。
 
 pageData 至少包含：
 

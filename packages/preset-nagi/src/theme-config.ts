@@ -1,3 +1,4 @@
+import type { ThemeConfig } from 'kawapress'
 import type { NagiHomeImage } from './home'
 import type { NagiSidebarConfig } from './sidebar'
 
@@ -13,30 +14,54 @@ export interface NagiNavItem {
   activeMatch?: string
 }
 
-export interface ResolvedNagiThemeConfig {
-  sidebarMenuLabel: string
-  sidebarResizeLabel: string
-  navMenuLabel: string
-  navLinksLabel: string
-  outlineLabel: string
-  outlineCollapseLabel: string
-  outlineExpandLabel: string
-  returnToTopLabel: string
-  langMenuLabel: string
-  appearanceLabel: string
-  previousPageLabel: string
-  nextPageLabel: string
-  notFoundMessage: string
-  notFoundHomeLabel: string
-  footerLicenseText: string
-  footerPoweredByText: string
-  logo?: NagiHomeImage
-  githubUrl?: string
-  nav?: NagiNavItem[]
-  sidebar?: NagiSidebarConfig
+/**
+ * What a site may write in `themeConfig` for nagi. The fields are added to the
+ * shared `ThemeConfig` of KawaPress, so they are checked in `nagi()`, in
+ * `defineConfig()` and in every locale, and they sit next to the fields of any
+ * other plugin that contributes its own.
+ */
+declare module 'kawapress' {
+  interface ThemeConfig {
+    sidebarMenuLabel?: string
+    sidebarResizeLabel?: string
+    navMenuLabel?: string
+    navLinksLabel?: string
+    outlineLabel?: string
+    outlineCollapseLabel?: string
+    outlineExpandLabel?: string
+    returnToTopLabel?: string
+    langMenuLabel?: string
+    appearanceLabel?: string
+    previousPageLabel?: string
+    nextPageLabel?: string
+    notFoundMessage?: string
+    notFoundHomeLabel?: string
+    footerLicenseText?: string
+    footerPoweredByText?: string
+    logo?: NagiHomeImage
+    githubUrl?: string
+    nav?: NagiNavItem[]
+    sidebar?: NagiSidebarConfig
+  }
 }
 
-export type NagiThemeConfig = Partial<ResolvedNagiThemeConfig>
+/** Texts that always have a value: the built-in ones, unless the site overrides them. */
+export interface ResolvedNagiThemeConfig extends Required<Pick<ThemeConfig, | 'sidebarMenuLabel'
+  | 'sidebarResizeLabel'
+  | 'navMenuLabel'
+  | 'navLinksLabel'
+  | 'outlineLabel'
+  | 'outlineCollapseLabel'
+  | 'outlineExpandLabel'
+  | 'returnToTopLabel'
+  | 'langMenuLabel'
+  | 'appearanceLabel'
+  | 'previousPageLabel'
+  | 'nextPageLabel'
+  | 'notFoundMessage'
+  | 'notFoundHomeLabel'
+  | 'footerLicenseText'
+  | 'footerPoweredByText'>>, Pick<ThemeConfig, 'logo' | 'githubUrl' | 'nav' | 'sidebar'> {}
 
 const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: 'Menu',
@@ -77,7 +102,7 @@ const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
 }
 
 export function resolveNagiThemeConfig(
-  config: NagiThemeConfig = {},
+  config: Partial<ThemeConfig> = {},
   lang = 'en',
 ): ResolvedNagiThemeConfig {
   const defaults = lang.toLowerCase().startsWith('zh')

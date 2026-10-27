@@ -1,38 +1,29 @@
 import type { DeadLinkConfig } from '../core/dead-links'
+import type { ThemeConfig } from '../core/extension-points'
 import type { HeadConfig } from '../core/head'
 import type { LocaleConfig } from '../core/site'
 import type { KawaPressPlugin } from './plugin'
 
-export interface KawapressConfig<ThemeConfig extends object = object> {
+export interface KawapressConfig {
   title?: string
   base?: string
   srcDir?: string
   publicDir?: string
   head?: HeadConfig[]
-  themeConfig?: ThemeConfig
-  locales?: Record<string, LocaleConfig<ThemeConfig>>
+  themeConfig?: Partial<ThemeConfig>
+  locales?: Record<string, LocaleConfig>
   plugins?: KawaPressPlugin[]
   /** Internal link checking. Defaults to `{ level: 'error' }`; `false` disables it. */
   deadLinks?: false | DeadLinkConfig
 }
 
-export function defineConfig<ThemeConfig extends object = object>(
-  config: KawapressConfig<ThemeConfig>,
-): KawapressConfig<ThemeConfig> {
+export function defineConfig(config: KawapressConfig): KawapressConfig {
   return config
 }
 
-export type PresetConfig<
-  ResolvedThemeConfig extends object,
-  ThemeConfig extends object = Partial<ResolvedThemeConfig>,
-> = KawapressConfig<ThemeConfig>
+export type KawapressPreset = (config?: KawapressConfig) => KawapressConfig
 
-export type KawapressPreset<ThemeConfig extends object = object>
-  = (config?: KawapressConfig<ThemeConfig>) => KawapressConfig<ThemeConfig>
-
-export function definePreset<ThemeConfig extends object = object>(
-  presetConfig: KawapressConfig<ThemeConfig>,
-): KawapressPreset<ThemeConfig> {
+export function definePreset(presetConfig: KawapressConfig): KawapressPreset {
   return (userConfig = {}) => ({
     ...presetConfig,
     ...userConfig,

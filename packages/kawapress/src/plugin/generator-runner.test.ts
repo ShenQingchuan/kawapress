@@ -76,7 +76,8 @@ describe('createGeneratorPluginRunner', () => {
         name: 'invalid-page-data',
         setup(api) {
           api.pageData((pageData) => {
-            pageData.frontmatter.order = 1n
+            // The type forbids a bigint, which is the mistake this test provokes.
+            pageData.frontmatter.order = 1n as unknown as number
           })
         },
       }),

@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import type { NagiHomeFrontmatter } from '../home'
 import { RouterView, usePageData } from 'kawapress/client'
 import { computed } from 'vue'
 import HomeFeatures from './HomeFeatures.vue'
 import HomeHero from './HomeHero.vue'
 
 const page = usePageData()
-const frontmatter = computed(() =>
-  (page.value?.frontmatter ?? {}) as NagiHomeFrontmatter,
-)
+const frontmatter = computed(() => page.value?.frontmatter ?? {})
 </script>
 
 <template>

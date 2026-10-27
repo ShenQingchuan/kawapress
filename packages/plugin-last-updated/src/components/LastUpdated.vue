@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { LastUpdatedPageData } from '../types'
 import { usePageData, useSite } from 'kawapress/client'
 import { computed, onMounted, shallowRef } from 'vue'
 import { formatLastUpdatedDate } from '../format'
@@ -23,23 +22,20 @@ const texts = computed(() => resolveLastUpdatedTexts({
   localeLabels: runtimeOptions.localeLabels,
 }))
 
-const frontmatter = computed<Record<string, unknown>>(
-  () => page.value?.frontmatter ?? {},
-)
 const lastUpdated = computed(() => {
-  const value = (page.value as LastUpdatedPageData | undefined)?.lastUpdated
+  const value = page.value?.lastUpdated
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 })
 const editLink = computed(() => {
-  const value = (page.value as LastUpdatedPageData | undefined)?.editLink
+  const value = page.value?.editLink
   return typeof value === 'string' && value.length > 0 ? value : undefined
 })
 
 const showDate = computed(() => (
-  lastUpdated.value !== undefined && frontmatter.value.lastUpdated !== false
+  lastUpdated.value !== undefined && page.value?.frontmatter.lastUpdated !== false
 ))
 const showEditLink = computed(() => (
-  editLink.value !== undefined && frontmatter.value.editLink !== false
+  editLink.value !== undefined && page.value?.frontmatter.editLink !== false
 ))
 const visible = computed(() => showDate.value || showEditLink.value)
 

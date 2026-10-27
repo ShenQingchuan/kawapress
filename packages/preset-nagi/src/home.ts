@@ -38,11 +38,6 @@ export interface NagiHomeFeature {
   rel?: string
 }
 
-export interface NagiHomeFrontmatter {
-  hero?: NagiHomeHero
-  features?: NagiHomeFeature[]
-}
-
 export function isExternalLink(link: string): boolean {
   return /^(?:[a-z][a-z\d+.-]*:)?\/\//i.test(link)
 }

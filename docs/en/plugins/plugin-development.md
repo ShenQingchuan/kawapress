@@ -166,6 +166,48 @@ Both values stay on the generator side and are never sent to the browser. Copy w
 
 A `title` you change in `pageData()` only affects that page's own data. It does not reach the page summaries used for navigation, which describe the title the author wrote in Frontmatter or in the first level-1 heading.
 
+### Add your fields to the types {#extend-types}
+
+Readers of a field you write in `pageData()` should see its type too. KawaPress leaves three types open for plugins to extend:
+
+| Type | Where it is used |
+| --- | --- |
+| `PageData` | The page data from `usePageData()` and `pageData()` |
+| `PageFrontmatter` | Page frontmatter. Any key an author writes is still allowed, typed `unknown` |
+| `ThemeConfig` | `themeConfig` of the site and of each language |
+
+Add your fields in the plugin package with `declare module 'kawapress'`:
+
+```ts
+// src/index.ts
+declare module 'kawapress' {
+  interface PageData {
+    /** Time of the last commit, in milliseconds. */
+    lastUpdated?: number
+  }
+
+  interface PageFrontmatter {
+    /** Write `false` to hide the update time of this page. */
+    lastUpdated?: boolean
+  }
+}
+```
+
+Once a site imports your plugin, the fields work everywhere:
+
+```ts
+const page = usePageData()
+page.value?.lastUpdated // number | undefined, no cast needed
+```
+
+The fields that several plugins add merge into one type. A plugin that is not installed adds nothing.
+
+Keep three things in mind:
+
+- **Make every field optional.** A site may not have installed your plugin, and frontmatter is written by hand, so the value may be missing.
+- **The types are a compile-time help.** The type in `PageFrontmatter` describes how an author *should* write the value. It does not guarantee the runtime value, so keep checking when you read it, for example `comments !== false`.
+- **Use only JSON-compatible values.** The reason is the same as for `pageData()` above.
+
 ### `pageArtifact()`: Observe the Build Result of Each Page {#page-artifact}
 
 `pageArtifact()` runs after a page has been compiled from Markdown and all `pageData()` handlers have finished. The handler can read the result but cannot change the source file, data, or route of the page.

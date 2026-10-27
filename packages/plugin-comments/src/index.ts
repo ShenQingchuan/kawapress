@@ -3,6 +3,7 @@ import type { CommentsPluginOptions } from './options'
 import { definePlugin } from 'kawapress'
 import { resolveCommentsOptions } from './options'
 import { commentsOptionsPlugin } from './vite-plugin'
+import './frontmatter'
 
 export const COMMENTS_PLUGIN_NAME = '@kawapress/plugin-comments'
 

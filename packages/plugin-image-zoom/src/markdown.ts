@@ -1,3 +1,4 @@
+import type { PageFrontmatter } from 'kawapress'
 import type { MarkdownExit, RenderRule, Token } from 'markdown-exit'
 import type { ImageZoomLabels } from './labels'
 import { ENGLISH_IMAGE_ZOOM_LABELS, formatImageZoomLabel } from './labels'
@@ -12,7 +13,7 @@ export interface ImageZoomRenderEnv {
   /** Route of the page being compiled. */
   path?: string
   /** Frontmatter of the page, read to skip pages that opt out. */
-  frontmatter?: Record<string, unknown>
+  frontmatter?: PageFrontmatter
 }
 
 export interface InstallImageZoomOptions {

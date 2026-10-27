@@ -216,27 +216,29 @@ If you want to see all of this in real files, the repository ships a tested refe
 
 ## The Theme Defines `themeConfig` {#the-theme-defines-themeconfig}
 
-KawaPress does not interpret fields inside `themeConfig`. A theme defines a typed configuration for its own components and behavior:
+KawaPress does not interpret fields inside `themeConfig`. A theme adds the fields it understands to the `ThemeConfig` type of KawaPress, and sites get hints and checks in their configuration:
 
 ```ts
-export interface MyThemeConfig {
-  logo?: string
-  menuLabel?: string
-  sidebar?: Array<{
-    text: string
-    link: string
-  }>
+// @example/kawapress-theme/src/index.ts
+declare module 'kawapress' {
+  interface ThemeConfig {
+    logo?: string
+    menuLabel?: string
+    sidebar?: Array<{
+      text: string
+      link: string
+    }>
+  }
 }
 ```
 
-A site passes this type to `defineConfig()` for configuration hints:
+Put this in the entry file of the theme package. As soon as a site imports the theme, `defineConfig()` knows these fields, and no generic argument is needed:
 
 ```ts
-import type { MyThemeConfig } from '@example/kawapress-theme'
 import themePlugin from '@example/kawapress-theme'
 import { defineConfig } from 'kawapress'
 
-export default defineConfig<MyThemeConfig>({
+export default defineConfig({
   themeConfig: {
     logo: '/logo.svg',
     menuLabel: 'Menu',
@@ -247,29 +249,38 @@ export default defineConfig<MyThemeConfig>({
 })
 ```
 
-Theme components read the current configuration with `useThemeConfig()`:
+A misspelled field, or a value of the wrong type, is reported by the compiler.
+
+Theme components read the current configuration with `useThemeConfig()`. The type already includes the fields you declared:
 
 ```ts
-import type { MyThemeConfig } from '@example/kawapress-theme'
 import { useThemeConfig } from 'kawapress/client'
 
-const theme = useThemeConfig<MyThemeConfig>()
+const theme = useThemeConfig()
+// theme.value.menuLabel is string | undefined
 ```
 
-`useThemeConfig()` reacts to the current route. A theme does not need to parse the URL or maintain a second runtime configuration channel.
+Make every field optional (`?`). A site may leave it out, so the theme prepares its own defaults.
 
-`themeConfig` enters server rendering and the browser, so it only contains serializable data. Do not store components, functions, Vue refs, or class instances in it.
+`useThemeConfig()` follows the current route. A theme does not need to parse URLs or build an extra runtime configuration.
+
+`themeConfig` enters server rendering and the browser, so it may hold only serializable data. Components, functions, Vue refs, and class instances should not be put in it.
+
+### Plugins can add fields too {#plugins-can-add-fields}
+
+`ThemeConfig` does not belong to one theme. Any plugin can add its own fields the same way, and the fields of several packages merge without overwriting each other. A plugin's settings can then be written straight into `themeConfig` by the site that uses it, without inventing another configuration entry.
+
+The same mechanism covers page data and frontmatter. See [Plugin Development](/en/plugins/plugin-development#extend-types).
 
 ## Each Language Can Override Theme Configuration {#each-language-can-override-theme-configuration}
 
 Top-level `themeConfig` contains settings shared by every language. A locale can replace fields that differ for that language:
 
 ```ts
-import type { MyThemeConfig } from '@example/kawapress-theme'
 import themePlugin from '@example/kawapress-theme'
 import { defineConfig } from 'kawapress'
 
-export default defineConfig<MyThemeConfig>({
+export default defineConfig({
   themeConfig: {
     logo: '/logo.svg',
     menuLabel: 'Menu',

@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import type { PageData } from './site'
+import type { PageData } from './extension-points'
 
 /** A Markdown page compiled to a Vue component, with the page data it carries. */
 export interface PageModule {

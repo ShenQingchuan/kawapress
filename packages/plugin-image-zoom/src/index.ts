@@ -6,6 +6,7 @@ import { createImageZoomLabelResolver, formatImageZoomLabel } from './labels'
 import { resolveLocaleLanguages } from './locale'
 import { installImageZoom } from './markdown'
 import { imageZoomOptionsPlugin } from './options-module'
+import './frontmatter'
 
 export type { ImageZoomLabels, ImageZoomPluginOptions }
 export { formatImageZoomLabel, installImageZoom }

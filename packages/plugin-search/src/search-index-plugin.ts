@@ -1,4 +1,5 @@
 import type { MarkdownItContainerOptions } from '@mdit/plugin-container'
+import type { PageFrontmatter } from 'kawapress'
 import type { MarkdownExit, Token } from 'markdown-exit'
 import type { Dirent } from 'node:fs'
 import type { Plugin } from 'vite'
@@ -52,7 +53,7 @@ interface SearchIndexPluginOptions {
 }
 
 interface SearchMarkdownEnv {
-  frontmatter?: Record<string, unknown>
+  frontmatter?: PageFrontmatter
   references?: Record<string, { title: string, href: string }>
 }
 

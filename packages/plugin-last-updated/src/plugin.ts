@@ -1,5 +1,5 @@
 import type { KawaPressPlugin } from 'kawapress'
-import type { LastUpdatedPageData, LastUpdatedPluginOptions } from './types'
+import type { LastUpdatedPluginOptions } from './types'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { consola } from 'consola'
@@ -50,12 +50,10 @@ export function lastUpdatedPlugin(
 
       api.pageData(async (pageData, { file }) => {
         const sourceFile = resolve(file)
-        const page = pageData as LastUpdatedPageData
-
         const dates = await loadTimestamps()
         const lastUpdated = dates.get(sourceFile)
         if (lastUpdated !== undefined) {
-          page.lastUpdated = lastUpdated
+          pageData.lastUpdated = lastUpdated
         }
 
         if (!editLinkPattern) {
@@ -71,7 +69,7 @@ export function lastUpdatedPlugin(
         }
         const repositoryPath = toRepositoryPath(sourceFile, topLevel)
         if (repositoryPath) {
-          page.editLink = createEditLink(editLinkPattern, repositoryPath)
+          pageData.editLink = createEditLink(editLinkPattern, repositoryPath)
         }
       })
     },

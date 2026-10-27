@@ -20,7 +20,7 @@ export interface NagiSidebarMetaPluginOptions {
   /** `themeConfig` of the site config; only `sidebar` is read. */
   themeConfig?: object | undefined
   /** `locales` of the site config, which can each declare their own sidebar. */
-  locales?: Record<string, LocaleConfig<object>> | undefined
+  locales?: Record<string, LocaleConfig> | undefined
 }
 
 export function nagiSidebarMetaPlugin(options: NagiSidebarMetaPluginOptions): Plugin {

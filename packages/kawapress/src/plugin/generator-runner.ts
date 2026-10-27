@@ -7,7 +7,8 @@ import type {
   PageBuildArtifact,
   PageDataContext,
 } from '../api/plugin'
-import type { PageData, SiteConfig } from '../core/site'
+import type { PageData } from '../core/extension-points'
+import type { SiteConfig } from '../core/site'
 import { assertPageDataSerializable } from '../core/site'
 import {
   createPluginHandlerRegistry,

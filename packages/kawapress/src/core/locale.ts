@@ -20,31 +20,31 @@ export function resolveLocaleIndex(path: string, localeKeys: Iterable<string>): 
   }) ?? 'root'
 }
 
-export function getLocaleIndex<ThemeConfig extends object>(
-  site: SiteData<ThemeConfig>,
+export function getLocaleIndex(
+  site: SiteData,
   path: string,
 ): string {
   return resolveLocaleIndex(path, Object.keys(site.locales))
 }
 
-export function getLocaleHome<ThemeConfig extends object>(
-  site: SiteData<ThemeConfig>,
+export function getLocaleHome(
+  site: SiteData,
   localeIndex: string,
 ): string {
   return site.locales[localeIndex]?.link
     ?? (localeIndex === 'root' ? '/' : `/${localeIndex}`)
 }
 
-export function resolveSiteDataByPath<ThemeConfig extends object>(
-  site: SiteData<ThemeConfig>,
+export function resolveSiteDataByPath(
+  site: SiteData,
   path: string,
-): ResolvedSiteData<ThemeConfig> {
+): ResolvedSiteData {
   const localeIndex = getLocaleIndex(site, path)
   const locale = site.locales[localeIndex]
   const themeConfig = {
     ...(site.themeConfig ?? {}),
     ...(locale?.themeConfig ?? {}),
-  } as ThemeConfig
+  }
 
   return {
     title: locale?.title ?? site.title,
@@ -60,8 +60,8 @@ export function resolveSiteDataByPath<ThemeConfig extends object>(
   }
 }
 
-export function resolveLocaleLink<ThemeConfig extends object>(
-  site: SiteData<ThemeConfig>,
+export function resolveLocaleLink(
+  site: SiteData,
   currentPath: string,
   targetLocale: string,
 ): string {
@@ -78,8 +78,8 @@ export function resolveLocaleLink<ThemeConfig extends object>(
   return `${withBase(targetPath, site.base)}${suffix}`
 }
 
-export function resolveLocaleLinks<ThemeConfig extends object>(
-  site: SiteData<ThemeConfig>,
+export function resolveLocaleLinks(
+  site: SiteData,
   currentPath: string,
 ): LocaleLink[] {
   return Object.entries(site.locales).map(([localeIndex, locale]) => ({

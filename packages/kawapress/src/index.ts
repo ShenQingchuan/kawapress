@@ -1,5 +1,5 @@
 export { defineConfig, definePreset } from './api/config'
-export type { KawapressConfig, KawapressPreset, PresetConfig } from './api/config'
+export type { KawapressConfig, KawapressPreset } from './api/config'
 export { createContentLoader, defineLoader } from './api/data'
 export type {
   ContentData,
@@ -43,6 +43,7 @@ export type {
   PageLinks,
   ResolvedDeadLinkConfig,
 } from './core/dead-links'
+export * from './core/extension-points'
 export { normalizeFrontmatterSource } from './core/frontmatter'
 export type { HeadAttrs, HeadConfig, HeadTag } from './core/head'
 export { resolveHeadingTitle } from './core/heading-title'
@@ -64,7 +65,6 @@ export type {
   LocaleConfig,
   LocaleDirection,
   LocaleLink,
-  PageData,
   PageHeader,
   ResolvedSiteData,
   SiteConfig,

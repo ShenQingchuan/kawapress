@@ -1,5 +1,3 @@
-import type { PageData } from 'kawapress'
-
 /** User-visible strings of the last updated footer. */
 export interface LastUpdatedLabels {
   /** Text before the date, for example `Last updated`. */
@@ -40,12 +38,22 @@ export interface LastUpdatedRuntimeOptions {
 }
 
 /**
- * Page data with the fields this plugin adds. Read it from the runtime with
- * `usePageData()` when a custom component wants to show the same values.
+ * Fields this plugin adds to the page data and to the frontmatter. Every
+ * reader sees them as soon as the plugin is imported, so a custom component can
+ * read `usePageData().value?.lastUpdated` without a cast.
  */
-export interface LastUpdatedPageData extends PageData {
-  /** Last commit time of the Markdown source file, in milliseconds since the epoch. */
-  lastUpdated?: number
-  /** Absolute URL of the page source on the repository host. */
-  editLink?: string
+declare module 'kawapress' {
+  interface PageData {
+    /** Last commit time of the Markdown source file, in milliseconds since the epoch. */
+    lastUpdated?: number
+    /** Absolute URL of the page source on the repository host. */
+    editLink?: string
+  }
+
+  interface PageFrontmatter {
+    /** `false` hides the last updated time of this page. */
+    lastUpdated?: boolean | string
+    /** `false` hides the edit link of this page. */
+    editLink?: boolean
+  }
 }

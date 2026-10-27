@@ -14,7 +14,7 @@ export interface SidebarPageScope {
   /** Site `themeConfig`, as the site config declares it; only `sidebar` is read. */
   themeConfig?: object | undefined
   /** Site locales, whose `themeConfig` can replace the site sidebar. */
-  locales?: Record<string, LocaleConfig<object>> | undefined
+  locales?: Record<string, LocaleConfig> | undefined
 }
 
 export interface SidebarPageReader {

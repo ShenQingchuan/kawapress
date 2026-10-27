@@ -1,6 +1,6 @@
 import type { Component } from 'vue'
+import type { PageData } from '../core/extension-points'
 import type { PageTable } from '../core/page-manifest'
-import type { PageData } from '../core/site'
 
 // path-level cache: same content for every request, safe under SSR concurrency
 const cache = new Map<string, PageData>()

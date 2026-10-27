@@ -1,3 +1,5 @@
+import './frontmatter'
+
 export { default, llmsPlugin } from './plugin'
 export type {
   LlmsPage,

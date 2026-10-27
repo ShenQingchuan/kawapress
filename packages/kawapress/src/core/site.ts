@@ -1,42 +1,43 @@
+import type { PageData, ThemeConfig } from './extension-points'
 import type { HeadConfig } from './head'
 import { assertJsonSerializable } from './json'
 
 export type LocaleDirection = 'ltr' | 'rtl'
 
-export interface LocaleConfig<ThemeConfig extends object = object> {
+export interface LocaleConfig {
   label: string
   lang?: string
   dir?: LocaleDirection
   link?: string
   title?: string
   head?: HeadConfig[]
-  themeConfig?: ThemeConfig
+  themeConfig?: Partial<ThemeConfig>
 }
 
-export interface SiteConfig<ThemeConfig extends object = object> {
+export interface SiteConfig {
   title?: string
   base?: string
   srcDir?: string
   publicDir?: string
   head?: HeadConfig[]
-  themeConfig?: ThemeConfig
-  locales?: Record<string, LocaleConfig<ThemeConfig>>
+  themeConfig?: Partial<ThemeConfig>
+  locales?: Record<string, LocaleConfig>
 }
 
 /** Raw site data exposed to the client via virtual module. */
-export interface SiteData<ThemeConfig extends object = object> {
+export interface SiteData {
   title: string
   base: string
   head: HeadConfig[]
-  themeConfig?: ThemeConfig
-  locales: Record<string, LocaleConfig<ThemeConfig>>
+  themeConfig?: Partial<ThemeConfig>
+  locales: Record<string, LocaleConfig>
 }
 
 /** Site data resolved for the current route and locale. */
-export interface ResolvedSiteData<ThemeConfig extends object = object> {
+export interface ResolvedSiteData {
   title: string
   base: string
-  themeConfig: ThemeConfig
+  themeConfig: Partial<ThemeConfig>
   localeIndex: string
   label?: string
   lang?: string
@@ -62,17 +63,6 @@ export interface PageHeader {
   slug: string
   link: string
   children: PageHeader[]
-}
-
-export interface PageData {
-  path: string
-  title: string
-  description?: string
-  titleTemplate?: string | false
-  /** `<head>` tags from frontmatter, rendered after site and locale tags. */
-  head?: HeadConfig[]
-  frontmatter: Record<string, unknown>
-  headers: PageHeader[]
 }
 
 export function assertPageDataSerializable(pageData: PageData): void {

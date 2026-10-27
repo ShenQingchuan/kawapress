@@ -1,5 +1,6 @@
 import type { ComputedRef } from 'vue'
-import type { LocaleLink, PageData, ResolvedSiteData, SiteData } from '../core/site'
+import type { PageData, ThemeConfig } from '../core/extension-points'
+import type { LocaleLink, ResolvedSiteData, SiteData } from '../core/site'
 import { site } from 'virtual:kawapress-site'
 import { computed } from 'vue'
 import { getLocaleIndex, resolveLocaleLinks, resolveSiteDataByPath } from '../core/locale'
@@ -13,16 +14,16 @@ export interface LocaleContext {
   localeLinks: ComputedRef<LocaleLink[]>
 }
 
-export function useSite<ThemeConfig extends object = object>(): ComputedRef<ResolvedSiteData<ThemeConfig>> {
+export function useSite(): ComputedRef<ResolvedSiteData> {
   const route = useRoute()
   return computed(() => resolveSiteDataByPath(
-    site as SiteData<ThemeConfig>,
+    site as SiteData,
     route.value.path,
   ))
 }
 
-export function useThemeConfig<ThemeConfig extends object = object>(): ComputedRef<ThemeConfig> {
-  const resolvedSite = useSite<ThemeConfig>()
+export function useThemeConfig(): ComputedRef<Partial<ThemeConfig>> {
+  const resolvedSite = useSite()
   return computed(() => resolvedSite.value.themeConfig)
 }
 

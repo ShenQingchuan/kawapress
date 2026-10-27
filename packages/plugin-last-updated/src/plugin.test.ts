@@ -6,7 +6,7 @@ import type {
   PageDataHandler,
 } from 'kawapress'
 import type { UserConfig } from 'vite'
-import type { LastUpdatedPageData, LastUpdatedPluginOptions } from './index'
+import type { LastUpdatedPluginOptions } from './index'
 import { execFileSync } from 'node:child_process'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -145,11 +145,11 @@ async function readPage(
   path: string,
   options: LastUpdatedPluginOptions = {},
   sourceFile = `${path.slice(1)}.md`,
-): Promise<LastUpdatedPageData> {
+): Promise<PageData> {
   const handlers = await createHandlers(options)
   await handlers.vite({ root })
 
-  const pageData: LastUpdatedPageData = {
+  const pageData: PageData = {
     path,
     title: 'Guide',
     frontmatter: {},

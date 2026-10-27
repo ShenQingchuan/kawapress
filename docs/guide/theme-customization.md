@@ -216,27 +216,29 @@ export default defineConfig({
 
 ## `themeConfig` 由主题定义 {#the-theme-defines-themeconfig}
 
-KawaPress 不解释 `themeConfig` 里的字段。主题可以根据自己的组件和交互，定义一套带类型的配置：
+KawaPress 不解释 `themeConfig` 里的字段。主题把自己认识的字段「加」到 KawaPress 的 `ThemeConfig` 类型上，站点就能在配置里得到提示和检查：
 
 ```ts
-export interface MyThemeConfig {
-  logo?: string
-  menuLabel?: string
-  sidebar?: Array<{
-    text: string
-    link: string
-  }>
+// @example/kawapress-theme/src/index.ts
+declare module 'kawapress' {
+  interface ThemeConfig {
+    logo?: string
+    menuLabel?: string
+    sidebar?: Array<{
+      text: string
+      link: string
+    }>
+  }
 }
 ```
 
-站点使用 `defineConfig<MyThemeConfig>()` 获得配置提示：
+这段写在主题包的入口文件里。站点只要 `import` 了这个主题，`defineConfig()` 就认识这些字段，不需要传任何泛型：
 
 ```ts
-import type { MyThemeConfig } from '@example/kawapress-theme'
 import themePlugin from '@example/kawapress-theme'
 import { defineConfig } from 'kawapress'
 
-export default defineConfig<MyThemeConfig>({
+export default defineConfig({
   themeConfig: {
     logo: '/logo.svg',
     menuLabel: '菜单',
@@ -247,29 +249,38 @@ export default defineConfig<MyThemeConfig>({
 })
 ```
 
-主题组件通过 `useThemeConfig()` 读取当前配置：
+写错字段名，或者给字段写了不对的类型，编译器会直接指出来。
+
+主题组件通过 `useThemeConfig()` 读取当前配置，拿到的类型已经包含你声明的字段：
 
 ```ts
-import type { MyThemeConfig } from '@example/kawapress-theme'
 import { useThemeConfig } from 'kawapress/client'
 
-const theme = useThemeConfig<MyThemeConfig>()
+const theme = useThemeConfig()
+// theme.value.menuLabel 的类型是 string | undefined
 ```
+
+字段都写成可选的（`?`）。站点可能没有填，主题要自己准备默认值。
 
 `useThemeConfig()` 会跟随当前路由更新。主题不需要自己解析 URL，也不需要建立一份额外的运行时配置。
 
 `themeConfig` 会进入服务端渲染和浏览器，因此只能保存可以序列化的数据。组件、函数、Vue ref 和类实例不应该放进去。
+
+### 插件也可以加字段 {#plugins-can-add-fields}
+
+`ThemeConfig` 不属于某一个主题。任何插件都可以用同样的写法加上自己的字段，几个包的字段会合并在一起，互不覆盖。这样，一个插件的设置可以由使用它的站点直接写进 `themeConfig`，而不用额外再发明一个配置入口。
+
+同一个机制也用在页面数据和 Frontmatter 上，见[插件开发](/plugins/plugin-development#extend-types)。
 
 ## 每种语言可以覆盖主题配置 {#each-language-can-override-theme-configuration}
 
 顶层 `themeConfig` 保存各语言共用的配置。`locales` 中的 `themeConfig` 可以替换当前语言需要变化的字段：
 
 ```ts
-import type { MyThemeConfig } from '@example/kawapress-theme'
 import themePlugin from '@example/kawapress-theme'
 import { defineConfig } from 'kawapress'
 
-export default defineConfig<MyThemeConfig>({
+export default defineConfig({
   themeConfig: {
     logo: '/logo.svg',
     menuLabel: 'Menu',
