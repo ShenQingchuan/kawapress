@@ -7,14 +7,16 @@
     background: var(--kawa-c-bg-soft);
   }
 
-  .kawa-mermaid__bar {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--kawa-c-divider);
+  /* The switch floats over the top right corner, so no header row takes space. */
+  .kawa-mermaid {
+    position: relative;
   }
 
   .kawa-mermaid__views {
+    position: absolute;
+    z-index: 3;
+    top: 0.5rem;
+    right: 0.5rem;
     display: inline-flex;
     gap: 0.125rem;
     padding: 0.125rem;
@@ -54,23 +56,55 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Side by side: the diagram on the left, the source on the right. */
-  .kawa-mermaid[data-view='split'] .kawa-mermaid__panes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .kawa-mermaid__divider {
+    display: none;
   }
 
-  .kawa-mermaid[data-view='split'] .kawa-mermaid__code {
-    border-left: 1px solid var(--kawa-c-divider);
-  }
-
-  @media (max-width: 40rem) {
+  /*
+   * Side by side: the diagram on the left, the source on the right, and a
+   * draggable divider between them. The divider only exists where the screen is
+   * wide enough to drag it; narrow screens stack the two panes instead.
+   */
+  @media (min-width: 40rem) {
     .kawa-mermaid[data-view='split'] .kawa-mermaid__panes {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns:
+        minmax(0, var(--kawa-mermaid-split, 50%))
+        0.5rem
+        minmax(0, 1fr);
     }
 
+    .kawa-mermaid[data-view='split'] .kawa-mermaid__divider {
+      position: relative;
+      display: block;
+      cursor: col-resize;
+      outline: none;
+      touch-action: none;
+    }
+
+    .kawa-mermaid__divider::before {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      background: var(--kawa-c-divider);
+      content: '';
+      transition:
+        width 160ms cubic-bezier(0.22, 1, 0.36, 1),
+        background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translateX(-50%);
+    }
+
+    .kawa-mermaid__divider:hover::before,
+    .kawa-mermaid__divider:focus-visible::before {
+      width: 3px;
+      background: var(--kawa-c-brand);
+    }
+  }
+
+  @media (max-width: 39.999rem) {
     .kawa-mermaid[data-view='split'] .kawa-mermaid__code {
       border-top: 1px solid var(--kawa-c-divider);
-      border-left: 0;
     }
   }
 
@@ -91,8 +125,19 @@
 
     position: relative;
     min-width: 0;
+    min-height: 7.5rem;
     padding: 1rem;
     overflow: auto;
+
+    /* The zoom buttons sit at the top left, because the view switch owns the top right. */
+    --pele-zoom-top: 0.5rem;
+    --pele-zoom-right: auto;
+    --pele-zoom-left: 0.5rem;
+  }
+
+  /* Room for the zoom buttons, which are taller than a flat diagram. */
+  .kawa-mermaid__host {
+    min-height: 5.5rem;
   }
 
   .kawa-mermaid__stage svg {
@@ -124,6 +169,26 @@
     margin: 0;
     border: 0;
     border-radius: 0;
+  }
+
+  /* Everything in this block is Mermaid, so the language label tells nothing. */
+  .kawa-mermaid__code .kawa-code-block__language {
+    display: none;
+  }
+
+  /*
+   * The code block keeps room at the top for its language label and copy button.
+   * Here the label is hidden and the copy button moves to the bottom right, so
+   * the room is given back, and the view switch (top right) does not cover code.
+   */
+  .kawa-mermaid__code .kawa-code-block pre {
+    padding-top: 1.25rem;
+    padding-right: 3rem;
+  }
+
+  .kawa-mermaid__code .kawa-code-block__copy {
+    top: auto;
+    bottom: 0.75rem;
   }
 
   @media (prefers-reduced-motion: reduce) {

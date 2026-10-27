@@ -10,6 +10,8 @@ export interface MermaidLabels {
   code: string
   /** Button that shows the diagram and the source next to each other. */
   split: string
+  /** Accessible name of the draggable divider of the side-by-side view. */
+  resize: string
   /** Accessible names of the zoom buttons that Pele draws. */
   zoomIn: string
   zoomOut: string
@@ -28,6 +30,7 @@ export const ENGLISH_MERMAID_LABELS: MermaidLabels = {
   diagram: 'Diagram',
   code: 'Code',
   split: 'Side by side',
+  resize: 'Resize the diagram and code panes',
   zoomIn: 'Zoom in',
   zoomOut: 'Zoom out',
   reset: 'Reset zoom',
@@ -38,6 +41,7 @@ export const CHINESE_MERMAID_LABELS: MermaidLabels = {
   diagram: '图像',
   code: '代码',
   split: '并排',
+  resize: '调整图像与代码的宽度',
   zoomIn: '放大',
   zoomOut: '缩小',
   reset: '重置缩放',

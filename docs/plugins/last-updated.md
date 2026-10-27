@@ -135,15 +135,12 @@ editLink: false
 
 ```vue
 <script setup lang="ts">
-import type { LastUpdatedPageData } from '@kawapress/plugin-last-updated'
 import { usePageData } from 'kawapress/client'
 import { computed } from 'vue'
 
 const page = usePageData()
-const lastUpdated = computed(
-  () => (page.value as LastUpdatedPageData | undefined)?.lastUpdated,
-)
+const lastUpdated = computed(() => page.value?.lastUpdated)
 </script>
 ```
 
-`lastUpdated` 是毫秒时间戳，`editLink` 是拼好的完整网址。两者都可能不存在，读取时请判空。
+`lastUpdated` 是毫秒时间戳，`editLink` 是拼好的完整网址。两者都可能不存在，读取时请判空。只要站点里导入了这个插件，这两个字段就已经带着类型，不需要自己写类型断言。

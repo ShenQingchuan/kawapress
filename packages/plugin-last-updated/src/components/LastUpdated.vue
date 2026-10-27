@@ -68,7 +68,13 @@ const formatted = computed(() => formatLastUpdatedDate(
       :href="editLink"
       rel="noopener noreferrer"
       target="_blank"
-    >{{ texts.editLink }}</a>
+    >
+      <svg class="kawa-last-updated__icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z" />
+      </svg>
+      <span>{{ texts.editLink }}</span>
+    </a>
     <span v-if="showDate" class="kawa-last-updated__text">
       <span class="kawa-last-updated__label">{{ texts.lastUpdated }}</span>
       <time class="kawa-last-updated__time" :datetime="iso">{{ formatted }}</time>

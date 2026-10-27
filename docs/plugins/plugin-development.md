@@ -77,7 +77,7 @@ export default defineConfig({
 
 六个生成侧方法都在 `setup(api)` 中注册。handler 可以是同步函数，也可以是异步函数。同一类 handler 按插件在 `plugins` 中的顺序串行执行。
 
-### `config()`：读取或修改站点配置 {#config}
+### `api.config()` {#config}
 
 `config()` 在站点配置归一化后调用。handler 接收真实的站点配置对象，可以直接修改。
 
@@ -89,7 +89,7 @@ api.config((config) => {
 
 需要知道语言、部署路径或源码目录的插件，通常在这里记下配置，留给后面的方法使用。
 
-### `markdown()`：扩展 Markdown 编译器 {#markdown}
+### `api.markdown()` {#markdown}
 
 `markdown()` 在 Markdown 编译器创建时调用，handler 接收真实的 `MarkdownExit` 实例。
 
@@ -133,7 +133,7 @@ api.markdown((markdown) => {
 
 写 Markdown 的人不需要声明任何东西。组件只在真正用到的页面上加载，没写这个围栏的页面不会为它多下载一个字节。页面自己写的 `<script setup>` 会被保留，导入追加在同一个块里；页面只有普通 `<script>` 或者完全没有脚本时，KawaPress 会补一个 `lang` 相同的 `<script setup>`。
 
-### `pageData()`：修改每个页面的数据 {#page-data}
+### `api.pageData()` {#page-data}
 
 `pageData()` 在每个页面的 `pageData` 生成之后调用。handler 接收当前页面的可修改数据：
 
@@ -207,7 +207,7 @@ page.value?.lastUpdated // number | undefined，不需要写 as
 - **类型只是编译期的帮助。** `PageFrontmatter` 里的类型描述作者「应该」怎么写，不保证运行时一定如此。读取时仍然要判断，比如 `comments !== false`。
 - **只能放 JSON 可表示的值。** 理由和上面的 `pageData()` 一样。
 
-### `pageArtifact()`：观察页面构建结果 {#page-artifact}
+### `api.pageArtifact()` {#page-artifact}
 
 `pageArtifact()` 在一个页面完成 Markdown 编译和全部 `pageData()` 之后调用。handler 只能读取结果，不能修改页面的源文件、数据或路由。
 
@@ -221,7 +221,7 @@ api.pageArtifact((artifact) => {
 
 如果只需要构建结束时的全部页面，请优先使用 `buildArtifacts()`。
 
-### `vite()`：调整 Vite 配置 {#vite}
+### `api.vite()` {#vite}
 
 `vite()` 在 Vite 配置完成基础组装后调用。handler 接收完整的 `UserConfig`，可以直接修改。
 
@@ -250,7 +250,7 @@ api.vite((config) => {
 
 第二个参数是真正依赖这个包的包名，通常就是你自己的插件包。站点一般只安装 `kawapress` 或某个 Preset，装不到插件内部的依赖，所以这个函数会顺着 package.json 里声明的依赖关系，算出从站点到这个包的路径，再按 Vite 的 `owner > dependency` 写法声明。只在开发时生效，不影响构建产物。
 
-### `buildArtifacts()`：生成静态文件 {#build-artifacts}
+### `api.buildArtifacts()` {#build-artifacts}
 
 `buildArtifacts()` 只在 `kawapress build` 中执行。它发生在全部 Vite 构建完成之后、HTML 预渲染之前。handler 接收全部页面和一个 `emitFile()` 函数：
 
@@ -349,7 +349,7 @@ Runtime Plugin 在网站运行时工作，它的代码会进入站点的 Vite �
 
 它与 Generator Plugin 放在同一个包中，并通过 `./runtime-plugin` 入口公开。它的 `name` 同样应与包名一致。
 
-### `vueApp()`：安装 Vue 插件或全局组件 {#vue-app}
+### `api.vueApp()` {#vue-app}
 
 `vueApp()` 接收真实的 Vue `App` 实例。它适合调用 `app.use()` 和注册全局组件：
 
@@ -370,9 +370,9 @@ export default defineRuntimePlugin({
 
 `NotesBadge.vue` 是普通的 Vue 组件。注册后，页面中就可以按 `NotesBadge` 这个名称使用它。
 
-### `addToOutlet()`：把界面交给主题摆放 {#add-to-outlet}
+### `api.addToOutlet()` {#add-to-outlet}
 
-导航栏按钮、复制按钮、评论区这类界面，属于页面框架的某个位置，而不属于 Markdown 正文。这类界面应该通过 Outlet 交给主题：
+`addToOutlet()` 把一个组件放进主题提供的某个固定位置。导航栏按钮、复制按钮、评论区这类界面，属于页面框架的某个位置，而不属于 Markdown 正文。这类界面应该通过 Outlet 交给主题：
 
 ```ts
 // src/runtime-plugin.ts
@@ -430,7 +430,7 @@ export default defineRuntimePlugin({
 
 插件样式也不要限定在某个主题的正文容器里（例如 `.nagi-doc .kawa-container`）。选择器请直接基于插件自己的 `.kawa-*` class 和 ARIA、原生属性，这样换一个主题也照样生效。
 
-### `router()`：调整运行时路由 {#router}
+### `api.router()` {#router}
 
 `router()` 接收 KawaPress 的站内 `Router`，名字与用法和 Vue Router 相同的部分保持相同。它适合添加导航守卫：`beforeEach()` 返回 `false` 就取消这次跳转；插件想换一个地址时，自己调用 `router.push()`。
 

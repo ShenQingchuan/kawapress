@@ -77,7 +77,7 @@ The factory function validates and normalizes the options. `setup()` should use 
 
 The six generator methods are registered inside `setup(api)`. A handler can be synchronous or asynchronous. Handlers of the same kind run serially in the order the plugins appear in `plugins`.
 
-### `config()`: Read or Change Site Configuration {#config}
+### `api.config()` {#config}
 
 `config()` runs after the site configuration has been normalized. The handler receives the real site configuration object and can change it directly.
 
@@ -89,7 +89,7 @@ api.config((config) => {
 
 A plugin that needs the language, deployment base, or source directory can record the values here and use them in later methods.
 
-### `markdown()`: Extend the Markdown Compiler {#markdown}
+### `api.markdown()` {#markdown}
 
 `markdown()` runs when the Markdown compiler is created. The handler receives the real `MarkdownExit` instance.
 
@@ -134,7 +134,7 @@ api.markdown((markdown) => {
 
 Markdown authors declare nothing. The component loads only on the pages that use it, and a page without that fence downloads nothing extra for it. A `<script setup>` the author wrote is kept, and the import is added to the same block. A page with only a plain `<script>`, or with no script at all, gets a `<script setup>` with the same `lang`.
 
-### `pageData()`: Change Data for Each Page {#page-data}
+### `api.pageData()` {#page-data}
 
 `pageData()` runs after the `pageData` of each page has been generated. The handler receives the editable data for the current page:
 
@@ -208,7 +208,7 @@ Keep three things in mind:
 - **The types are a compile-time help.** The type in `PageFrontmatter` describes how an author *should* write the value. It does not guarantee the runtime value, so keep checking when you read it, for example `comments !== false`.
 - **Use only JSON-compatible values.** The reason is the same as for `pageData()` above.
 
-### `pageArtifact()`: Observe the Build Result of Each Page {#page-artifact}
+### `api.pageArtifact()` {#page-artifact}
 
 `pageArtifact()` runs after a page has been compiled from Markdown and all `pageData()` handlers have finished. The handler can read the result but cannot change the source file, data, or route of the page.
 
@@ -222,7 +222,7 @@ api.pageArtifact((artifact) => {
 
 If you only need all pages when the build finishes, prefer `buildArtifacts()`.
 
-### `vite()`: Adjust the Vite Configuration {#vite}
+### `api.vite()` {#vite}
 
 `vite()` runs after KawaPress has assembled the base Vite configuration. The handler receives the complete `UserConfig` and can change it directly.
 
@@ -251,7 +251,7 @@ api.vite((config) => {
 
 The second argument is the package that really depends on it, usually your own plugin package. A site normally installs `kawapress` or a preset, not the packages inside a plugin, so the function follows the dependencies declared in `package.json` to work out how the site reaches your package, then declares the dependency in Vite's `owner > dependency` form. It only affects the dev server, never the built site.
 
-### `buildArtifacts()`: Generate Static Files {#build-artifacts}
+### `api.buildArtifacts()` {#build-artifacts}
 
 `buildArtifacts()` runs only during `kawapress build`. It runs after all Vite builds have finished and before HTML prerendering. The handler receives all pages and an `emitFile()` function:
 
@@ -350,7 +350,7 @@ A Runtime Plugin works while the website runs. Its code enters the site's Vite m
 
 It lives in the same package as the Generator Plugin and is exposed through the `./runtime-plugin` entry. Its `name` should also match the package name.
 
-### `vueApp()`: Install Vue Plugins or Global Components {#vue-app}
+### `api.vueApp()` {#vue-app}
 
 `vueApp()` receives the real Vue `App` instance. It is the right place to call `app.use()` and register global components:
 
@@ -371,9 +371,9 @@ export default defineRuntimePlugin({
 
 `NotesBadge.vue` is an ordinary Vue component. After registration, pages can use it by the name `NotesBadge`.
 
-### `addToOutlet()`: Let the Theme Decide Where It Goes {#add-to-outlet}
+### `api.addToOutlet()` {#add-to-outlet}
 
-Top-bar buttons, copy-page buttons, and comment sections belong to a spot in the page frame, not to the Markdown body. Hand these interfaces to the theme through an outlet:
+`addToOutlet()` puts a component into one of the fixed spots a theme provides. Top-bar buttons, copy-page buttons, and comment sections belong to a spot in the page frame, not to the Markdown body. Hand these interfaces to the theme through an outlet:
 
 ```ts
 // src/runtime-plugin.ts
@@ -431,7 +431,7 @@ Do not read another theme's private variables such as `--nagi-*`, and do not inv
 
 Do not scope plugin styles to one theme's content container either, such as `.nagi-doc .kawa-container`. Build selectors from the plugin's own `.kawa-*` classes plus ARIA and native attributes, so the styles keep working under any theme.
 
-### `router()`: Adjust Runtime Routing {#router}
+### `api.router()` {#router}
 
 `router()` receives the KawaPress `Router`, which keeps the names and the usage of Vue Router wherever the two overlap. It is the right place to add navigation guards: `beforeEach()` cancels a navigation by returning `false`, and a plugin that wants another URL calls `router.push()` itself.
 

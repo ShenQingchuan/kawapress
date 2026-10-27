@@ -85,11 +85,17 @@
   object-fit: contain;
 }
 
+.nagi-nav__start {
+  display: flex;
+  align-items: center;
+  margin-left: 1.5rem;
+}
+
 .nagi-nav-links {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  margin-left: 1.5rem;
+  margin-right: 0.5rem;
 }
 
 .nagi-nav-links__link {
@@ -118,7 +124,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  margin-left: 0;
+  margin-right: 0;
 }
 
 .nagi-nav-links--list .nagi-nav-links__link {

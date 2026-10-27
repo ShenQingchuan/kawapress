@@ -135,15 +135,12 @@ The plugin writes two page data fields that any component can read, so a theme c
 
 ```vue
 <script setup lang="ts">
-import type { LastUpdatedPageData } from '@kawapress/plugin-last-updated'
 import { usePageData } from 'kawapress/client'
 import { computed } from 'vue'
 
 const page = usePageData()
-const lastUpdated = computed(
-  () => (page.value as LastUpdatedPageData | undefined)?.lastUpdated,
-)
+const lastUpdated = computed(() => page.value?.lastUpdated)
 </script>
 ```
 
-`lastUpdated` is a millisecond timestamp and `editLink` is the finished URL. Either one may be missing, so check before you show it.
+`lastUpdated` is a millisecond timestamp and `editLink` is the finished URL. Either one may be missing, so check before you show it. As long as the site imports this plugin, both fields already carry their types, so you do not write a type assertion.
