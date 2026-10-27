@@ -2,7 +2,7 @@
 
 UnoCSS for KawaPress, so you can write utility classes in Markdown.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-unocss?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-unocss) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-unocss/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-unocss?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-unocss) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-unocss/README-zh-CN.md)
 
 `@kawapress/plugin-unocss` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

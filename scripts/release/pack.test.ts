@@ -29,7 +29,7 @@ describe('addMissingReadmes', () => {
     const { pkg, repo } = await makeDirs()
     await addMissingReadmes(pkg, repo)
     expect(await readFile(join(pkg, 'README.md'), 'utf8')).toBe('repo en')
-    expect(await readFile(join(pkg, 'README.zh-CN.md'), 'utf8')).toBe('repo zh')
+    expect(await readFile(join(pkg, 'README-zh-CN.md'), 'utf8')).toBe('repo zh')
   })
 
   it('keeps a README the package wrote itself', async () => {
@@ -37,6 +37,6 @@ describe('addMissingReadmes', () => {
     await writeFile(join(pkg, 'README.md'), 'own en')
     await addMissingReadmes(pkg, repo)
     expect(await readFile(join(pkg, 'README.md'), 'utf8')).toBe('own en')
-    expect(await readFile(join(pkg, 'README.zh-CN.md'), 'utf8')).toBe('repo zh')
+    expect(await readFile(join(pkg, 'README-zh-CN.md'), 'utf8')).toBe('repo zh')
   })
 })

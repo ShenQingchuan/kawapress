@@ -2,7 +2,7 @@
 
 GitHub-style alerts for Markdown, written as `> [!NOTE]`.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-github-alerts?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-github-alerts) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-github-alerts/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-github-alerts?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-github-alerts) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-github-alerts/README-zh-CN.md)
 
 `@kawapress/plugin-github-alerts` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

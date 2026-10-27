@@ -2,7 +2,7 @@
 
 AI-ready output for KawaPress: a Markdown file for every page, plus llms.txt and llms-full.txt.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-llms?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-llms) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-llms/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-llms?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-llms) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-llms/README-zh-CN.md)
 
 `@kawapress/plugin-llms` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

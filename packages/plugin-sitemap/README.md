@@ -2,7 +2,7 @@
 
 sitemap.xml output for KawaPress, with locale alternates and last modified times.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-sitemap?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-sitemap) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-sitemap/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-sitemap?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-sitemap) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-sitemap/README-zh-CN.md)
 
 `@kawapress/plugin-sitemap` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

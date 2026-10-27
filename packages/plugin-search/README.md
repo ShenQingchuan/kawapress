@@ -2,7 +2,7 @@
 
 Local full-text search for KawaPress. The index loads only when search is first opened.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-search?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-search) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-search/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-search?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-search) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-search/README-zh-CN.md)
 
 `@kawapress/plugin-search` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

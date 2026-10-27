@@ -2,7 +2,7 @@
 
 Click-to-zoom images for KawaPress Markdown content.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-image-zoom?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-image-zoom) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-image-zoom/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-image-zoom?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-image-zoom) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-image-zoom/README-zh-CN.md)
 
 `@kawapress/plugin-image-zoom` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

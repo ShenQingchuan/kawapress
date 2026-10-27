@@ -17,7 +17,18 @@ export const manifestDependencyFields = [
   'devDependencies',
 ]
 
-export const readmeFiles = ['README.md', 'README.zh-CN.md']
+/**
+ * The package READMEs. The Chinese one is `README-zh-CN.md`, not `README.zh-CN.md`: npm shows
+ * the first file that matches `README.*` on the package page, and the dotted name would
+ * win over `README.md` and put the Chinese text on the page.
+ */
+export const readmeFiles = ['README.md', 'README-zh-CN.md']
+
+/** The repository README that stands in for each package README that a package lacks. */
+export const repoReadmeFor = {
+  'README.md': 'README.md',
+  'README-zh-CN.md': 'README.zh-CN.md',
+}
 
 /** Unscoped public packages. Scoped packages are matched by the @kawapress/ prefix. */
 export const unscopedPackageNames = new Set(['kawapress', 'create-kawapress'])

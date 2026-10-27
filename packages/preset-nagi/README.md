@@ -2,7 +2,7 @@
 
 nagi (凪), the default documentation preset of KawaPress.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/preset-nagi?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/preset-nagi) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/preset-nagi/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/preset-nagi?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/preset-nagi) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/preset-nagi/README-zh-CN.md)
 
 `@kawapress/preset-nagi` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

@@ -2,7 +2,7 @@
 
 A last updated time and an edit link at the bottom of every KawaPress page.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-last-updated?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-last-updated) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-last-updated/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-last-updated?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-last-updated) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-last-updated/README-zh-CN.md)
 
 `@kawapress/plugin-last-updated` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

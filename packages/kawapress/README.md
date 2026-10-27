@@ -2,7 +2,7 @@
 
 The KawaPress core: the CLI, the generator and the runtime, plus the nagi preset and its official plugins.
 
-[![npm version](https://img.shields.io/npm/v/kawapress?label=npm&color=42b883)](https://www.npmjs.com/package/kawapress) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/kawapress/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/kawapress?label=npm&color=42b883)](https://www.npmjs.com/package/kawapress) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/kawapress/README-zh-CN.md)
 
 `kawapress` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

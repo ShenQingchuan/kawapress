@@ -10,6 +10,7 @@ import {
   manifestDependencyFields,
   publishedDependencyFields,
   readmeFiles,
+  repoReadmeFor,
   rootDir,
   sensitiveFilePattern,
   testFilePattern,
@@ -60,7 +61,7 @@ export async function copyReleaseWorkspace(packages, versionOverride) {
 export async function addMissingReadmes(packageDir, sourceDir = rootDir) {
   for (const readme of readmeFiles) {
     if (!await pathExists(join(packageDir, readme)))
-      await cp(join(sourceDir, readme), join(packageDir, readme))
+      await cp(join(sourceDir, repoReadmeFor[readme]), join(packageDir, readme))
   }
 }
 

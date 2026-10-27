@@ -2,7 +2,7 @@
 
 Code highlighting for KawaPress, with light and dark themes and optional Twoslash type hints.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-shiki?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-shiki) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-shiki/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-shiki?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-shiki) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-shiki/README-zh-CN.md)
 
 `@kawapress/plugin-shiki` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 

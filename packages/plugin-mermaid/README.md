@@ -2,7 +2,7 @@
 
 Mermaid diagrams for KawaPress Markdown, drawn at build time by Pele, with zoom and code views.
 
-[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-mermaid?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-mermaid) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-mermaid/README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/@kawapress/plugin-mermaid?label=npm&color=42b883)](https://www.npmjs.com/package/@kawapress/plugin-mermaid) · [简体中文](https://github.com/kawapress/kawapress/blob/main/packages/plugin-mermaid/README-zh-CN.md)
 
 `@kawapress/plugin-mermaid` is part of [KawaPress](https://github.com/kawapress/kawapress), a Vue-first static site generator.
 
