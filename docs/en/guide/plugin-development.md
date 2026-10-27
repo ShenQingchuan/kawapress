@@ -253,6 +253,55 @@ It applies the same rule KawaPress uses for the site itself: `root` owns every p
 
 The function is pure and works on the runtime side too; import it from `kawapress/client` there.
 
+### List Pages and Read Their Titles {#page-list-and-title}
+
+When you build your own navigation, index, or search data, start from the list of pages. `listMarkdownPages()` from `kawapress/generator` applies exactly the same rules as KawaPress itself: it skips directories that start with `.` and the `dist` and `node_modules` directories, leaves out `publicDir`, and sorts by name.
+
+```ts
+import { resolve } from 'node:path'
+import { listMarkdownPages } from 'kawapress/generator'
+
+let srcDir = '.'
+
+api.config((config) => {
+  srcDir = config.srcDir ?? '.'
+})
+
+api.vite((config) => {
+  config.plugins ??= []
+  config.plugins.push({
+    name: 'your-plugin:pages',
+    async configResolved(resolved) {
+      // sourceRoot holds the pages; publicDir holds files copied as they are, so it holds none
+      const pages = await listMarkdownPages({
+        sourceRoot: resolve(resolved.root, srcDir),
+        publicDir: resolved.publicDir,
+      })
+      // Each entry looks like
+      // { file: '/site/src/guide/intro.md', sourcePath: '/guide/intro.md', routePath: '/guide/intro' }
+      console.log(pages.map(page => page.routePath))
+    },
+  })
+})
+```
+
+Read the title and the `layout` of a page with `createPageSummaryReader()`:
+
+```ts
+import { readFile } from 'node:fs/promises'
+import { createPageSummaryReader } from 'kawapress/generator'
+
+const reader = createPageSummaryReader()
+const source = await readFile(page.file, 'utf8')
+const { title, layout } = reader.read(source, page.file)
+```
+
+It only parses Markdown and never renders a page: no `pageData()` handler runs, and Markdown plugins, Shiki, Twoslash and MathJax stay out of it, so listing a whole site does not compile it first. The title follows the same rule as the page itself: `title` from the frontmatter when it is there, otherwise the text of the first level-one heading. `layout` is the string written in the frontmatter, or `undefined`.
+
+The same file with the same content reuses the previous result, so reading a whole site repeatedly stays cheap. The theme reads titles exactly this way when it builds the automatic sidebar.
+
+A dev server reports changed files as absolute paths: `isMarkdownPage()` tells you whether such a file is a page, and `markdownFileToRoutePath()` turns it back into a route path.
+
 ## Runtime API {#runtime-api}
 
 A Runtime Plugin works while the website runs. Its code enters the site's Vite module graph, so it can statically import `.vue` files, CSS, and regular Vue plugins.

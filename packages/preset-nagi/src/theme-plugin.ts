@@ -17,7 +17,11 @@ export function nagiThemePlugin(): KawaPressPlugin {
       })
       api.vite((config) => {
         config.plugins ??= []
-        config.plugins.push(nagiSidebarMetaPlugin(siteConfig?.srcDir ?? '.'))
+        config.plugins.push(nagiSidebarMetaPlugin({
+          srcDir: siteConfig?.srcDir ?? '.',
+          themeConfig: siteConfig?.themeConfig,
+          locales: siteConfig?.locales,
+        }))
         useRuntimeDependencies(config, PLUGIN_NAME, RUNTIME_DEPENDENCIES)
       })
     },

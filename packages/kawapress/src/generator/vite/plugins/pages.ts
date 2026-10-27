@@ -1,14 +1,13 @@
-import type { Dirent } from 'node:fs'
 import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
 import type { MarkdownPageLoader } from '../../../compiler/page-loader'
 import type { PageSummaryReader } from '../../../compiler/page-summary'
 import type { PageSummary } from '../../../core/page-manifest'
-import { readdir, readFile } from 'node:fs/promises'
-import { isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { markdownFileToSourcePath } from '../../../compiler/page-loader'
+import type { MarkdownPageScope } from '../../pages'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { createPageSummaryReader } from '../../../compiler/page-summary'
 import { stringifyJson } from '../../../core/json'
-import { markdownPagePathToRoutePath } from '../../../core/markdown-route'
+import { isMarkdownPage, listMarkdownPages } from '../../pages'
 
 /** Virtual module holding the page manifest. */
 export const PAGE_MANIFEST_MODULE_ID = 'virtual:kawapress-pages'
@@ -18,10 +17,6 @@ const RESOLVED_ID = `\0${PAGE_MANIFEST_MODULE_ID}`
  * more often than framework and theme code, so the two must not share a chunk.
  */
 export const PAGE_MANIFEST_CHUNK_NAME = 'page-manifest'
-const IGNORED_DIRECTORIES = new Set([
-  'dist',
-  'node_modules',
-])
 export interface VirtualPagesOptions {
   srcDir: string
   publicDir: string
@@ -55,17 +50,25 @@ export async function listPageRoutes(
   pageLoader: MarkdownPageLoader,
   publicDir: string,
 ): Promise<string[]> {
-  const pages = await listMarkdownPages(pageLoader, publicDir)
-  return pages.map(page => page.path)
+  const pages = await listMarkdownPages(pageScope(pageLoader, publicDir))
+  return pages.map(page => page.routePath)
+}
+
+/** Where the pages of the site are, from the site config the loader was built with. */
+function pageScope(
+  pageLoader: MarkdownPageLoader,
+  publicDir: string,
+): MarkdownPageScope {
+  return {
+    sourceRoot: pageLoader.sourceRoot,
+    publicDir: resolve(pageLoader.sourceRoot, publicDir),
+  }
 }
 
 export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
   const summaryReader = createPageSummaryReader()
-  const isPage = (file: string) => isMarkdownFile(
-    file,
-    options.pageLoader.sourceRoot,
-    resolve(options.pageLoader.sourceRoot, options.publicDir),
-  )
+  const scope = pageScope(options.pageLoader, options.publicDir)
+  const isPage = (file: string) => isMarkdownPage(file, scope)
 
   return {
     name: 'kawapress:virtual-pages',
@@ -76,7 +79,7 @@ export function virtualPagesPlugin(options: VirtualPagesOptions): Plugin {
     },
     async load(id) {
       if (id === RESOLVED_ID) {
-        return renderPagesModule(await readManifestPages(options, summaryReader))
+        return renderPagesModule(await readManifestPages(scope, options, summaryReader))
       }
     },
     configureServer(server) {
@@ -122,15 +125,6 @@ function invalidateManifestModule(server: ViteDevServer): ModuleNode | undefined
   return virtualModule
 }
 
-/** One Markdown page on disk, before its route summary is read. */
-interface MarkdownPage {
-  file: string
-  /** Public route path, for example `/guide/intro`. */
-  path: string
-  /** Path relative to `srcDir`, for example `/guide/intro.md`. */
-  sourcePath: string
-}
-
 /** One record of the generated manifest: a page module and its route summary. */
 export interface ManifestPage {
   /** Public route path the record is keyed by. */
@@ -174,14 +168,15 @@ function jsonLiteral(value: string): string {
  * the first dev request does not compile the whole site.
  */
 async function readManifestPages(
+  scope: MarkdownPageScope,
   options: VirtualPagesOptions,
   summaryReader: PageSummaryReader,
 ): Promise<ManifestPage[]> {
-  const pages = await listMarkdownPages(options.pageLoader, options.publicDir)
+  const pages = await listMarkdownPages(scope)
   return Promise.all(pages.map(async (page) => {
     const source = await readFile(page.file, 'utf8')
     return {
-      path: page.path,
+      path: page.routePath,
       id: pageModuleId(page.sourcePath, options.srcDir),
       summary: summaryReader.read(source, page.file),
     }
@@ -195,72 +190,4 @@ async function readManifestPages(
  */
 function pageModuleId(sourcePath: string, srcDir: string): string {
   return `${srcDir === '.' ? '' : `/${srcDir}`}${sourcePath}`
-}
-
-async function listMarkdownPages(
-  pageLoader: MarkdownPageLoader,
-  publicDir: string,
-): Promise<MarkdownPage[]> {
-  const publicDirectory = resolve(pageLoader.sourceRoot, publicDir)
-  const files = await findMarkdownFiles(pageLoader.sourceRoot, publicDirectory)
-  return files.map((file) => {
-    const sourcePath = markdownFileToSourcePath(file, pageLoader.sourceRoot)
-    return { file, path: markdownPagePathToRoutePath(sourcePath), sourcePath }
-  })
-}
-
-async function findMarkdownFiles(
-  directory: string,
-  publicDirectory: string,
-): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true })
-  const files = await Promise.all(entries
-    .sort(compareEntries)
-    .map(async (entry) => {
-      const path = join(directory, entry.name)
-      if (shouldIgnore(entry, path, publicDirectory)) {
-        return []
-      }
-      if (entry.isDirectory()) {
-        return findMarkdownFiles(path, publicDirectory)
-      }
-      return entry.isFile() && entry.name.endsWith('.md') ? [path] : []
-    }))
-
-  return files.flat()
-}
-
-function isMarkdownFile(
-  file: string,
-  sourceRoot: string,
-  publicDirectory: string,
-): boolean {
-  const relativePath = relative(sourceRoot, file)
-  return file.endsWith('.md')
-    && !isAbsolute(relativePath)
-    && relativePath !== '..'
-    && !relativePath.startsWith(`..${sep}`)
-    && !isInDirectory(file, publicDirectory)
-}
-
-function compareEntries(a: Dirent, b: Dirent): number {
-  return a.name.localeCompare(b.name)
-}
-
-function isInDirectory(file: string, directory: string): boolean {
-  const relativePath = relative(directory, file)
-  return relativePath === ''
-    || (!isAbsolute(relativePath)
-      && relativePath !== '..'
-      && !relativePath.startsWith(`..${sep}`))
-}
-
-function shouldIgnore(
-  entry: Dirent,
-  path: string,
-  publicDirectory: string,
-): boolean {
-  return entry.name.startsWith('.')
-    || path === publicDirectory
-    || (entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name))
 }

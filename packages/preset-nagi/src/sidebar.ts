@@ -1,5 +1,3 @@
-import type { PageRouteMeta } from 'kawapress'
-
 export interface NagiSidebarItem {
   text: string
   link?: string
@@ -40,6 +38,16 @@ export interface SidebarMetaEntry {
 
 export type SidebarMetaItem = string | SidebarMetaEntry
 export type SidebarMeta = Readonly<Record<string, SidebarMetaItem[]>>
+
+/** What the automatic sidebar needs to know about one page. */
+export interface SidebarPage {
+  title: string
+  /** `frontmatter.layout` when it is a string. */
+  layout?: string
+}
+
+/** Pages the automatic sidebar can show, keyed by public route path. */
+export type SidebarPages = Readonly<Record<string, SidebarPage>>
 
 interface SidebarNode {
   segment: string
@@ -133,26 +141,26 @@ export function isSidebarLinkActive(link: string, routePath: string): boolean {
 }
 
 export function createSidebar(
-  pages: Readonly<Record<string, PageRouteMeta>>,
+  pages: SidebarPages,
   options: CreateSidebarOptions = {},
 ): SidebarItem[] {
   const rootPages: SidebarItem[] = []
   const root = new Map<string, SidebarNode>()
   const base = normalizeDirectoryPath(options.base ?? '')
 
-  for (const page of Object.values(pages).sort(comparePages)) {
+  for (const [path, page] of Object.entries(pages).sort(comparePages)) {
     if (!isDocumentPage(page)) {
       continue
     }
 
-    const relativePath = options.base && page.path.startsWith(options.base)
-      ? page.path.slice(options.base.length)
-      : page.path
+    const relativePath = options.base && path.startsWith(options.base)
+      ? path.slice(options.base.length)
+      : path
     const segments = relativePath.split('/').filter(Boolean)
     if (segments.length === 0) {
       rootPages.push({
         text: page.title || 'Home',
-        link: page.path,
+        link: path,
       })
       continue
     }
@@ -170,7 +178,7 @@ export function createSidebar(
       siblings.set(segment, node)
 
       if (index === segments.length - 1) {
-        node.link = page.path
+        node.link = path
         node.text = page.title || node.text
       }
       parentPath = path
@@ -279,12 +287,16 @@ function withSidebarBase(link: string, base: string): string {
   return normalizedBase === '/' ? `/${link}` : `${normalizedBase}/${link}`
 }
 
-function isDocumentPage(page: PageRouteMeta): boolean {
+/** Whether the automatic sidebar lists a page: `home` and `page` layouts build their own. */
+export function isDocumentPage(page: SidebarPage): boolean {
   return page.layout !== 'home' && page.layout !== 'page'
 }
 
-function comparePages(a: PageRouteMeta, b: PageRouteMeta): number {
-  return a.path.localeCompare(b.path)
+function comparePages(
+  [left]: [string, SidebarPage],
+  [right]: [string, SidebarPage],
+): number {
+  return left.localeCompare(right)
 }
 
 function humanize(segment: string): string {
