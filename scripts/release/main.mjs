@@ -46,8 +46,12 @@ export async function main(argv = process.argv.slice(2)) {
     return prepareRelease(options, packages, committedVersion)
 
   const ci = isOidcPublishingAvailable(process.env)
-  rejectVersionMismatch({ ci, committedVersion, options })
-  assertVersionIsNotOlder(options.version, committedVersion)
+  // A bootstrap only reserves names on npm. The staged copy gets `options.version`, so it
+  // may be a placeholder below the committed version (for example 0.0.1 for a new package).
+  if (options.mode !== 'bootstrap') {
+    rejectVersionMismatch({ ci, committedVersion, options })
+    assertVersionIsNotOlder(options.version, committedVersion)
+  }
 
   printPackagePlan(packages, options)
 
@@ -164,8 +168,7 @@ async function prepareRelease(options, packages, committedVersion) {
 }
 
 function rejectVersionMismatch({ ci, committedVersion, options }) {
-  const needsMatch = ci || options.mode === 'bootstrap'
-  if (!needsMatch)
+  if (!ci)
     return
 
   const problems = findCommittedVersionProblems({

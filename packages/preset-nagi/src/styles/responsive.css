@@ -344,6 +344,10 @@
 }
 
 @media (max-width: 59.999rem) {
+  .nagi-nav__links {
+    display: none;
+  }
+
   .nagi-nav__controls--desktop {
     display: none;
   }

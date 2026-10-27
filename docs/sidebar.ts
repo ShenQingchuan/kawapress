@@ -1,10 +1,13 @@
 import { defineLocalizedSidebars } from 'kawapress/nagi'
 
-export const sidebars = defineLocalizedSidebars({
-  locales: {
-    zhCN: '',
-    en: '/en',
-  },
+const locales = {
+  zhCN: '',
+  en: '/en',
+}
+
+/** 「指南」分区：写站点需要的内容，与具体插件无关。 */
+export const guideSidebars = defineLocalizedSidebars({
+  locales,
   items: [
     {
       text: {
@@ -47,13 +50,6 @@ export const sidebars = defineLocalizedSidebars({
           },
           link: '/guide/deploy',
         },
-        {
-          text: {
-            zhCN: '站点地图',
-            en: 'Sitemap',
-          },
-          link: '/guide/sitemap',
-        },
       ],
     },
     {
@@ -75,13 +71,6 @@ export const sidebars = defineLocalizedSidebars({
             en: 'Asset Handling',
           },
           link: '/guide/asset-handling',
-        },
-        {
-          text: {
-            zhCN: '图片缩放',
-            en: 'Image Zoom',
-          },
-          link: '/guide/image-zoom',
         },
         {
           text: {
@@ -114,20 +103,6 @@ export const sidebars = defineLocalizedSidebars({
       items: [
         {
           text: {
-            zhCN: '插件体系',
-            en: 'Plugin System',
-          },
-          link: '/guide/plugin-system',
-        },
-        {
-          text: {
-            zhCN: '插件开发',
-            en: 'Plugin Development',
-          },
-          link: '/guide/plugin-development',
-        },
-        {
-          text: {
             zhCN: '构建时数据加载',
             en: 'Build-Time Data Loading',
           },
@@ -142,24 +117,82 @@ export const sidebars = defineLocalizedSidebars({
         },
         {
           text: {
+            zhCN: 'SSR 兼容性',
+            en: 'SSR Compatibility',
+          },
+          link: '/guide/ssr-compatibility',
+        },
+      ],
+    },
+  ],
+})
+
+/** 「插件」分区：先讲插件体系，再列出官方插件。 */
+export const pluginSidebars = defineLocalizedSidebars({
+  locales,
+  items: [
+    {
+      text: {
+        zhCN: '插件体系',
+        en: 'Plugin System',
+      },
+      items: [
+        {
+          text: {
+            zhCN: '插件体系',
+            en: 'Plugin System',
+          },
+          link: '/plugins/plugin-system',
+        },
+        {
+          text: {
+            zhCN: '插件开发',
+            en: 'Plugin Development',
+          },
+          link: '/plugins/plugin-development',
+        },
+      ],
+    },
+    {
+      text: {
+        zhCN: '官方插件',
+        en: 'Official Plugins',
+      },
+      items: [
+        {
+          text: {
+            zhCN: 'Mermaid 图表',
+            en: 'Mermaid',
+          },
+          link: '/plugins/mermaid',
+        },
+        {
+          text: {
+            zhCN: '图片缩放',
+            en: 'Image Zoom',
+          },
+          link: '/plugins/image-zoom',
+        },
+        {
+          text: {
             zhCN: '最后更新时间',
             en: 'Last Updated',
           },
-          link: '/guide/last-updated',
+          link: '/plugins/last-updated',
         },
         {
           text: {
             zhCN: '评论',
             en: 'Comments',
           },
-          link: '/guide/comments',
+          link: '/plugins/comments',
         },
         {
           text: {
-            zhCN: 'SSR 兼容性',
-            en: 'SSR Compatibility',
+            zhCN: '站点地图',
+            en: 'Sitemap',
           },
-          link: '/guide/ssr-compatibility',
+          link: '/plugins/sitemap',
         },
       ],
     },

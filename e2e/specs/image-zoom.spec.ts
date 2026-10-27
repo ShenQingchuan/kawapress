@@ -2,7 +2,7 @@ import { expect, test } from '../support/fixtures'
 import { sitePath } from '../support/site'
 
 // The demo images of this page are stable fixtures of the docs content.
-const imageZoomPage = '/guide/image-zoom'
+const imageZoomPage = '/plugins/image-zoom'
 const dialogSelector = 'dialog.kawa-image-zoom'
 
 test('a click opens the zoom dialog and Escape returns focus to the image', async ({ page }) => {
@@ -31,7 +31,7 @@ test('a click opens the zoom dialog and Escape returns focus to the image', asyn
 })
 
 test('a route change closes the dialog', async ({ page }) => {
-  await page.goto(sitePath('/guide/asset-handling'))
+  await page.goto(sitePath('/plugins/last-updated'))
   await page.getByRole('link', { name: /^(?:图片缩放|Image Zoom)$/ }).click()
   await expect(page).toHaveURL(/image-zoom/)
 

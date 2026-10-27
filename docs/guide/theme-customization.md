@@ -13,7 +13,7 @@ KawaPress 不内置这些界面。它只负责创建 Vue App、站内路由和 M
 
 KawaPress 没有单独的主题加载器，也没有只能由主题使用的生命周期。主题和搜索、代码高亮一样，都通过插件体系安装。
 
-主题包遵循通用的[插件包 exports 约定](/guide/plugin-system#plugin-package-exports)：
+主题包遵循通用的[插件包 exports 约定](/plugins/plugin-system#plugin-package-exports)：
 
 ```text
 @example/kawapress-theme

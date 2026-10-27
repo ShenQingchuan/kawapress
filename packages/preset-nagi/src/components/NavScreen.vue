@@ -4,6 +4,7 @@ import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import AppearanceSwitch from './AppearanceSwitch.vue'
 import GitHubLink from './GitHubLink.vue'
 import LanguageMenu from './LanguageMenu.vue'
+import NavLinks from './NavLinks.vue'
 import OsScroll from './OsScroll.vue'
 
 const emit = defineEmits<{
@@ -29,6 +30,7 @@ onMounted(() => {
   >
     <OsScroll class="nagi-nav-screen__scroll">
       <div class="nagi-nav-screen__body">
+        <NavLinks variant="list" @navigate="emit('close')" />
         <LanguageMenu variant="list" @navigate="emit('close')" />
         <div class="nagi-nav-screen__actions">
           <AppearanceSwitch />

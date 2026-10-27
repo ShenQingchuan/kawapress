@@ -81,7 +81,7 @@ Do not ask site authors to import `@kawapress/plugin-search/runtime-plugin`. Gen
 
 KawaPress Plugins are best written in TypeScript and can publish `.ts`, `.vue`, and CSS source files directly. A separate bundling step is not required. The Vite used by KawaPress performs the final syntax transforms, dependency resolution, and browser build.
 
-For the `package.json` layout, the code for each entry, and the publishing checklist, read [Plugin Development](/en/guide/plugin-development).
+For the `package.json` layout, the code for each entry, and the publishing checklist, read [Plugin Development](/en/plugins/plugin-development).
 
 ## Good Defaults Should Form a Complete Product {#good-defaults-should-form-a-complete-product}
 
@@ -151,4 +151,4 @@ The custom theme Plugin must register the layout components KawaPress needs to r
 
 ## Start Writing a Plugin {#start-writing-a-plugin}
 
-This page explains why KawaPress organizes plugins this way. When you write one, read [Plugin Development](/en/guide/plugin-development). It lists the six generator methods and two runtime methods by extension point, with code you can use as a reference.
+This page explains why KawaPress organizes plugins this way. When you write one, read [Plugin Development](/en/plugins/plugin-development). It lists the six generator methods and two runtime methods by extension point, with code you can use as a reference.

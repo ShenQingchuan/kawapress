@@ -13,7 +13,7 @@ KawaPress does not provide that interface itself. It creates the Vue App, the cl
 
 KawaPress has no separate theme loader or theme-only lifecycle. Themes use the same plugin system as search and syntax highlighting.
 
-A theme package follows the shared [Plugin package export conventions](/en/guide/plugin-system#plugin-package-exports):
+A theme package follows the shared [Plugin package export conventions](/en/plugins/plugin-system#plugin-package-exports):
 
 ```text
 @example/kawapress-theme

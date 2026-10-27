@@ -1,0 +1,134 @@
+@layer kawa.plugin {
+  .kawa-mermaid {
+    margin: 1rem 0;
+    overflow: hidden;
+    border: 1px solid var(--kawa-c-divider);
+    border-radius: var(--kawa-radius);
+    background: var(--kawa-c-bg-soft);
+  }
+
+  .kawa-mermaid__bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--kawa-c-divider);
+  }
+
+  .kawa-mermaid__views {
+    display: inline-flex;
+    gap: 0.125rem;
+    padding: 0.125rem;
+    border: 1px solid var(--kawa-c-divider);
+    border-radius: calc(var(--kawa-radius) - 0.125rem);
+    background: var(--kawa-c-bg);
+  }
+
+  .kawa-mermaid__view {
+    padding: 0.125rem 0.625rem;
+    color: var(--kawa-c-text-2);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5rem;
+    border-radius: calc(var(--kawa-radius) - 0.25rem);
+    transition:
+      color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .kawa-mermaid__view:hover {
+    color: var(--kawa-c-text-1);
+  }
+
+  .kawa-mermaid__view[aria-pressed='true'] {
+    color: var(--kawa-c-text-1);
+    background: var(--kawa-c-bg-soft);
+  }
+
+  .kawa-mermaid__view:focus-visible {
+    outline: 2px solid var(--kawa-c-brand);
+    outline-offset: 1px;
+  }
+
+  .kawa-mermaid__panes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Side by side: the diagram on the left, the source on the right. */
+  .kawa-mermaid[data-view='split'] .kawa-mermaid__panes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kawa-mermaid[data-view='split'] .kawa-mermaid__code {
+    border-left: 1px solid var(--kawa-c-divider);
+  }
+
+  @media (max-width: 40rem) {
+    .kawa-mermaid[data-view='split'] .kawa-mermaid__panes {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .kawa-mermaid[data-view='split'] .kawa-mermaid__code {
+      border-top: 1px solid var(--kawa-c-divider);
+      border-left: 0;
+    }
+  }
+
+  .kawa-mermaid__stage {
+    /* Pele reads its colors from these variables, so a theme switch needs no redraw. */
+    --pele-bg: var(--kawa-c-bg-soft);
+    --pele-fg: var(--kawa-c-text-1);
+    --pele-muted: var(--kawa-c-text-2);
+    --pele-line: var(--kawa-c-text-3);
+    --pele-surface: var(--kawa-c-bg);
+    --pele-surface-alt: var(--kawa-c-bg-elv);
+    --pele-border: var(--kawa-c-border);
+    --pele-accent: var(--kawa-c-brand);
+    --pele-font: var(--kawa-font-sans);
+    --pele-font-mono: var(--kawa-font-mono);
+    --pele-radius: var(--kawa-radius);
+    --pele-error: var(--kawa-c-danger);
+
+    position: relative;
+    min-width: 0;
+    padding: 1rem;
+    overflow: auto;
+  }
+
+  .kawa-mermaid__stage svg {
+    display: block;
+    margin-inline: auto;
+  }
+
+  /* The server drawing stays in the DOM as the fallback; Pele's live copy replaces it. */
+  .kawa-mermaid__stage.is-enhanced > :not(.kawa-mermaid__host) {
+    display: none;
+  }
+
+  .kawa-mermaid__error {
+    margin: 0;
+    color: var(--kawa-c-danger);
+    font-family: var(--kawa-font-mono);
+    font-size: 0.8125rem;
+    white-space: pre-wrap;
+  }
+
+  .kawa-mermaid__code {
+    min-width: 0;
+  }
+
+  /* The code block draws its own frame; inside the diagram block only the block's frame counts. */
+  .kawa-mermaid__code .kawa-code-block,
+  .kawa-mermaid__code pre.shiki {
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kawa-mermaid__view {
+      transition: none;
+    }
+  }
+}

@@ -126,7 +126,7 @@ KawaPress 把扩展边界分得很清楚：
 - **Runtime Plugin** 在 SSR 和浏览器中扩展真实的 Vue App 与 Vue Router；
 - **Preset** 把配置和一组插件组合成可以直接使用的产品体验，例如 nagi。
 
-一个逻辑插件只需要安装一次，同时可以提供生成侧和运行侧能力。更多内容请查看[插件体系](https://shenqingchuan.github.io/kawapress/guide/plugin-system)。
+一个逻辑插件只需要安装一次，同时可以提供生成侧和运行侧能力。更多内容请查看[插件体系](https://shenqingchuan.github.io/kawapress/plugins/plugin-system)。
 
 ## 文档
 
@@ -134,7 +134,7 @@ KawaPress 把扩展边界分得很清楚：
 - [KawaPress 是什么？](https://shenqingchuan.github.io/kawapress/guide/what-is-kawapress)
 - [Markdown 语法扩展](https://shenqingchuan.github.io/kawapress/guide/markdown-extensions)
 - [国际化](https://shenqingchuan.github.io/kawapress/guide/internationalization)
-- [插件体系](https://shenqingchuan.github.io/kawapress/guide/plugin-system)
+- [插件体系](https://shenqingchuan.github.io/kawapress/plugins/plugin-system)
 - [主题定制](https://shenqingchuan.github.io/kawapress/guide/theme-customization)
 
 ## 参与贡献

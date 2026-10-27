@@ -5,7 +5,7 @@ description: 按扩展位置编写 KawaPress 插件，使用生成侧与运行�
 
 # 插件开发
 
-本篇说明如何编写一个 KawaPress 插件。阅读前，请先了解 [插件体系](/guide/plugin-system) 中 Generator Plugin、Runtime Plugin 与 Preset 的分工。
+本篇说明如何编写一个 KawaPress 插件。阅读前，请先了解 [插件体系](/plugins/plugin-system) 中 Generator Plugin、Runtime Plugin 与 Preset 的分工。
 
 下面的示例都围绕一个虚构的包 `@acme/kawapress-plugin-notes`。它的各个部分分别演示一种 API，最后组合成一个完整的包。
 

@@ -5,6 +5,7 @@ import { useNagiThemeConfig } from '../composables/useNagiThemeConfig'
 import AppearanceSwitch from './AppearanceSwitch.vue'
 import GitHubLink from './GitHubLink.vue'
 import LanguageMenu from './LanguageMenu.vue'
+import NavLinks from './NavLinks.vue'
 import NavScreen from './NavScreen.vue'
 import ThemeableImage from './ThemeableImage.vue'
 
@@ -47,6 +48,7 @@ onUnmounted(() => {
         />
         <span>{{ site.title }}</span>
       </a>
+      <NavLinks class="nagi-nav__links" />
       <div class="nagi-nav__end">
         <KawaOutlet name="header.actions" />
         <div class="nagi-nav__controls nagi-nav__controls--desktop">

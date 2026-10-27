@@ -1,6 +1,6 @@
 # 发布 KawaPress
 
-KawaPress 的 16 个公开包永远同一个版本号，由 `scripts/release.mjs` 一起打包、校验、按依赖顺序发布。
+KawaPress 的 17 个公开包永远同一个版本号，由 `scripts/release.mjs` 一起打包、校验、按依赖顺序发布。
 
 真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `ShenQingchuan/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。推送 `v*` tag 之后全程自动，不需要人工介入。
 
@@ -33,30 +33,30 @@ gh api --method POST repos/ShenQingchuan/kawapress/environments/npm/deployment-b
 
 本地 `npm login` 之后，第一次运行写入类命令时 npm 会在浏览器里问你一次，之后有 5 分钟免打扰窗口。
 
-### 3. 把 npm 上还不存在的 4 个包补上（bootstrap）
+### 3. 新增公开包时，先在 npm 上占位（bootstrap）
 
-npm 的 trusted publishing 只能给**已经存在**的包配置，而 `release.yml` 会把所有包放在一次运行里发出去，缺一个就会中途失败——这是最难收拾的失败方式。所以先手工补一次。
-
-当前 npm 上还没有：`create-kawapress`、`@kawapress/plugin-comments`、`@kawapress/plugin-image-zoom`、`@kawapress/plugin-last-updated`。
+npm 的 trusted publishing 只能给**已经存在**的包配置，而 `release.yml` 会把所有包放在一次运行里发出去，缺一个就会中途失败——这是最难收拾的失败方式。所以每新增一个公开包，都要先手工在 npm 上占一个位置。
 
 ```sh
 git switch main && git pull
 npm login                      # 需要是 @kawapress 组织成员、kawapress 包 owner
-pnpm release:trust             # 先看一眼要配置的 trusted publisher 命令（不会改任何东西）
 pnpm release --bootstrap --version 0.0.1
 ```
 
-`--bootstrap` 只发布「npm 上还查不到」的包，包内容和正式发布完全一样（同一套暂存目录、同一套 tarball 校验），发完会把 16 个包的 `npm trust github` 命令打印出来。
+`--bootstrap` 只发布「npm 上还查不到」的包，已经存在的包一律跳过。包内容走同一套暂存目录和 tarball 校验，发完会把全部包的 `npm trust github` 命令打印出来。
 
-**为什么是 `0.0.1` 而不是下一个版本号 `0.1.0`？**
+**占位版本固定用 `0.0.1`，不要用要正式发布的版本号。**
 
-- `0.0.1` 是现在仓库里已经提交的版本，也是其余 12 个包在 npm 上的版本。补完之后 16 个包版本一致，`@kawapress/plugin-comments` 里对 `@kawapress/preset-nagi` 之类的依赖也指向真实存在的版本，不会出现装不上的包。
-- 如果用 `0.1.0` 补，这个版本号就被一次「本地打包」永久占住了。之后 CI 用 Node 22 重新打包同样的代码，压缩结果大概率不是逐字节相同，npm 会直接拒绝：「0.1.0 已存在且内容不同」。而且 trusted publishing 要求配置好后 2 天内有一次**通过 CI 的成功发布**，那几个被「已存在」跳过的包就永远等不到这一次发布。
-- 结论：**bootstrap 只补当前已提交的版本，`0.1.0` 一定留给 CI 去发**。所以 bootstrap 必须在改版本号之前做。
+- 占位用 `--version` 指定的版本，不要求等于仓库里已提交的版本，所以新包的 `package.json` 里可以直接写将来要发的 `0.1.0`。
+- 如果占位直接用 `0.1.0`，这个版本号就被一次「本地打包」永久占住了。之后 CI 用 Node 22 重新打包同样的代码，压缩结果大概率不是逐字节相同，npm 会直接拒绝：「0.1.0 已存在且内容不同」。而且 trusted publishing 要求配置好后 2 天内有一次**通过 CI 的成功发布**，被「已存在」跳过的包就永远等不到这一次发布。
+- 占位包里 `kawapress` 等依赖会变成 `0.0.1`，那是 npm 上真实存在的早期版本，占位包不会因此装不上。
+- 结论：**占位发 `0.0.1`，带真实内容的第一个版本（例如 `0.1.0`）一定留给 CI 去发。**
 
 `--bootstrap` 会跳过 lint/typecheck/test/构建（这一步只是占坑，内容马上会被正式版本覆盖），但 tarball 校验一样跑。
 
-### 4. 给 16 个包配置 trusted publisher
+### 4. 给新包配置 trusted publisher
+
+`pnpm release:trust --apply` 会对**全部公开包**依次执行下面的命令。已经配置过的包再配一次是重复操作，所以只给刚占位的新包配时，直接手工跑那几条即可（用 `pnpm release:trust` 打印出来复制）。
 
 ```sh
 pnpm release:trust --apply
@@ -68,20 +68,20 @@ pnpm release:trust --apply
 npm trust github <包名> --file release.yml --repository ShenQingchuan/kawapress --environment npm --allow-publish -y
 ```
 
-想手工逐条跑也行，`pnpm release:trust`（不带 `--apply`）会把 16 条命令打印出来，而且真的用 `npm trust github ... --dry-run` 校验了一遍，不登录也能跑。
+想手工逐条跑也行，`pnpm release:trust`（不带 `--apply`）会把 17 条命令打印出来，而且真的用 `npm trust github ... --dry-run` 校验了一遍，不登录也能跑。
 
 几个容易踩的点：
 
-- **每个包单独配一次**，共 16 次。第一次会弹浏览器做 2FA，之后 5 分钟内不用重复。
-- 配好之后 **2 天内必须完成第一次通过 CI 的成功发布**，否则这条 trust 配置会被 npm 自动清掉，只能重配。所以第 3、4 步做完就尽快发 `0.1.0`。
+- **每个包单独配一次**，共 17 次。第一次会弹浏览器做 2FA，之后 5 分钟内不用重复。
+- 配好之后 **2 天内必须完成第一次通过 CI 的成功发布**，否则这条 trust 配置会被 npm 自动清掉，只能重配。所以第 3、4 步做完就尽快发带真实内容的第一个版本（例如 `0.1.0`）。
 - 想检查现状：`npm trust list <包名>`。想撤销：`npm trust revoke <包名> --id=<trust-id>`。
 
 ### 5. 第一次 CI 发布成功之后，关掉 token 发布
 
-把 16 个包的发布权限都改成「必须两步验证，不接受绕过两步验证的 token」（网页上的 Require two-factor authentication and disallow bypass 2fa tokens）：
+把 17 个包的发布权限都改成「必须两步验证，不接受绕过两步验证的 token」（网页上的 Require two-factor authentication and disallow bypass 2fa tokens）：
 
 ```sh
-pnpm release:lock            # 先打印 16 条命令，不改任何东西
+pnpm release:lock            # 先打印 17 条命令，不改任何东西
 pnpm release:lock --apply    # 真正修改；第一次会在浏览器里做两步验证
 ```
 
@@ -116,7 +116,7 @@ open https://www.npmjs.com/package/kawapress/v/0.1.0   # 页面上有 provenance
 
 `release.yml` 里有两个 job：
 
-- `verify`：跑 lint / typecheck / test / 构建文档，再打 16 个 tarball 并逐个校验（README、不含测试文件、`workspace:`/`catalog:` 都换成了真实范围、导出目标存在），然后 `npm publish --dry-run` 一遍。它没有任何发布权限，也不需要 token。
+- `verify`：跑 lint / typecheck / test / 构建文档，再打 17 个 tarball 并逐个校验（README、不含测试文件、`workspace:`/`catalog:` 都换成了真实范围、导出目标存在），然后 `npm publish --dry-run` 一遍。它没有任何发布权限，也不需要 token。
 - `publish`：`verify` 通过后自动启动，跑在 `npm` 环境里，同一个 tag、同一套校验，真实发布。
 
 tag 和版本的对应关系写死在工作流里：tag 必须是 `v<包版本>`，而且必须指向这次提交，否则一开场就会失败。

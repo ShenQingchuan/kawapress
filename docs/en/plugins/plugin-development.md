@@ -5,7 +5,7 @@ description: Write KawaPress plugins by extension point, using generator and run
 
 # Plugin Development
 
-This page explains how to write a KawaPress plugin. Before you start, read [Plugin System](/en/guide/plugin-system) to understand how Generator Plugins, Runtime Plugins, and Presets divide the work.
+This page explains how to write a KawaPress plugin. Before you start, read [Plugin System](/en/plugins/plugin-system) to understand how Generator Plugins, Runtime Plugins, and Presets divide the work.
 
 The examples revolve around an imaginary package, `@acme/kawapress-plugin-notes`. Each part of it demonstrates one API, and together they form a complete package.
 

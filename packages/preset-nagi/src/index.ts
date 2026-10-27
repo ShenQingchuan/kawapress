@@ -38,7 +38,7 @@ export type {
   NagiSidebarItem,
   NagiSidebarSection,
 } from './sidebar'
-export type { NagiThemeConfig } from './theme-config'
+export type { NagiNavItem, NagiThemeConfig } from './theme-config'
 
 export function nagi(userConfig: NagiConfig = {}): NagiConfig {
   const { codeBlock, llms, sitemap, ...siteConfig } = userConfig

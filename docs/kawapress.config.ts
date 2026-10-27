@@ -3,8 +3,9 @@ import commentsPlugin from '@kawapress/plugin-comments'
 import imageZoomPlugin from '@kawapress/plugin-image-zoom'
 import lastUpdatedPlugin from '@kawapress/plugin-last-updated'
 import mathjaxPlugin from '@kawapress/plugin-mathjax'
+import mermaidPlugin from '@kawapress/plugin-mermaid'
 import { nagi } from 'kawapress/nagi'
-import { sidebars } from './sidebar'
+import { guideSidebars, pluginSidebars } from './sidebar'
 
 export default nagi({
   title: 'KawaPress',
@@ -21,6 +22,7 @@ export default nagi({
       },
     }),
     mathjaxPlugin(),
+    mermaidPlugin(),
     lastUpdatedPlugin({
       editLink: {
         pattern: 'https://github.com/ShenQingchuan/kawapress/edit/main/:path',
@@ -34,7 +36,14 @@ export default nagi({
       alt: 'KawaPress',
     },
     githubUrl: 'https://github.com/ShenQingchuan/kawapress',
-    sidebar: sidebars.zhCN,
+    nav: [
+      { text: '指南', link: '/guide/what-is-kawapress', activeMatch: '/guide' },
+      { text: '插件', link: '/plugins/plugin-system', activeMatch: '/plugins' },
+    ],
+    sidebar: {
+      '/guide/': guideSidebars.zhCN,
+      '/plugins/': pluginSidebars.zhCN,
+    },
   },
   locales: {
     root: {
@@ -45,7 +54,14 @@ export default nagi({
       label: 'English',
       lang: 'en',
       themeConfig: {
-        sidebar: sidebars.en,
+        nav: [
+          { text: 'Guide', link: '/en/guide/what-is-kawapress', activeMatch: '/en/guide' },
+          { text: 'Plugins', link: '/en/plugins/plugin-system', activeMatch: '/en/plugins' },
+        ],
+        sidebar: {
+          '/en/guide/': guideSidebars.en,
+          '/en/plugins/': pluginSidebars.en,
+        },
       },
     },
   },

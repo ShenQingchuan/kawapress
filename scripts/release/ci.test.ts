@@ -97,13 +97,13 @@ describe('findCommittedVersionProblems', () => {
     expect(problems.join('\n')).toContain('pnpm release:prepare --version 0.1.0')
   })
 
-  it('tells the maintainer to bootstrap before bumping', () => {
+  it('words the bootstrap hint around the version that was passed', () => {
     const problems = findCommittedVersionProblems({
       committedVersion: '0.1.0',
       mode: 'bootstrap',
-      releaseVersion: '0.2.0',
+      releaseVersion: '0.0.1',
     })
-    expect(problems.join('\n')).toContain('pnpm release --version 0.1.0 --bootstrap')
+    expect(problems.join('\n')).toContain('pnpm release --version 0.0.1 --bootstrap')
   })
 })
 

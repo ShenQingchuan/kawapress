@@ -2,6 +2,7 @@ minimumReleaseAgeExclude:
   - '@vue/language-core@3.3.11'
   - vue-tsc@3.3.11
   - markdown-exit@1.3.0
+  - pele@1.12.0
 
 shellEmulator: true
 
@@ -41,6 +42,7 @@ catalogs:
     floating-vue: ^5.2.2
     minisearch: ^7.2.0
     overlayscrollbars: ^2.16.0
+    pele: 1.12.0
     vue: ^3.5.41
   markdown:
     '@mdit-vue/plugin-component': ^3.0.2

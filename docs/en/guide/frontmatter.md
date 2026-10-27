@@ -153,4 +153,4 @@ sitemap: false
 ---
 ```
 
-Only a literal `false` excludes a page. For the other sitemap settings, see [Sitemap](/en/guide/sitemap).
+Only a literal `false` excludes a page. For the other sitemap settings, see [Sitemap](/en/plugins/sitemap).

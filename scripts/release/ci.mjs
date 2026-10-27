@@ -73,15 +73,14 @@ export async function checkCiReleaseEnvironment({ version, env = process.env }) 
 
 /**
  * Pure check that the committed package versions are exactly the version being released.
- * CI publishes what is committed (the release is cut by committing the bump, then
- * tagging); the bootstrap runs before that bump, so it also needs the versions to match.
+ * CI publishes what is committed: the release is cut by committing the bump, then tagging.
  */
 export function findCommittedVersionProblems({ committedVersion, mode, releaseVersion }) {
   if (committedVersion === releaseVersion)
     return []
 
   const fix = mode === 'bootstrap'
-    ? `Bootstrap publishes the version that is currently committed. Run it before bumping:\n  pnpm release --version ${committedVersion} --bootstrap`
+    ? `Bootstrap publishes the version you pass with --version, whatever is committed:\n  pnpm release --version ${releaseVersion} --bootstrap`
     : `Cut the release by committing the bump first, then tag that commit:\n  pnpm release:prepare --version ${releaseVersion}\n  git commit -am "chore: 发布 ${releaseVersion}" && git push origin main`
 
   return [

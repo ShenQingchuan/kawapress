@@ -81,7 +81,7 @@ const plugins = [
 
 KawaPress Plugin 推荐使用 TypeScript 开发，并直接发布 `.ts`、`.vue` 和 CSS 源码，不需要先运行一次打包工具。KawaPress 使用的 Vite 会完成最终的语法转换、依赖解析和浏览器构建。
 
-具体的 `package.json` 写法、各入口的代码与发布检查，请阅读[插件开发](/guide/plugin-development)。
+具体的 `package.json` 写法、各入口的代码与发布检查，请阅读[插件开发](/plugins/plugin-development)。
 
 ## 默认配置应当是一个足够好的产品 {#good-defaults-should-form-a-complete-product}
 
@@ -151,4 +151,4 @@ export default defineConfig({
 
 ## 开始编写插件 {#start-writing-a-plugin}
 
-本篇解释了 KawaPress 为什么这样组织插件。实际编写时，请阅读[插件开发](/guide/plugin-development)。那里按扩展位置列出了六个生成侧方法与两个运行侧方法，并给出可以直接参考的代码。
+本篇解释了 KawaPress 为什么这样组织插件。实际编写时，请阅读[插件开发](/plugins/plugin-development)。那里按扩展位置列出了六个生成侧方法与两个运行侧方法，并给出可以直接参考的代码。

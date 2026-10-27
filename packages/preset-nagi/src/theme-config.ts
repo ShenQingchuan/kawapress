@@ -1,10 +1,23 @@
 import type { NagiHomeImage } from './home'
 import type { NagiSidebarConfig } from './sidebar'
 
+/** One link in the top navigation bar. */
+export interface NagiNavItem {
+  text: string
+  /** Public route of the page it opens, for example `/guide/getting-started`. */
+  link: string
+  /**
+   * Route prefix that keeps the item highlighted. Without it, the item is
+   * highlighted only on its own page.
+   */
+  activeMatch?: string
+}
+
 export interface ResolvedNagiThemeConfig {
   sidebarMenuLabel: string
   sidebarResizeLabel: string
   navMenuLabel: string
+  navLinksLabel: string
   outlineLabel: string
   outlineCollapseLabel: string
   outlineExpandLabel: string
@@ -19,6 +32,7 @@ export interface ResolvedNagiThemeConfig {
   footerPoweredByText: string
   logo?: NagiHomeImage
   githubUrl?: string
+  nav?: NagiNavItem[]
   sidebar?: NagiSidebarConfig
 }
 
@@ -28,6 +42,7 @@ const EN_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: 'Menu',
   sidebarResizeLabel: 'Resize sidebar',
   navMenuLabel: 'Open navigation menu',
+  navLinksLabel: 'Main navigation',
   outlineLabel: 'On this page',
   outlineCollapseLabel: 'Collapse page outline',
   outlineExpandLabel: 'Expand page outline',
@@ -46,6 +61,7 @@ const ZH_THEME_CONFIG: ResolvedNagiThemeConfig = {
   sidebarMenuLabel: '菜单',
   sidebarResizeLabel: '调整侧边栏宽度',
   navMenuLabel: '打开导航菜单',
+  navLinksLabel: '主导航',
   outlineLabel: '本页目录',
   outlineCollapseLabel: '收起本页目录',
   outlineExpandLabel: '展开本页目录',
@@ -72,6 +88,7 @@ export function resolveNagiThemeConfig(
     sidebarMenuLabel: config.sidebarMenuLabel ?? defaults.sidebarMenuLabel,
     sidebarResizeLabel: config.sidebarResizeLabel ?? defaults.sidebarResizeLabel,
     navMenuLabel: config.navMenuLabel ?? defaults.navMenuLabel,
+    navLinksLabel: config.navLinksLabel ?? defaults.navLinksLabel,
     outlineLabel: config.outlineLabel ?? defaults.outlineLabel,
     outlineCollapseLabel: config.outlineCollapseLabel ?? defaults.outlineCollapseLabel,
     outlineExpandLabel: config.outlineExpandLabel ?? defaults.outlineExpandLabel,
@@ -90,6 +107,9 @@ export function resolveNagiThemeConfig(
   }
   if (config.githubUrl !== undefined) {
     resolved.githubUrl = config.githubUrl
+  }
+  if (config.nav !== undefined) {
+    resolved.nav = config.nav
   }
   if (config.sidebar !== undefined) {
     resolved.sidebar = config.sidebar

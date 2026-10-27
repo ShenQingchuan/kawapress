@@ -153,4 +153,4 @@ sitemap: false
 ---
 ```
 
-只有直接写 `false` 才会排除页面。站点地图的其他设置见[站点地图](/guide/sitemap)。
+只有直接写 `false` 才会排除页面。站点地图的其他设置见[站点地图](/plugins/sitemap)。

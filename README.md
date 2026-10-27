@@ -126,7 +126,7 @@ KawaPress keeps extension boundaries explicit:
 - a **Runtime Plugin** extends the real Vue App and Vue Router in both SSR and the browser;
 - a **Preset** combines configuration and plugins into a ready-to-use experience such as nagi.
 
-A logical plugin is installed once and can provide both generator and runtime behavior. Learn more in the [Plugin System guide](https://shenqingchuan.github.io/kawapress/en/guide/plugin-system).
+A logical plugin is installed once and can provide both generator and runtime behavior. Learn more in the [Plugin System guide](https://shenqingchuan.github.io/kawapress/en/plugins/plugin-system).
 
 ## Documentation
 
@@ -134,7 +134,7 @@ A logical plugin is installed once and can provide both generator and runtime be
 - [What is KawaPress?](https://shenqingchuan.github.io/kawapress/en/guide/what-is-kawapress)
 - [Markdown Extensions](https://shenqingchuan.github.io/kawapress/en/guide/markdown-extensions)
 - [Internationalization](https://shenqingchuan.github.io/kawapress/en/guide/internationalization)
-- [Plugin System](https://shenqingchuan.github.io/kawapress/en/guide/plugin-system)
+- [Plugin System](https://shenqingchuan.github.io/kawapress/en/plugins/plugin-system)
 - [Theme Customization](https://shenqingchuan.github.io/kawapress/en/guide/theme-customization)
 
 ## Contributing
