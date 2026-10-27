@@ -48,12 +48,10 @@ onUnmounted(() => {
         />
         <span>{{ site.title }}</span>
       </a>
-      <div class="nagi-nav__start">
-        <KawaOutlet name="header.actions" />
-      </div>
       <div class="nagi-nav__end">
         <NavLinks class="nagi-nav__links" />
         <div class="nagi-nav__controls nagi-nav__controls--desktop">
+          <KawaOutlet name="header.actions" />
           <LanguageMenu />
           <AppearanceSwitch />
           <GitHubLink />

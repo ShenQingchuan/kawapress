@@ -1,47 +1,19 @@
 ---
-title: 主题开发与 Outlet 机制
+title: 主题开发
 description: 了解 KawaPress 的主题架构、插座插头模型、必要组件约定与配置扩展。
 ---
 
-# 主题开发与 Outlet 机制
+# 主题开发
 
 在 KawaPress 中，主题决定页面的结构与排版骨架：顶栏在哪里、正文放在哪里、侧边栏如何展现以及 404 页面怎样渲染。
 
 与其他静态站点生成器不同，KawaPress 坚持两项核心设计哲学：
-1. **主题是一个普通的 Plugin**：KawaPress 没有独立于插件之外的“主题加载器”，主题通过相同的插件包机制进行分发和安装。
+1. **主题也是一个 Plugin**：KawaPress 没有独立于插件之外的“主题加载器”，主题通过相同的插件包机制进行分发和安装。
 2. **插座与插头模型（Outlet 机制）**：主题负责搭骨架并留出插座（`<KawaOutlet>`），插件负责提供功能组件插进插座。两者互不引用、零耦合。
-
----
 
 ## 页面骨架与 Outlet 分布 {#page-frame-and-outlets}
 
-一个典型的 KawaPress 文档页面由**主题布局组件**、**核心正文渲染区**和**四个标准插座（Outlet）**共同组织。
-
-页面的整体排版结构如下：
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ Layout.vue (由主题控制)                                     │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ 顶栏 (Header / NavBar)                                │  │
-│  │ Logo & 站点名                   [header.actions] 🔌   │  │
-│  └───────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ 主内容区 (Main)                                       │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Markdown 正文区 (RouterView，核心负责渲染)      │  │  │
-│  │  │ <h1>首个大标题</h1>                             │  │  │
-│  │  │ [doc.header] 🔌 (由核心在首个 H1 后自动插入)    │  │  │
-│  │  │ 正文段落、代码块、列表...                       │  │  │
-│  │  │ [doc.footer] 🔌                                 │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │  [doc.after] 🔌 (评论区、前后篇翻页等)             │  │
-│  └───────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ 页脚 (Footer)                                         │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
+一个典型的 KawaPress 文档页面由主题布局组件、核心正文渲染区和四个标准插座（Outlet）共同组织。
 
 ### 四个标准 Outlet 规范 {#standard-outlets}
 
@@ -55,8 +27,6 @@ KawaPress 约定了以下四个标准的 Outlet 位置：
 | `doc.after` | **主题** 在正文容器下方写 `<KawaOutlet name="doc.after" />` | 整个文档正文区域之外的紧接部分 | 评论区（Giscus/Waline）、前后翻页 |
 
 > **提示**：除了 `doc.header` 是核心解析 Markdown 时自动注入外，其余三个 Outlet 均由主题在自己的 Vue 模板中决定摆放在何处。
-
----
 
 ## 主题与插件如何解耦协作？ {#how-they-collaborate}
 
@@ -74,8 +44,6 @@ KawaPress 约定了以下四个标准的 Outlet 位置：
 | **主题 (Theme)** | <ul><li>提供全局 `Layout.vue` 与 `NotFound.vue`</li><li>在骨架上合适的位置摆放 `<KawaOutlet>` 插座</li><li>定义设计变量（CSS Tokens，基于 `--kawa-*`）</li></ul> | <ul><li>不硬编码内置具体业务功能（如强行内置搜索弹窗或评论系统）</li><li>不侵入 Markdown 编译器修改文档 HTML</li></ul> |
 | **插件 (Plugin)** | <ul><li>实现独立的业务逻辑和 UI 组件</li><li>通过 `api.addToOutlet()` 把组件挂入插座</li><li>默认样式写在 `@layer kawa.plugin` 并使用 `--kawa-*` 变量</li></ul> | <ul><li>不写死像素级宽度和假定特定的主题 DOM 容器</li><li>不覆盖主题的基础全局样式</li><li>不直接修改主题私有变量（如 `--nagi-*`）</li></ul> |
 | **核心 (Core)** | <ul><li>创建 Vue 应用实例与站内路由</li><li>渲染当前页面的 Markdown 内容至 `<RouterView />`</li><li>自动在首个 H1 后挂载 `doc.header`</li><li>按插件配置顺序分发各个插座的内容并进行校验警告</li></ul> | <ul><li>不自带硬编码的顶栏、侧边栏或样式主题</li><li>把所有页面布局呈现权交由主题</li></ul> |
-
----
 
 ## 主题必须约定的两个组件 {#kawapress-requires-two-components}
 
@@ -170,8 +138,6 @@ const site = useSite()
 </template>
 ```
 
----
-
 ## 最小主题包结构 {#a-minimal-theme-package}
 
 一个标准的主题 npm 包结构如下：
@@ -251,8 +217,6 @@ export default defineRuntimePlugin({
 })
 ```
 
----
-
 ## `themeConfig` 类型扩展 {#theme-config}
 
 KawaPress 不主动解释 `themeConfig` 的字段。主题可以把自己的配置字段扩展到 KawaPress 的 `ThemeConfig` 接口上，站点使用者就能在 `defineConfig()` 里享受到类型提示与校验：
@@ -300,8 +264,6 @@ const themeConfig = useThemeConfig()
   <img v-if="themeConfig?.logo" :src="themeConfig.logo" alt="logo" />
 </template>
 ```
-
----
 
 ## 样式设计约定 {#styling}
 

@@ -131,17 +131,17 @@ export const pluginSidebars = defineLocalizedSidebars({
         },
         {
           text: {
-            zhCN: '主题开发与 Outlet 机制',
-            en: 'Theme Development & Outlets',
-          },
-          link: '/plugins/theme-development',
-        },
-        {
-          text: {
             zhCN: '插件开发',
             en: 'Plugin Development',
           },
           link: '/plugins/plugin-development',
+        },
+        {
+          text: {
+            zhCN: '主题开发',
+            en: 'Theme Development',
+          },
+          link: '/plugins/theme-development',
         },
       ],
     },

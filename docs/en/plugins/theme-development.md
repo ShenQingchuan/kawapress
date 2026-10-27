@@ -1,47 +1,19 @@
 ---
-title: Theme Development & Outlets
+title: Theme Development
 description: Learn the KawaPress theme architecture, socket-and-plug model, required components, and configuration extension.
 ---
 
-# Theme Development & Outlets
+# Theme Development
 
 In KawaPress, themes determine the structural skeleton of the page: where the top navigation bar sits, where document content is rendered, how sidebars behave, and how 404 pages look.
 
 Unlike other static site generators, KawaPress follows two primary architectural principles:
-1. **A Theme is a regular Plugin**: There is no separate "theme loader". Themes are packaged, distributed, and installed just like regular plugins.
+1. **A Theme is also a Plugin**: There is no separate "theme loader". Themes are packaged, distributed, and installed just like regular plugins.
 2. **Socket-and-Plug Model (Outlet System)**: Themes provide the structural frame and leave outlets (`<KawaOutlet>`), while plugins inject self-contained UI components into them. Themes and plugins remain completely decoupled.
-
----
 
 ## Page Skeleton & Outlet Layout {#page-frame-and-outlets}
 
-A typical KawaPress documentation page is composed of **Theme Layout Components**, **KawaPress Core Content Area**, and **Four Standard Outlets**.
-
-The overall structural layout looks like:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ Layout.vue (Theme Governed)                                 │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Top Bar (Header / NavBar)                             │  │
-│  │ Logo & Site Title               [header.actions] 🔌   │  │
-│  └───────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Main Content Area (Main)                              │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Markdown Body (RouterView, Core Governed)       │  │  │
-│  │  │ <h1>First Heading</h1>                          │  │  │
-│  │  │ [doc.header] 🔌 (Core auto-mounts below H1)     │  │  │
-│  │  │ Paragraphs, code blocks, tables...              │  │  │
-│  │  │ [doc.footer] 🔌                                 │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │  [doc.after] 🔌 (Comments, prev/next pagination)   │  │
-│  └───────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Page Footer (Footer)                                  │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
+A typical KawaPress documentation page is composed of theme layout components, the core content area, and four standard outlets.
 
 ### Four Standard Outlets {#standard-outlets}
 
@@ -55,8 +27,6 @@ KawaPress defines four standard outlets:
 | `doc.after` | **Theme** places `<KawaOutlet name="doc.after" />` | Directly outside and below the document container | Comments (Giscus/Waline), prev/next links |
 
 > **Note**: Except for `doc.header` which is injected automatically by KawaPress when compiling Markdown, all other three outlets are placed freely by the theme in its Vue templates.
-
----
 
 ## How Themes & Plugins Decouple {#how-they-collaborate}
 
@@ -74,8 +44,6 @@ Themes and plugins never directly import each other. The collaboration flow is s
 | **Theme** | <ul><li>Provide global `Layout.vue` and `NotFound.vue`</li><li>Place `<KawaOutlet>` sockets at structural locations</li><li>Define design tokens (CSS variables via `--kawa-*`)</li></ul> | <ul><li>Hardcode business logic (e.g. search dialogs or comment systems)</li><li>Invade Markdown compilation</li></ul> |
 | **Plugin** | <ul><li>Implement self-contained logic and UI components</li><li>Plug into outlets via `api.addToOutlet()`</li><li>Scope default styles in `@layer kawa.plugin` using `--kawa-*` tokens</li></ul> | <ul><li>Assume specific container widths or theme-specific DOM structure</li><li>Override theme global styles or read theme-private tokens (e.g. `--nagi-*`)</li></ul> |
 | **Core** | <ul><li>Create Vue app and station client-side router</li><li>Render Markdown to `<RouterView />`</li><li>Automatically mount `doc.header` after the first H1</li><li>Validate outlet registrations and dispatch items in order</li></ul> | <ul><li>Hardcode topbars, sidebars, or default layouts</li><li>Take away visual layout control from the theme</li></ul> |
-
----
 
 ## Two Required Components {#kawapress-requires-two-components}
 
@@ -170,8 +138,6 @@ const site = useSite()
 </template>
 ```
 
----
-
 ## Minimal Theme Package Structure {#a-minimal-theme-package}
 
 ```text
@@ -246,8 +212,6 @@ export default defineRuntimePlugin({
 })
 ```
 
----
-
 ## Extending `themeConfig` {#theme-config}
 
 Themes can extend the `ThemeConfig` interface to provide full autocompletion and type safety in `defineConfig()`:
@@ -279,8 +243,6 @@ const themeConfig = useThemeConfig()
   <img v-if="themeConfig?.logo" :src="themeConfig.logo" alt="logo" />
 </template>
 ```
-
----
 
 ## Styling Conventions {#styling}
 
