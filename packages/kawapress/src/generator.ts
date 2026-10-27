@@ -4,3 +4,4 @@
  */
 export { parseGitLog, readGitLastUpdated } from './generator/git'
 export type { ReadGitLastUpdatedOptions } from './generator/git'
+export { useRuntimeDependencies } from './generator/runtime-dependencies'

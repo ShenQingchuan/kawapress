@@ -7,6 +7,7 @@ import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
 import { createMarkdownPageLoader } from '../../compiler/page-loader'
 import { createDataLoaderContext } from '../data/context'
+import { runtimeDependencySpecifiers } from '../runtime-dependencies'
 import { dataLoaderPlugin } from './plugins/data'
 import { devDeadLinksPlugin } from './plugins/dev-dead-links'
 import { markdownPlugin } from './plugins/markdown'
@@ -16,6 +17,23 @@ import { virtualSitePlugin } from './plugins/site'
 
 const require = createRequire(import.meta.url)
 const VUE_PACKAGE_PATH = 'vue/package.json'
+const KAWAPRESS_PACKAGE_NAME = 'kawapress'
+
+/**
+ * Packages the browser entry imports before it asks for a page: the router and
+ * the head manager. A site installs `kawapress` and not its dependencies, so the
+ * site root cannot resolve them by name and they are declared through the chain
+ * of packages that leads to them.
+ */
+const CORE_RUNTIME_DEPENDENCIES = ['vue-router', '@unhead/vue', '@unhead/vue/client']
+
+/**
+ * Vue is declared by its bare name, not through that chain. `resolve.alias`
+ * already points every `vue` import at one file, including the imports in
+ * Markdown pages, and a page cannot resolve the package on its own: Vite finds
+ * the declared dependency for such an import by its bare name only.
+ */
+const VUE_DEPENDENCY = 'vue'
 
 export interface CreateBaseViteConfigOptions {
   /** Reuse a page loader created by the caller, for example to read its link registry. */
@@ -44,6 +62,19 @@ export function createBaseViteConfig(
       resolve: {
         conditions: ['module'],
       },
+    },
+    // Without declared entries the optimizer starts empty: there is no
+    // `index.html` to scan, so every dependency would be discovered after the
+    // first page request and force a full reload. See useRuntimeDependencies().
+    optimizeDeps: {
+      include: [
+        VUE_DEPENDENCY,
+        ...runtimeDependencySpecifiers(
+          root,
+          KAWAPRESS_PACKAGE_NAME,
+          CORE_RUNTIME_DEPENDENCIES,
+        ),
+      ],
     },
     plugins: createBasePlugins(root, siteConfig, pageLoader),
   }
