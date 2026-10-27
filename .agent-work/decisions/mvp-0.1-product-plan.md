@@ -533,7 +533,7 @@ interface PageData {
 }
 ```
 
-Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAML 或花括号包围的 JSON 对象。它是开放的、严格 JSON 可序列化的数据对象：Core 保留所有键值，不建立通用 schema；字段 schema 与构建校验仍留到 0.3。Core 只赋予 `title`、`description` 与 `titleTemplate` 页面元数据语义：字符串 `title` 优先于第一个 h1，否则回退 h1；字符串 `description` 生成唯一的 description meta；`titleTemplate` 可以是字符串模板，其中的 `%s` 替换为页面标题，或为 `false` 以只使用页面标题。其他值保持原样供主题、插件或用户代码读取。Core 在 SSR 与浏览器导航中统一生成 title 与 description；页面级 `head`、`dir` 和 VitePress 的 `$frontmatter` 模板全局不进入 0.1，用户使用 `usePageData()` 读取当前页面数据。
+Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAML 或花括号包围的 JSON 对象。它是开放的、严格 JSON 可序列化的数据对象：Core 保留所有键值，不建立通用 schema；字段 schema 与构建校验仍留到 0.3。Core 只赋予 `title`、`description` 与 `titleTemplate` 页面元数据语义：字符串 `title` 优先于第一个 h1，否则回退 h1；标题的纯文本是作者写在标题行上的文字去掉 Markdown 格式：强调、加粗、删除线与链接的标记消失而文字保留（图片同样只保留 alt 文字），行内代码保留内容去掉反引号，公式、行内 HTML、表情短代码等其他扩展语法按源码原样保留，自定义 ID 后缀与永久链接符号不进入标题，空白折叠并去除首尾；该纯文本标题同时用于 `pageData.title`、`pageData.headers` 的标题与纯解析页面摘要、搜索索引，且不随站点安装了哪些 Markdown 插件而变；字符串 `description` 生成唯一的 description meta；`titleTemplate` 可以是字符串模板，其中的 `%s` 替换为页面标题，或为 `false` 以只使用页面标题。其他值保持原样供主题、插件或用户代码读取。Core 在 SSR 与浏览器导航中统一生成 title 与 description；页面级 `head`、`dir` 和 VitePress 的 `$frontmatter` 模板全局不进入 0.1，用户使用 `usePageData()` 读取当前页面数据。
 
 `PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与 pageData，保证 Generator Plugin 的 `pageData()` 修改只执行一次。进入浏览器的页面表只携带每页的加载函数，不携带标题、layout 或其他摘要：标题属于需要它的主题，不属于 Core 的路由数据。题目与 layout 的读取能力由 `kawapress/generator` 提供：`listMarkdownPages()` 给出页面文件，`createPageSummaryReader()` 读出作者写下的 `PageSummary`（`title` 与可选的 `layout`），都不渲染页面、不执行 `pageData()`。`kawapress/client` 只公开当前页面数据：
 
