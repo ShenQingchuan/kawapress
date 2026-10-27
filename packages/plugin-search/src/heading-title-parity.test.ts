@@ -1,4 +1,3 @@
-import type { KawaPressPlugin } from 'kawapress'
 import type { MarkdownExit } from 'markdown-exit'
 import { mathjaxPlugin } from '@kawapress/plugin-mathjax'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -30,7 +29,7 @@ let compiler: MarkdownExit
 
 beforeAll(async () => {
   compiler = await createMarkdownCompiler({
-    pluginRunner: await createGeneratorPluginRunner([mathjaxPlugin() as KawaPressPlugin]),
+    pluginRunner: await createGeneratorPluginRunner([mathjaxPlugin()]),
   })
 })
 
