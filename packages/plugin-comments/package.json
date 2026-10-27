@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-comments",
   "type": "module",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "GitHub Discussions comments for KawaPress, powered by Giscus",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",
@@ -27,6 +27,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "README-zh-CN.md",
     "src/**/!(*.test.*)"
   ],
   "engines": {

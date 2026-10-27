@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-last-updated",
   "type": "module",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Last updated time and edit link for every KawaPress page",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",
@@ -27,6 +27,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "README-zh-CN.md",
     "src/**/!(*.test.*)"
   ],
   "engines": {

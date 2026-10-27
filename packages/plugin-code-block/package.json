@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-code-block",
   "type": "module",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Language labels, copy controls, and line numbers for KawaPress code blocks",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",
@@ -27,6 +27,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "README-zh-CN.md",
     "src/**/!(*.test.*)"
   ],
   "engines": {

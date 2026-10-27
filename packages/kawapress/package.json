@@ -1,7 +1,7 @@
 {
   "name": "kawapress",
   "type": "module",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A Vue-centric static site generator",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",
@@ -52,6 +52,7 @@
     "kawapress": "./bin/kawapress.mjs"
   },
   "files": [
+    "README-zh-CN.md",
     "bin",
     "src/**/!(*.test.*)"
   ],
