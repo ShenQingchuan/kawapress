@@ -16,7 +16,9 @@
     "test:e2e": "pnpm --filter @kawapress/e2e test",
     "bench": "pnpm --filter @kawapress/bench bench",
     "release": "node scripts/release.mjs",
-    "release:dry": "node scripts/release.mjs --dry-run"
+    "release:dry": "node scripts/release.mjs --dry-run",
+    "release:prepare": "node scripts/release.mjs --prepare",
+    "release:trust": "node scripts/trust-publishers.mjs"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
