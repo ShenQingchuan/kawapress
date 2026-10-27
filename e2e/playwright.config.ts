@@ -48,7 +48,11 @@ export default defineConfig({
     },
     {
       // `kawapress dev` always listens on its default port.
-      command: 'pnpm --dir ../docs dev',
+      //
+      // The dependency optimizer cache is removed first: the dev smoke suite has
+      // to see the cold start every time, because a stale cache hides the reload
+      // that a lazily imported dependency causes on a first visit.
+      command: 'rm -rf ../docs/node_modules/.vite && pnpm --dir ../docs dev',
       // A public asset is served by Vite itself, so it stays reachable even
       // while the page requests are still being inspected.
       url: `${devOrigin}${sitePath('/kawapress-logo.png')}`,
