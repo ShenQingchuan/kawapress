@@ -86,7 +86,7 @@ export default defineConfig({
     {
       name: 'preview',
       use: { baseURL: previewOrigin },
-      testIgnore: [/dev-smoke\.spec\.ts/, /comments\.spec\.ts/],
+      testIgnore: [/dev-smoke\.spec\.ts/, /comments\.spec\.ts/, /sidebar-pages\.spec\.ts/],
     },
     {
       name: 'dev-smoke',
@@ -96,7 +96,7 @@ export default defineConfig({
     {
       name: 'plugins-site',
       use: { baseURL: pluginsOrigin },
-      testMatch: /comments\.spec\.ts/,
+      testMatch: [/comments\.spec\.ts/, /sidebar-pages\.spec\.ts/],
     },
   ],
 })

@@ -1,4 +1,4 @@
-import type { PageRouteMeta } from 'kawapress'
+import type { SidebarPage } from './sidebar'
 import { describe, expect, it } from 'vitest'
 import {
   createSidebar,
@@ -8,16 +8,16 @@ import {
   resolveConfiguredSidebar,
 } from './sidebar'
 
-function page(path: string, title: string): PageRouteMeta {
-  return { path, title }
+function page(title: string): SidebarPage {
+  return { title }
 }
 
 describe('nagi sidebar metadata', () => {
   it('localizes directories and orders listed pages', () => {
     const pages = {
-      '/guide/getting-started': page('/guide/getting-started', '快速开始'),
-      '/guide/what-is-kawapress': page('/guide/what-is-kawapress', 'KawaPress 是什么？'),
-      '/guide/appendix': page('/guide/appendix', '附录'),
+      '/guide/getting-started': page('快速开始'),
+      '/guide/what-is-kawapress': page('KawaPress 是什么？'),
+      '/guide/appendix': page('附录'),
     }
 
     expect(createSidebar(pages, {
@@ -63,9 +63,9 @@ describe('nagi sidebar metadata', () => {
 
   it('keeps only doc layout pages in the automatic sidebar', () => {
     const pages = {
-      '/': { path: '/', title: 'Home', layout: 'home' },
-      '/about': { path: '/about', title: 'About', layout: 'page' },
-      '/guide/start': { path: '/guide/start', title: 'Start' },
+      '/': { title: 'Home', layout: 'home' },
+      '/about': { title: 'About', layout: 'page' },
+      '/guide/start': { title: 'Start' },
     }
 
     expect(createSidebar(pages)).toEqual([{
@@ -137,7 +137,7 @@ describe('nagi sidebar metadata', () => {
 
   it('uses locale-specific metadata below the locale root', () => {
     const pages = {
-      '/en/guide/getting-started': page('/en/guide/getting-started', 'Getting Started'),
+      '/en/guide/getting-started': page('Getting Started'),
     }
 
     expect(createSidebar(pages, {
