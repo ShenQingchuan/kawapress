@@ -1,12 +1,11 @@
 /** Discovery of the public packages and the local version helpers. */
 
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 
 import { normalizeRegistry } from './cli.mjs'
 import { defaultRegistry, rootDir, unscopedPackageNames } from './constants.mjs'
-import { pathExists, readJson, run } from './runtime.mjs'
+import { pathExists, readJson } from './runtime.mjs'
 import { compareSemver, parseSemver } from './semver.mjs'
 
 /** Every non-private package under `packages/`, sorted by directory name. */
@@ -85,52 +84,43 @@ export function assertVersionIsNotOlder(targetVersion, currentVersion) {
  * Rewrites the `version` field of every public package.json, keeping the rest of the
  * file byte-identical by applying a generated patch instead of re-serialising JSON.
  */
-export async function updateWorkspaceVersions(packages, version) {
-  const patchSections = []
+/**
+ * Manifest fields that hold the lockstep release version. `kawapressVersion` is
+ * the `kawapress` version `create-kawapress` writes into new sites, so it moves
+ * together with the package versions.
+ */
+export const LOCKSTEP_VERSION_FIELDS = ['version', 'kawapressVersion']
 
+/**
+ * Rewrites every lockstep version field of one manifest, keeping the rest of the
+ * file byte for byte. Returns the new content, or `undefined` when nothing changes.
+ */
+export function bumpManifestVersions(content, version) {
+  let changed = false
+  const next = content.split('\n').map((line) => {
+    for (const field of LOCKSTEP_VERSION_FIELDS) {
+      const match = new RegExp(`^ {2}"${field}": "([^"]+)"(,?)$`).exec(line)
+      if (match && match[1] !== version) {
+        changed = true
+        return `  "${field}": "${version}"${match[2]}`
+      }
+    }
+    return line
+  }).join('\n')
+  return changed ? next : undefined
+}
+
+export async function updateWorkspaceVersions(packages, version) {
+  const updates = []
   for (const packageInfo of packages) {
     const content = await readFile(packageInfo.manifestPath, 'utf8')
-    const lines = content.split('\n')
-    const versionLineIndex = lines.findIndex(line => /^ {2}"version": "[^"]+",$/.test(line))
-    if (versionLineIndex < 0)
+    if (!/^ {2}"version": "[^"]+",$/m.test(content))
       throw new Error(`Could not find the version line in ${packageInfo.relativeDirectory}/package.json.`)
-
-    const oldLine = lines[versionLineIndex]
-    const newLine = `  "version": "${version}",`
-    if (oldLine === newLine)
-      continue
-
-    const previousLine = lines[versionLineIndex - 1]
-    const nextLine = lines[versionLineIndex + 1]
-    if (previousLine === undefined || nextLine === undefined)
-      throw new Error(`The version line in ${packageInfo.relativeDirectory}/package.json needs surrounding context.`)
-
-    const path = `${packageInfo.relativeDirectory}/package.json`.replaceAll('\\', '/')
-    const hunkStart = versionLineIndex
-    patchSections.push([
-      `diff --git a/${path} b/${path}`,
-      `--- a/${path}`,
-      `+++ b/${path}`,
-      `@@ -${hunkStart},3 +${hunkStart},3 @@`,
-      ` ${previousLine}`,
-      `-${oldLine}`,
-      `+${newLine}`,
-      ` ${nextLine}`,
-      '',
-    ].join('\n'))
+    const next = bumpManifestVersions(content, version)
+    if (next !== undefined)
+      updates.push([packageInfo.manifestPath, next])
   }
 
-  if (patchSections.length === 0)
-    return
-
-  const patchDirectory = await mkdtemp(join(tmpdir(), 'kawapress-version-'))
-  const patchPath = join(patchDirectory, 'versions.patch')
-  try {
-    await writeFile(patchPath, patchSections.join(''))
-    await run('git', ['apply', '--check', patchPath], { capture: true })
-    await run('git', ['apply', patchPath], { capture: true })
-  }
-  finally {
-    await rm(patchDirectory, { force: true, recursive: true })
-  }
+  for (const [path, content] of updates)
+    await writeFile(path, content)
 }

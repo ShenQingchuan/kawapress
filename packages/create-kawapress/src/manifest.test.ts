@@ -7,8 +7,10 @@ async function readManifest(relativePath: string): Promise<Record<string, unknow
 }
 
 describe('manifest', () => {
-  it('exposes the scaffolder version', () => {
-    expect(scaffolderVersion).toBe('0.0.1')
+  it('exposes the scaffolder version', async () => {
+    const manifest = await readManifest('../package.json')
+
+    expect(scaffolderVersion).toBe(manifest.version)
   })
 
   it('keeps kawapressVersion equal to the kawapress package version', async () => {

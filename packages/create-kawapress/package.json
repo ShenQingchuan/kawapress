@@ -43,7 +43,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "kawapressVersion": "0.0.1",
+  "kawapressVersion": "0.1.0",
   "dependencies": {
     "@clack/prompts": "catalog:node",
     "citty": "catalog:node",
