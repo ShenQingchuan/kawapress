@@ -1,3 +1,5 @@
+import type { BuiltPageEntry } from '../core/page-manifest'
+
 /**
  * A chunk of the Vite client manifest. Only the fields page asset collection
  * reads are described; Vite writes more.
@@ -16,63 +18,87 @@ export type ClientManifest = Record<string, ClientManifestEntry>
 export interface PageAssets {
   /** Stylesheet files, entry CSS first, in manifest traversal order. */
   css: string[]
-  /** JS files the page chunk needs before it can hydrate. */
+  /** JS files the document needs before it can hydrate. */
   modulepreload: string[]
 }
 
 /**
- * Picks the client assets one prerendered page needs.
+ * Page table entry of one page chunk: the chunk file itself, plus the JS and CSS
+ * it needs beyond what the entry already loads.
  *
- * `moduleIds` are the module ids the SSR render recorded for the page: the page
- * module plus every SFC it rendered. Only ids that are manifest keys are used;
- * theme components bundled into a shared chunk are not keys and are reached
- * through the chunk `imports` instead. Dynamic imports stay out on purpose so a
- * page does not pay for chunks it only loads on interaction.
- *
- * Chunks the entry chunk imports statically are preloaded as well: they are
- * needed to start the app, and the browser would otherwise discover them only
- * after downloading and parsing the entry chunk.
+ * Everything is read from the final bundle, so no file name is guessed from a
+ * route or from an output naming pattern. Modules the page only imports
+ * dynamically (a popup component, for example) stay out on purpose: they belong
+ * to an interaction, not to the first render.
  */
-export function collectPageAssets(
+export function collectPageEntry(
   manifest: ClientManifest,
-  moduleIds: Iterable<string>,
+  pageModuleId: string,
   entryKey: string,
-): PageAssets {
-  const pageKeys = [...new Set([...moduleIds].map(toManifestKey))]
-    .filter(key => Object.hasOwn(manifest, key))
+): BuiltPageEntry | undefined {
+  const key = toManifestKey(pageModuleId)
+  const page = manifest[key]
+  if (!page) {
+    return undefined
+  }
 
-  const css: string[] = []
-  const entryFiles: string[] = []
-  walkChunks(manifest, [entryKey], (chunk) => {
-    css.push(...chunk.css ?? [])
-    entryFiles.push(chunk.file)
-  })
+  const entry = collectClosure(manifest, [entryKey])
+  const own = collectClosure(manifest, [key])
+  const js = own.files.filter(file => file !== page.file && !entry.files.includes(file))
+  const css = own.css.filter(href => !entry.css.includes(href))
 
-  const pageFiles: string[] = []
-  walkChunks(manifest, pageKeys, (chunk) => {
-    css.push(...chunk.css ?? [])
-    pageFiles.push(chunk.file)
-  })
-
-  // The entry script tag already loads the entry chunk.
-  const entryFile = manifest[entryKey]?.file
-  const modulepreload = unique([...entryFiles, ...pageFiles])
-    .filter(file => file !== entryFile)
-
-  return { css: unique(css), modulepreload }
+  return js.length === 0 && css.length === 0
+    ? page.file
+    : [page.file, js, css]
 }
 
 /**
- * Visits a chunk and its static imports, transitively. Keys that are not in the
- * manifest are skipped instead of failing the build.
+ * Assets one document has to preload: everything the entry needs to start, plus
+ * the page chunk of the document and its extra dependencies. First paint and a
+ * client navigation therefore use the very same dependency set.
  */
-function walkChunks(
+export function collectPageAssets(
+  manifest: ClientManifest,
+  entry: BuiltPageEntry | undefined,
+  entryKey: string,
+): PageAssets {
+  const assets = collectClosure(manifest, [entryKey])
+  const files = [...assets.files]
+  const css = [...assets.css]
+
+  if (entry !== undefined) {
+    const [file, js = [], extraCss = []] = typeof entry === 'string' ? [entry] : entry
+    files.push(file, ...js)
+    css.push(...extraCss)
+  }
+
+  // The entry script tag already loads the entry chunk.
+  const entryFile = manifest[entryKey]?.file
+  return {
+    css: unique(css),
+    modulepreload: unique(files).filter(file => file !== entryFile),
+  }
+}
+
+interface ChunkClosure {
+  files: string[]
+  css: string[]
+}
+
+/**
+ * Files and stylesheets of the given chunks and their static imports, visited in
+ * manifest order. Keys that are not in the manifest are skipped instead of
+ * failing the build.
+ */
+function collectClosure(
   manifest: ClientManifest,
   roots: Iterable<string>,
-  visit: (chunk: ClientManifestEntry) => void,
-): void {
+): ChunkClosure {
   const seen = new Set<string>()
+  const files: string[] = []
+  const css: string[] = []
   const pending = [...roots]
+
   for (let index = 0; index < pending.length; index++) {
     const key = pending[index]
     if (seen.has(key)) {
@@ -83,17 +109,21 @@ function walkChunks(
     if (!chunk) {
       continue
     }
-    visit(chunk)
+    files.push(chunk.file)
+    css.push(...chunk.css ?? [])
     pending.push(...chunk.imports ?? [])
   }
+
+  return { files, css }
 }
 
 /**
- * SSR module ids are relative to the Vite root, like manifest keys, but use
- * platform separators. Markdown pages keep their `.md` extension in both.
+ * SSR module ids are relative to the Vite root, like manifest keys, but carry a
+ * leading slash and use platform separators. Markdown pages keep their `.md`
+ * extension in both.
  */
-function toManifestKey(moduleId: string): string {
-  return moduleId.replaceAll('\\', '/').replace(/^\.\//, '')
+export function toManifestKey(moduleId: string): string {
+  return moduleId.replaceAll('\\', '/').replace(/^\/+/, '').replace(/^\.\//, '')
 }
 
 function unique(values: string[]): string[] {

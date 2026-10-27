@@ -36,39 +36,40 @@ export interface HydrationPlan {
  * for every unknown URL, so its first render has to resolve `/404` too. Every
  * other document was rendered for its path alone, so the query and the hash are
  * dropped for the first render and adopted right afterwards, which is a normal
- * update instead of a mismatch.
+ * update instead of a mismatch. A percent-encoded path was rendered decoded, so
+ * the first render uses the decoded path and the address bar follows it.
  */
 export function resolveHydrationPlan(
   { isNotFoundDocument, requestedLocation, hasPage }: HydrationPlanInput,
 ): HydrationPlan {
-  const requestedPath = decodeUrlPathname(pathOf(requestedLocation))
-  const decodedLocation = `${requestedPath}${requestedLocation.slice(pathOf(requestedLocation).length)}`
-  const decodingChangedPath = requestedPath !== pathOf(requestedLocation)
+  const path = pathOf(requestedLocation)
+  const suffix = requestedLocation.slice(path.length)
+  const decodedPath = decodeUrlPathname(path)
+  const decodedLocation = `${decodedPath}${suffix}`
+  const wasEncoded = decodedPath !== path
+  // A bare `?` or `#` addresses the same path with nothing to adopt.
+  const hasSuffix = /[^?#]/.test(suffix)
+  const startPath = decodedPath || '/'
 
   if (isNotFoundDocument) {
     return {
       startPath: NOT_FOUND_ROUTE_PATH,
       adoptPath: decodedLocation,
-      ...decodingChangedPath ? { replacePath: decodedLocation } : {},
+      ...wasEncoded ? { replacePath: decodedLocation } : {},
     }
   }
 
-  if (decodingChangedPath && hasPage(requestedPath)) {
+  if (wasEncoded && hasPage(decodedPath)) {
     return {
-      startPath: requestedPath,
-      adoptPath: decodedLocation,
+      startPath,
+      ...hasSuffix ? { adoptPath: decodedLocation } : {},
       replacePath: decodedLocation,
     }
   }
 
-  const startPath = requestedPath || '/'
-  const suffix = requestedLocation.slice(pathOf(requestedLocation).length)
-  // A bare `?` or `#` addresses the same path with nothing to adopt.
-  if (!/[^?#]/.test(suffix)) {
-    return { startPath }
-  }
-
-  return { startPath, adoptPath: `${startPath}${suffix}` }
+  return hasSuffix
+    ? { startPath, adoptPath: `${startPath}${suffix}` }
+    : { startPath }
 }
 
 /** Path part of a location: everything before the query or the hash. */

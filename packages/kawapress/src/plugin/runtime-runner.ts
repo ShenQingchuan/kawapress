@@ -1,10 +1,10 @@
 import type { App } from 'vue'
-import type { Router } from 'vue-router'
 import type {
   RuntimePlugin,
   RuntimePluginAPI,
 } from '../api/plugin'
 import type { OutletRegistry } from '../core/outlet'
+import type { Router } from '../core/router'
 import {
   createPluginHandlerRegistry,
   runPluginSetup,

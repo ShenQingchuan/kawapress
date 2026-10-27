@@ -1,39 +1,41 @@
 import type { App, Plugin } from 'vue'
-import type { Router } from 'vue-router'
 import type { OutletRegistry } from '../core/outlet'
-import type { PageManifest } from '../core/page-manifest'
+import type { PageTable } from '../core/page-manifest'
+import type { Router } from '../core/router'
 import { runtimePlugins } from 'virtual:kawapress-runtime-plugins'
 import { createSSRApp } from 'vue'
 import { createRuntimePluginRunner } from '../plugin/runtime-runner'
 import KawaOutlet from './components/KawaOutlet.vue'
 import Root from './components/Root.vue'
 import { createOutletRenderStore, outletRegistryKey, outletRenderStoreKey } from './outlet'
-import { createAppRouter } from './router'
+import { createAppRouter } from './router/app-router'
+import { routerKey } from './router/injection'
 
 export interface CreateKawapressAppOptions {
   head: Plugin
   /**
-   * Pages of the site. It is passed in rather than imported so the generated
-   * manifest stays in its own chunk: a content edit then never invalidates the
-   * chunk that holds the framework and the theme.
+   * Pages of the site. A dev server and the SSR build hand over module loaders;
+   * the browser of a build hands over the chunk files its page table names.
    */
-  pageManifest: PageManifest
+  pages: PageTable
 }
 
 export interface KawapressApp {
   app: App
   router: Router
   outlets: OutletRegistry
-  /** See {@link import('./router').AppRouter.adoptRequestedUrl}. */
+  /** See {@link import('./router/app-router').AppRouter.start}. */
+  start: () => Promise<void>
+  /** See {@link import('./router/app-router').AppRouter.adoptRequestedUrl}. */
   adoptRequestedUrl: () => Promise<void>
 }
 
 export async function createKawapressApp(
-  { head, pageManifest }: CreateKawapressAppOptions,
+  { head, pages }: CreateKawapressAppOptions,
 ): Promise<KawapressApp> {
-  const { router, adoptRequestedUrl } = createAppRouter(pageManifest)
+  const { router, start, adoptRequestedUrl } = createAppRouter(pages)
   const app = createSSRApp(Root)
-  app.use(router)
+  app.provide(routerKey, router)
   app.use(head)
   // Plugin setup runs before the app is touched, so the collected outlets are
   // provided before any `vueApp()` handler runs. Runtime plugins can then read
@@ -49,6 +51,7 @@ export async function createKawapressApp(
     app,
     router,
     outlets: pluginRunner.outlets,
+    start,
     adoptRequestedUrl,
   }
 }

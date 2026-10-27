@@ -42,7 +42,6 @@ catalogs:
     minisearch: ^7.2.0
     overlayscrollbars: ^2.16.0
     vue: ^3.5.41
-    vue-router: ^5.2.0
   markdown:
     '@mdit-vue/plugin-component': ^3.0.2
     '@mdit-vue/plugin-frontmatter': ^3.0.2

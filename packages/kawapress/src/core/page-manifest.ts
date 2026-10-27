@@ -8,6 +8,17 @@ export interface PageModule {
 }
 
 /**
+ * What a page says about itself without being rendered: the title its author
+ * wrote and the layout its frontmatter asks for. Reading it needs no Markdown
+ * pipeline, so listing a site never renders a page.
+ */
+export interface PageSummary {
+  title: string
+  /** `frontmatter.layout` when it is a string. */
+  layout?: string
+}
+
+/**
  * Loads one page module. A dev server and the SSR build import the Markdown
  * module; the browser of a build fetches the chunk file recorded in the page
  * table.

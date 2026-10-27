@@ -2,9 +2,9 @@ import type { ComputedRef } from 'vue'
 import type { LocaleLink, PageData, ResolvedSiteData, SiteData } from '../core/site'
 import { site } from 'virtual:kawapress-site'
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { getLocaleIndex, resolveLocaleLinks, resolveSiteDataByPath } from '../core/locale'
 import { getPageData } from './page-data'
+import { useRoute } from './router/injection'
 
 export interface LocaleContext {
   localeIndex: ComputedRef<string>
@@ -17,7 +17,7 @@ export function useSite<ThemeConfig extends object = object>(): ComputedRef<Reso
   const route = useRoute()
   return computed(() => resolveSiteDataByPath(
     site as SiteData<ThemeConfig>,
-    route.path,
+    route.value.path,
   ))
 }
 
@@ -28,8 +28,8 @@ export function useThemeConfig<ThemeConfig extends object = object>(): ComputedR
 
 export function useLocale(): LocaleContext {
   const route = useRoute()
-  const localeIndex = computed(() => getLocaleIndex(site, route.path))
-  const locales = computed(() => resolveLocaleLinks(site, route.fullPath))
+  const localeIndex = computed(() => getLocaleIndex(site, route.value.path))
+  const locales = computed(() => resolveLocaleLinks(site, route.value.fullPath))
   const locale = computed(() => locales.value.find(
     item => item.localeIndex === localeIndex.value,
   ))
@@ -47,5 +47,5 @@ export function useLocale(): LocaleContext {
 
 export function usePageData(): ComputedRef<PageData | undefined> {
   const route = useRoute()
-  return computed(() => getPageData(route.path))
+  return computed(() => getPageData(route.value.path))
 }
