@@ -1,5 +1,6 @@
 import type { BuiltPageEntry, BuiltPageTable, PageLoader, PageModule, PageTable } from '../core/page-manifest'
 import { withBase } from '../core/base'
+import { pageChunkFileName } from '../core/page-chunk'
 import { PAGE_TABLE_META } from '../core/page-manifest'
 
 /** Stylesheet requests already started, so a page never loads its CSS twice. */
@@ -41,25 +42,27 @@ export function createPageTable(
   doc: Document = document,
 ): PageTable {
   return Object.fromEntries(Object.entries(table).map(
-    ([path, entry]) => [path, createPageLoader(entry, base, doc)],
+    ([path, entry]) => [path, createPageLoader(path, entry, base, doc)],
   ))
 }
 
 /**
- * Loader of one built page: warm the browser for the page chunk and every extra
- * file it needs, wait for the page CSS, then import the chunk. Warming and
- * waiting happen before the import so the chunk travels in parallel with its
- * stylesheet instead of after it.
+ * Loader of one built page: the table holds the content hash of the page chunk,
+ * the route supplies the rest of its file name. Warming the browser for the
+ * chunk and its extra files, then waiting for the page CSS, happens before the
+ * import, so the chunk travels in parallel with its stylesheet instead of after
+ * it.
  */
 export function createPageLoader(
+  path: string,
   entry: BuiltPageEntry,
   base: string,
   doc: Document = document,
 ): PageLoader {
-  const [file, js = [], css = []] = typeof entry === 'string' ? [entry] : entry
+  const [hash, js = [], css = []] = typeof entry === 'string' ? [entry] : entry
 
   return async () => {
-    const url = withBase(file, base)
+    const url = withBase(pageChunkFileName(path, hash), base)
     for (const href of js) {
       preloadModule(withBase(href, base), doc)
     }

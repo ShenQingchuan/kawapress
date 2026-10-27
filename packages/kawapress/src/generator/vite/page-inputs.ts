@@ -1,4 +1,5 @@
 import type { MarkdownPageLoader } from '../../compiler/page-loader'
+import { pageInputName } from '../../core/page-chunk'
 import { listMarkdownPages } from '../pages'
 import { pageScope } from './plugins/pages'
 
@@ -18,12 +19,4 @@ export async function createPageInputs(
   return Object.fromEntries(
     pages.map(page => [pageInputName(page.routePath), page.file]),
   )
-}
-
-/**
- * Entry name of a page, derived from its route path so the output file is
- * stable and readable, for example `pages/guide/intro`.
- */
-export function pageInputName(routePath: string): string {
-  return routePath === '/' ? 'pages/index' : `pages${routePath}`
 }

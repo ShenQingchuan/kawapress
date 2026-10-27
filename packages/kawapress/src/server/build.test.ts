@@ -6,6 +6,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { pageChunkFileName } from '../core/page-chunk'
 
 const run = promisify(execFile)
 
@@ -22,6 +23,19 @@ const DEVELOPMENT_ONLY_MARKERS = [
 
 /** A sentence only one page contains, so a chunk can be recognised by it. */
 const PAGE_MARKER = 'Only this page mentions the yellow submarine.'
+
+/**
+ * Comment inside the template of a component. Vue's development compiler keeps
+ * template comments, its production compiler strips them, so finding one in the
+ * output proves the development compiler was loaded.
+ */
+const TEMPLATE_COMMENT_MARKER = 'probe-template-comment'
+
+const PROBE_COMPONENT = `<template>
+  <!-- ${TEMPLATE_COMMENT_MARKER} -->
+  <p class="probe">probe</p>
+</template>
+`
 
 const CONFIG = `export default {
   title: 'Build Env Test',
@@ -41,9 +55,15 @@ function guidePage(title: string): string {
 title: ${title}
 ---
 
+<script setup>
+import Probe from '../Probe.vue'
+</script>
+
 # ${title}
 
 ${PAGE_MARKER}
+
+<Probe />
 `
 }
 
@@ -86,6 +106,7 @@ async function createSite(): Promise<void> {
   await writeFile(join(siteDirectory, 'kawapress.config.ts'), CONFIG)
   await writeFile(join(siteDirectory, 'index.md'), HOME_PAGE)
   await mkdir(join(siteDirectory, 'guide'), { recursive: true })
+  await writeFile(join(siteDirectory, 'Probe.vue'), PROBE_COMPONENT)
   await writeFile(join(siteDirectory, 'guide/one.md'), guidePage('One'))
   await writeFile(join(siteDirectory, 'guide/styled.md'), STYLED_PAGE)
   await mkdir(join(siteDirectory, 'node_modules'), { recursive: true })
@@ -136,11 +157,15 @@ async function readPageTable(): Promise<Record<string, string | [string, string[
   return JSON.parse(json) as Record<string, string | [string, string[], string[]]>
 }
 
-/** Page chunk file of a table entry, narrowed out of its tuple form. */
-function pageChunkOf(
-  entry: string | [string, string[], string[]],
-): string {
+/** Content hash of a table entry, narrowed out of its tuple form. */
+function hashOf(entry: string | [string, string[], string[]]): string {
   return typeof entry === 'string' ? entry : entry[0]
+}
+
+/** Page chunk file of a route, rebuilt from the hash the table stores. */
+async function pageChunkOf(route: string): Promise<string> {
+  const table = await readPageTable()
+  return pageChunkFileName(route, hashOf(table[route]!))
 }
 
 describe('buildSite', () => {
@@ -159,32 +184,62 @@ describe('buildSite', () => {
     }
   }, 300_000)
 
+  it('keeps no template comment when NODE_ENV is unset', async () => {
+    // Vue keeps template comments only in its development compiler, and it picks
+    // the compiler when `@vue/compiler-core` is first required. The build has to
+    // pin NODE_ENV before anything loads that module, or the development
+    // compiler renders a comment node into every chunk and document.
+    await createSite()
+    await buildWithoutNodeEnv()
+
+    for (const file of (await listClientFiles()).filter(name => name.endsWith('.js'))) {
+      expect(await readClientFile(file), `${file} must come from the production compiler`)
+        .not
+        .toContain(TEMPLATE_COMMENT_MARKER)
+    }
+
+    for (const htmlFile of ['index.html', 'guide/one.html', 'guide/styled.html', '404.html']) {
+      const html = await readFile(join(siteDirectory, 'dist', htmlFile), 'utf8')
+      expect(html, `${htmlFile} must come from the production compiler`)
+        .not
+        .toContain(TEMPLATE_COMMENT_MARKER)
+    }
+
+    // The component itself is still rendered, only its comment node is gone.
+    expect(await readClientFile(await pageChunkOf('/guide/one')))
+      .toContain('class:`probe`')
+  }, 300_000)
+
   it('keeps page code out of the app chunk', async () => {
     await createSite()
     await buildWithoutNodeEnv()
 
-    const table = await readPageTable()
     const app = await readClientFile(await findClientFile('assets/app-'))
-    const page = await readClientFile(pageChunkOf(table['/guide/one']!))
+    const page = await readClientFile(await pageChunkOf('/guide/one'))
 
     expect(page, 'the page chunk has to carry the page').toContain(PAGE_MARKER)
     expect(app, 'the app chunk must not carry any page').not.toContain(PAGE_MARKER)
   }, 300_000)
 
-  it('records one file name per page and the page CSS of a styled page', async () => {
+  it('records the content hash of every page instead of its file name', async () => {
     await createSite()
     await buildWithoutNodeEnv()
 
     const table = await readPageTable()
 
     expect(Object.keys(table).sort()).toEqual(['/', '/guide/one', '/guide/styled'])
-    const plain = table['/guide/one']!
-    expect(pageChunkOf(plain)).toMatch(/^assets\/pages\/guide\/one-[\w-]+\.js$/)
-    // A page names its own chunk and only the chunks no page can get from the
-    // entry: here the Vue SFC helper every page imports, and no stylesheet.
-    const [, plainJs, plainCss] = plain as [string, string[], string[]]
-    expect(plainJs.every(file => file.includes('_plugin-vue_export-helper'))).toBe(true)
-    expect(plainCss).toEqual([])
+    // The route names the rest of the file, so the table stores the hash alone.
+    for (const route of Object.keys(table)) {
+      expect(hashOf(table[route]!), route).toMatch(/^[\w-]+$/)
+      expect(await listClientFiles()).toContain(
+        pageChunkFileName(route, hashOf(table[route]!)),
+      )
+    }
+
+    // A page that needs nothing beyond its own chunk and the app chunk is a
+    // plain string: the Vue SFC helper lives in the app chunk, so no page names
+    // a second file of its own.
+    expect(table['/guide/one']).toBeTypeOf('string')
 
     const styled = table['/guide/styled']
     expect(Array.isArray(styled), 'a styled page records its CSS').toBe(true)
@@ -194,6 +249,16 @@ describe('buildSite', () => {
     expect(extraJs.every(file => file.endsWith('.js'))).toBe(true)
     // The stylesheet the table names is really part of the build output.
     expect(await listClientFiles()).toContain(css[0])
+  }, 300_000)
+
+  it('ships no Vue export helper chunk of its own', async () => {
+    await createSite()
+    await buildWithoutNodeEnv()
+
+    expect(
+      (await listClientFiles()).filter(file => file.includes('_plugin-vue_export-helper')),
+      'the helper every page imports belongs to the app chunk',
+    ).toEqual([])
   }, 300_000)
 
   it('ships no preload dependency table', async () => {
@@ -214,7 +279,7 @@ describe('buildSite', () => {
       app: await findClientFile('assets/app-'),
       entry: await findClientFile('assets/entry-client-'),
       table: await findClientFile('assets/pages-'),
-      page: pageChunkOf((await readPageTable())['/guide/one']!),
+      page: await pageChunkOf('/guide/one'),
     }
 
     await writeFile(join(siteDirectory, 'guide/one.md'), guidePage('One Renamed'))
@@ -223,7 +288,7 @@ describe('buildSite', () => {
       app: await findClientFile('assets/app-'),
       entry: await findClientFile('assets/entry-client-'),
       table: await findClientFile('assets/pages-'),
-      page: pageChunkOf((await readPageTable())['/guide/one']!),
+      page: await pageChunkOf('/guide/one'),
     }
 
     // The page chunk carries the new title and the table names that new chunk,

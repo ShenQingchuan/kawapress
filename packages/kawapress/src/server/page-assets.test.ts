@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collectPageAssets, collectPageEntry, toManifestKey } from './page-assets'
+import { collectPageAssets, collectPageChunk, toManifestKey } from './page-assets'
 
 const ENTRY_KEY = 'packages/kawapress/src/client/entries/entry-client.ts'
 
@@ -40,54 +40,42 @@ const manifest = {
   },
 }
 
-describe('collectPageEntry', () => {
-  it('records a page without own CSS as its file name plus the extra JS', () => {
-    // The helper chunk is imported by every page and by nothing else, so no
-    // page can rely on the entry to have loaded it.
-    expect(collectPageEntry(manifest, '/src/guide/plain.md', ENTRY_KEY)).toEqual([
-      'assets/pages/guide/plain.js',
-      ['assets/helper.js'],
-      [],
-    ])
-  })
-
-  it('records a page that only needs its own chunk as a plain file name', () => {
-    const alone = {
-      [ENTRY_KEY]: { file: 'assets/entry-client.js', isEntry: true },
-      'src/guide/alone.md': { file: 'assets/alone.js', imports: [ENTRY_KEY] },
-    }
-
-    expect(collectPageEntry(alone, '/src/guide/alone.md', ENTRY_KEY)).toBe('assets/alone.js')
+describe('collectPageChunk', () => {
+  it('records the page chunk file and the JS it needs beyond the entry', () => {
+    expect(collectPageChunk(manifest, '/src/guide/plain.md', ENTRY_KEY)).toEqual({
+      file: 'assets/pages/guide/plain.js',
+      // The helper chunk is imported by every page and by nothing else, so no
+      // page can rely on the entry to have loaded it.
+      js: ['assets/helper.js'],
+      css: [],
+    })
   })
 
   it('records the page CSS of a page with its own styles', () => {
-    expect(collectPageEntry(manifest, '/src/guide/styled.md', ENTRY_KEY)).toEqual([
-      'assets/pages/guide/styled.js',
-      ['assets/helper.js'],
-      ['assets/pages/guide/styled.css'],
-    ])
+    expect(collectPageChunk(manifest, '/src/guide/styled.md', ENTRY_KEY)).toEqual({
+      file: 'assets/pages/guide/styled.js',
+      js: ['assets/helper.js'],
+      css: ['assets/pages/guide/styled.css'],
+    })
   })
 
   it('keeps what the entry already loads out of the extra files', () => {
-    const entry = collectPageEntry(manifest, '/src/guide/plain.md', ENTRY_KEY)
+    const chunk = collectPageChunk(manifest, '/src/guide/plain.md', ENTRY_KEY)
 
-    expect(Array.isArray(entry) ? entry[1] : []).not.toContain('assets/app.js')
-    expect(Array.isArray(entry) ? entry[1] : []).not.toContain('assets/entry-client.js')
+    expect(chunk?.js).not.toContain('assets/app.js')
+    expect(chunk?.js).not.toContain('assets/entry-client.js')
   })
 
   it('returns nothing for a module id the manifest does not know', () => {
-    expect(collectPageEntry(manifest, '/src/guide/missing.md', ENTRY_KEY)).toBeUndefined()
+    expect(collectPageChunk(manifest, '/src/guide/missing.md', ENTRY_KEY)).toBeUndefined()
   })
 
   it('accepts Windows separators in module ids', () => {
-    expect(collectPageEntry(manifest, '\\src\\guide\\stylist.md', ENTRY_KEY))
-      .toBeUndefined()
-    expect(collectPageEntry(manifest, '\\src\\guide\\styled.md', ENTRY_KEY))
-      .toEqual([
-        'assets/pages/guide/styled.js',
-        ['assets/helper.js'],
-        ['assets/pages/guide/styled.css'],
-      ])
+    expect(collectPageChunk(manifest, '\\src\\guide\\styled.md', ENTRY_KEY)).toEqual({
+      file: 'assets/pages/guide/styled.js',
+      js: ['assets/helper.js'],
+      css: ['assets/pages/guide/styled.css'],
+    })
   })
 })
 
@@ -100,18 +88,18 @@ describe('collectPageAssets', () => {
   })
 
   it('lists the entry imports before the page chunk', () => {
-    const entry = collectPageEntry(manifest, '/src/guide/plain.md', ENTRY_KEY)
+    const chunk = collectPageChunk(manifest, '/src/guide/plain.md', ENTRY_KEY)
 
-    expect(collectPageAssets(manifest, entry, ENTRY_KEY)).toEqual({
+    expect(collectPageAssets(manifest, chunk, ENTRY_KEY)).toEqual({
       css: ['assets/entry-client.css', 'assets/app.css'],
       modulepreload: ['assets/app.js', 'assets/pages/guide/plain.js', 'assets/helper.js'],
     })
   })
 
   it('adds the page CSS after the entry CSS', () => {
-    const entry = collectPageEntry(manifest, '/src/guide/styled.md', ENTRY_KEY)
+    const chunk = collectPageChunk(manifest, '/src/guide/styled.md', ENTRY_KEY)
 
-    expect(collectPageAssets(manifest, entry, ENTRY_KEY).css).toEqual([
+    expect(collectPageAssets(manifest, chunk, ENTRY_KEY).css).toEqual([
       'assets/entry-client.css',
       'assets/app.css',
       'assets/pages/guide/styled.css',
@@ -119,9 +107,9 @@ describe('collectPageAssets', () => {
   })
 
   it('never preloads the entry chunk the script tag already loads', () => {
-    const entry = collectPageEntry(manifest, '/src/guide/plain.md', ENTRY_KEY)
+    const chunk = collectPageChunk(manifest, '/src/guide/plain.md', ENTRY_KEY)
 
-    expect(collectPageAssets(manifest, entry, ENTRY_KEY).modulepreload)
+    expect(collectPageAssets(manifest, chunk, ENTRY_KEY).modulepreload)
       .not
       .toContain('assets/entry-client.js')
   })
@@ -136,12 +124,12 @@ describe('collectPageAssets', () => {
       },
     }
 
-    expect(collectPageEntry(broken, '/src/guide/broken.md', ENTRY_KEY)).toEqual([
-      'assets/broken.js',
-      [],
-      ['assets/broken.css'],
-    ])
-    expect(collectPageAssets(broken, ['assets/broken.js', [], ['assets/broken.css']], ENTRY_KEY))
+    expect(collectPageChunk(broken, '/src/guide/broken.md', ENTRY_KEY)).toEqual({
+      file: 'assets/broken.js',
+      js: [],
+      css: ['assets/broken.css'],
+    })
+    expect(collectPageAssets(broken, { file: 'assets/broken.js', js: [], css: ['assets/broken.css'] }, ENTRY_KEY))
       .toEqual({
         css: ['assets/broken.css'],
         modulepreload: ['assets/broken.js'],

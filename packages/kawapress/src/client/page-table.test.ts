@@ -44,8 +44,8 @@ describe('readPageTableUrl', () => {
 describe('createPageTable', () => {
   it('turns every record into a loader', () => {
     const table = createPageTable({
-      '/': 'assets/pages/index.js',
-      '/guide/intro': ['assets/pages/guide/intro.js', [], []],
+      '/': 'indexHash',
+      '/guide/intro': ['introHash', [], []],
     }, BASE)
 
     expect(Object.keys(table)).toEqual(['/', '/guide/intro'])
@@ -57,7 +57,7 @@ describe('createPageTable', () => {
 describe('loadPageTable', () => {
   it('imports the table file the HTML points at', async () => {
     const url = `data:text/javascript,${
-      encodeURIComponent('export default { "/guide/intro": "assets/pages/guide/intro.js" }')
+      encodeURIComponent('export default { "/guide/intro": "introHash" }')
     }`
 
     const table = await loadPageTable(url, BASE)
@@ -69,7 +69,8 @@ describe('loadPageTable', () => {
 describe('createPageLoader', () => {
   it('preloads the extra JS of a page once', async () => {
     const loader = createPageLoader(
-      ['assets/page.js', ['assets/helper.js', 'assets/helper2.js'], []],
+      '/guide/preloads',
+      ['preloadsHash', ['assets/helper.js', 'assets/helper2.js'], []],
       BASE,
     )
 
@@ -84,7 +85,11 @@ describe('createPageLoader', () => {
   })
 
   it('waits for the page stylesheet before loading the page', async () => {
-    const loader = createPageLoader(['assets/styled.js', [], ['assets/styled.css']], BASE)
+    const loader = createPageLoader(
+      '/guide/styled',
+      ['styledHash', [], ['assets/styled.css']],
+      BASE,
+    )
     let settled = false
     const run = loader().catch(() => {}).then(() => {
       settled = true

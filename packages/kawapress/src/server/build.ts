@@ -2,6 +2,7 @@ import type { InlineConfig } from 'vite'
 import process from 'node:process'
 import { consola } from 'consola'
 import { createBuilder } from 'vite'
+import { PAGE_CHUNK_FILE_PATTERN } from '../core/page-chunk'
 import { loadSiteConfig } from '../generator/load-config'
 import { appChunkGroup } from '../generator/vite/app-chunk'
 import {
@@ -49,6 +50,10 @@ export async function buildSite(root: string) {
             // reads the default component out of it.
             preserveEntrySignatures: 'allow-extension',
             output: {
+              // Pinned so a page chunk name is predictable from its route; the
+              // page table stores the content hash alone. Prerendering verifies
+              // the names the bundle reports against this layout.
+              entryFileNames: PAGE_CHUNK_FILE_PATTERN,
               codeSplitting: {
                 groups: [
                   // `$initial` would treat page-only code as app code as well,

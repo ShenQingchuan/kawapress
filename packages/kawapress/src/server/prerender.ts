@@ -1,7 +1,7 @@
 import type { OutletRegistry } from '../core/outlet'
 import type { BuiltPageTable, PageTable } from '../core/page-manifest'
 import type { SiteData } from '../core/site'
-import type { ClientManifest } from './page-assets'
+import type { ClientManifest, PageChunkAssets } from './page-assets'
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -11,8 +11,9 @@ import { withBase } from '../core/base'
 import { parseJson, stringifyJson } from '../core/json'
 import { NOT_FOUND_ROUTE_PATH } from '../core/not-found'
 import { findUnconsumedOutletItems, formatUnconsumedOutletWarnings } from '../core/outlet'
+import { pageChunkFileName, pageChunkHash } from '../core/page-chunk'
 import { pageTableFileName } from '../core/page-manifest'
-import { collectPageAssets, collectPageEntry } from './page-assets'
+import { collectPageAssets, collectPageChunk } from './page-assets'
 import { renderHtmlTemplate } from './template'
 
 interface RenderResult {
@@ -50,8 +51,9 @@ export async function prerenderPages(root: string): Promise<void> {
   const clientEntryUrl = withBase(entryChunk.file, site.base)
 
   // The browser needs one table for the whole site, computed from the bundle
-  // that was just written: page chunk file names only exist here.
-  const pageTable = createPageTable(Object.keys(pages), pageModules, manifest, entryKey)
+  // that was just written: page chunk hashes only exist here.
+  const chunks = createPageChunks(Object.keys(pages), pageModules, manifest, entryKey)
+  const pageTable = createPageTable(chunks)
   const pageTableUrl = await writePageTable(distDir, pageTable, site.base)
 
   const paths = [...Object.keys(pages), NOT_FOUND_ROUTE_PATH]
@@ -62,8 +64,7 @@ export async function prerenderPages(root: string): Promise<void> {
       renderedOutlets.add(outlet)
     }
     // The not-found document has no page of its own and preloads the entry only.
-    const pageEntry = path === NOT_FOUND_ROUTE_PATH ? undefined : pageTable[path]
-    const assets = collectPageAssets(manifest, pageEntry, entryKey)
+    const assets = collectPageAssets(manifest, chunks.get(path), entryKey)
     const file = join(distDir, pathToHtmlFile(path))
     await mkdir(dirname(file), { recursive: true })
     await writeFile(file, renderHtmlTemplate({
@@ -87,23 +88,23 @@ export async function prerenderPages(root: string): Promise<void> {
 }
 
 /**
- * Page table of the site, read from the client manifest: for every page the
- * chunk it lives in and the extra JS and CSS that chunk needs.
+ * The page chunks of the client bundle, keyed by route path. Prerendering needs
+ * them twice: for the page table and for the first paint of every document.
  */
-function createPageTable(
+function createPageChunks(
   routes: readonly string[],
   pageModules: Record<string, string>,
   manifest: ClientManifest,
   entryKey: string,
-): BuiltPageTable {
-  const table: BuiltPageTable = {}
+): Map<string, PageChunkAssets> {
+  const chunks = new Map<string, PageChunkAssets>()
   for (const path of routes) {
     const pageModuleId = pageModules[path]
-    const entry = pageModuleId === undefined
+    const chunk = pageModuleId === undefined
       ? undefined
-      : collectPageEntry(manifest, pageModuleId, entryKey)
+      : collectPageChunk(manifest, pageModuleId, entryKey)
 
-    if (entry === undefined) {
+    if (chunk === undefined) {
       throw new Error(
         `KawaPress: page ${JSON.stringify(path)} is missing from the client build. `
         + `The page table is computed from dist/.vite/manifest.json, so the page's chunk `
@@ -111,7 +112,34 @@ function createPageTable(
         + `file below srcDir and that no plugin removed it from the build input.`,
       )
     }
-    table[path] = entry
+    chunks.set(path, chunk)
+  }
+  return chunks
+}
+
+/**
+ * Page table of the site: the content hash of every page chunk plus the extra
+ * files that chunk needs. The file name itself follows from the route, and
+ * {@link pageChunkHash} refuses a chunk whose name does not, so a plugin or a
+ * Vite option that renames output files fails the build here instead of shipping
+ * a page table that points nowhere.
+ */
+function createPageTable(chunks: ReadonlyMap<string, PageChunkAssets>): BuiltPageTable {
+  const table: BuiltPageTable = {}
+  for (const [path, chunk] of chunks) {
+    const hash = pageChunkHash(path, chunk.file)
+    if (hash === undefined) {
+      throw new Error(
+        `KawaPress: the page chunk of ${JSON.stringify(path)} is named `
+        + `${JSON.stringify(chunk.file)}, but the page table derives page chunk file names `
+        + `from the route, for example ${JSON.stringify(pageChunkFileName(path, '<hash>'))}. `
+        + `A plugin or the site config changed build.rolldownOptions.output.entryFileNames; `
+        + `remove that override, or the browser cannot load pages.`,
+      )
+    }
+    table[path] = chunk.js.length === 0 && chunk.css.length === 0
+      ? hash
+      : [hash, chunk.js, chunk.css]
   }
   return table
 }

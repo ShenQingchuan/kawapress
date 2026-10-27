@@ -1,5 +1,3 @@
-import type { BuiltPageEntry } from '../core/page-manifest'
-
 /**
  * A chunk of the Vite client manifest. Only the fields page asset collection
  * reads are described; Vite writes more.
@@ -22,20 +20,30 @@ export interface PageAssets {
   modulepreload: string[]
 }
 
+/** Files of one page chunk: its own file, plus what it needs beyond the entry. */
+export interface PageChunkAssets {
+  /** File name of the page chunk, relative to the build output. */
+  file: string
+  /** JS files the page needs on top of the entry closure. */
+  js: string[]
+  /** Stylesheet files the page needs on top of the entry closure. */
+  css: string[]
+}
+
 /**
- * Page table entry of one page chunk: the chunk file itself, plus the JS and CSS
- * it needs beyond what the entry already loads.
+ * Files of one page chunk: the chunk itself, plus the JS and CSS it needs beyond
+ * what the entry already loads.
  *
  * Everything is read from the final bundle, so no file name is guessed from a
  * route or from an output naming pattern. Modules the page only imports
  * dynamically (a popup component, for example) stay out on purpose: they belong
  * to an interaction, not to the first render.
  */
-export function collectPageEntry(
+export function collectPageChunk(
   manifest: ClientManifest,
   pageModuleId: string,
   entryKey: string,
-): BuiltPageEntry | undefined {
+): PageChunkAssets | undefined {
   const key = toManifestKey(pageModuleId)
   const page = manifest[key]
   if (!page) {
@@ -44,12 +52,12 @@ export function collectPageEntry(
 
   const entry = collectClosure(manifest, [entryKey])
   const own = collectClosure(manifest, [key])
-  const js = own.files.filter(file => file !== page.file && !entry.files.includes(file))
-  const css = own.css.filter(href => !entry.css.includes(href))
 
-  return js.length === 0 && css.length === 0
-    ? page.file
-    : [page.file, js, css]
+  return {
+    file: page.file,
+    js: own.files.filter(file => file !== page.file && !entry.files.includes(file)),
+    css: own.css.filter(href => !entry.css.includes(href)),
+  }
 }
 
 /**
@@ -59,17 +67,16 @@ export function collectPageEntry(
  */
 export function collectPageAssets(
   manifest: ClientManifest,
-  entry: BuiltPageEntry | undefined,
+  page: PageChunkAssets | undefined,
   entryKey: string,
 ): PageAssets {
   const assets = collectClosure(manifest, [entryKey])
   const files = [...assets.files]
   const css = [...assets.css]
 
-  if (entry !== undefined) {
-    const [file, js = [], extraCss = []] = typeof entry === 'string' ? [entry] : entry
-    files.push(file, ...js)
-    css.push(...extraCss)
+  if (page !== undefined) {
+    files.push(page.file, ...page.js)
+    css.push(...page.css)
   }
 
   // The entry script tag already loads the entry chunk.

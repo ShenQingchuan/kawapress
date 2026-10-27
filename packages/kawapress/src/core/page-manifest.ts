@@ -29,12 +29,13 @@ export type PageLoader = () => Promise<PageModule>
 export type PageTable = Record<string, PageLoader>
 
 /**
- * One page of a built client bundle: the page chunk's file name, or that name
- * plus the JS and CSS the page needs beyond what the entry already loads.
+ * One page of a built client bundle: the content hash of its page chunk, or that
+ * hash plus the JS and CSS the page needs beyond what the entry already loads.
+ * The rest of the file name follows from the route, see `pageChunkFileName()`.
  */
 export type BuiltPageEntry
   = | string
-    | [file: string, js: string[], css: string[]]
+    | [hash: string, js: string[], css: string[]]
 
 /** Page table of a build, keyed by public route path. Serialised into the table file. */
 export type BuiltPageTable = Record<string, BuiltPageEntry>
