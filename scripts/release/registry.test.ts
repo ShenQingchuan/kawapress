@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { findMissingPackages, packageExistsOnNpm } from './registry.mjs'
+import { classifyPackage, findMissingPackages, isSkippedState, packageExistsOnNpm } from './registry.mjs'
 
 /** Registry stub: `versionByName` maps a package name to its published version, or null. */
 function createRunner(versionByName: Record<string, string | null>) {
@@ -67,5 +67,32 @@ describe('packageExistsOnNpm', () => {
   it('is false when npm answers 404', async () => {
     const { runner } = createRunner({ 'create-kawapress': null })
     await expect(packageExistsOnNpm('create-kawapress', { run: runner as never })).resolves.toBe(false)
+  })
+})
+
+describe('classifyPackage', () => {
+  const same = { integrity: 'sha512-a', version: '0.1.0' }
+
+  it('publishes a version npm does not have', () => {
+    expect(classifyPackage({ ...same, publishedIntegrity: null, publishedTags: null })).toBe('available')
+    expect(classifyPackage({ ...same, publishedIntegrity: null, publishedTags: { latest: '0.0.1' } })).toBe('available')
+  })
+
+  it('resumes when the same tarball is already published', () => {
+    expect(classifyPackage({ ...same, publishedIntegrity: 'sha512-a', publishedTags: { latest: '0.1.0' } })).toBe('identical')
+  })
+
+  it('skips a version that npm has with other contents instead of failing', () => {
+    expect(classifyPackage({ ...same, publishedIntegrity: 'sha512-b', publishedTags: { latest: '0.1.0' } })).toBe('published')
+    expect(isSkippedState('published')).toBe(true)
+  })
+
+  it('waits for metadata when a tag already names the version', () => {
+    expect(classifyPackage({ ...same, publishedIntegrity: null, publishedTags: { latest: '0.1.0' } })).toBe('pending')
+  })
+
+  it('only skips the published state', () => {
+    for (const state of ['available', 'identical', 'pending'])
+      expect(isSkippedState(state)).toBe(false)
   })
 })

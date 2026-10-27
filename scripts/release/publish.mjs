@@ -3,7 +3,7 @@
 import process from 'node:process'
 import { createInterface } from 'node:readline/promises'
 
-import { ensureDistTag, waitForDistTag, waitForPublishedIntegrity } from './registry.mjs'
+import { ensureDistTag, isSkippedState, waitForDistTag, waitForPublishedIntegrity } from './registry.mjs'
 import { logStep, logSuccess, logWarning, run } from './runtime.mjs'
 
 /** Topological order over internal production dependencies, ties broken by name. */
@@ -87,9 +87,14 @@ export async function confirmPublish(options, packages, states) {
     throw new Error('Release cancelled.')
 }
 
-/** Publishes whatever is still `available`; identical packages only get their dist-tag checked. */
-export async function publishPackages(packages, states, options) {
+/**
+ * Publishes whatever is still `available`; identical packages only get their dist-tag
+ * checked, and packages whose version npm already holds with other contents are left
+ * alone, dist-tag included.
+ */
+export async function publishPackages(allPackages, states, options) {
   logStep(`Publishing to npm with dist-tag ${options.tag}`)
+  const packages = allPackages.filter(packageInfo => !isSkippedState(states.get(packageInfo.name)))
 
   for (const packageInfo of packages) {
     if (states.get(packageInfo.name) === 'available') {
@@ -120,8 +125,12 @@ export async function publishPackages(packages, states, options) {
   logStep('Waiting for the registry to report dist-tags')
   await Promise.all(packages.map(packageInfo => waitForDistTag(packageInfo, options.tag, options.registry)))
 
-  for (const packageInfo of packages) {
+  for (const packageInfo of allPackages) {
     const state = states.get(packageInfo.name)
+    if (isSkippedState(state)) {
+      logSuccess(`${packageInfo.name}@${packageInfo.version} (already on npm, skipped)`)
+      continue
+    }
     const resumed = state === 'identical'
       ? ' (resumed)'
       : state === 'pending'

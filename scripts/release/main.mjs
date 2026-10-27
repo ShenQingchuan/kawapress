@@ -16,7 +16,7 @@ import { copyReleaseWorkspace, packAndValidate, removeStagingDir } from './pack.
 import { assertVersionIsNotOlder, discoverPackages, readLockstepVersion, updateWorkspaceVersions } from './packages.mjs'
 import { confirmPublish, dryRunPublish, filterPublishOrder, publishPackages, sortForPublish } from './publish.mjs'
 import { runQualityChecks } from './quality.mjs'
-import { findMissingPackages, inspectRegistry, logMissingPackages } from './registry.mjs'
+import { findMissingPackages, inspectRegistry, isSkippedState, logMissingPackages } from './registry.mjs'
 import { logStep, logSuccess } from './runtime.mjs'
 import { compareSemver, defaultTag, parseSemver, tagNameForVersion, validateTag } from './semver.mjs'
 import { checkNpmVersion, checkToolchain } from './toolchain.mjs'
@@ -108,7 +108,10 @@ export async function main(argv = process.argv.slice(2)) {
     const registryStates = await inspectRegistry(publishOrder, options.registry, options.tag)
 
     if (options.mode === 'dry-run') {
-      await dryRunPublish(publishOrder, options)
+      await dryRunPublish(
+        publishOrder.filter(packageInfo => !isSkippedState(registryStates.get(packageInfo.name))),
+        options,
+      )
       console.log(`\nDry-run complete. Nothing was published and package versions were not changed.`)
       console.log(`To publish: pnpm release --version ${options.version} --tag ${options.tag} --publish`)
       return

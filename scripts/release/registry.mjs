@@ -152,10 +152,32 @@ export async function ensureDistTag(packageInfo, tag, registry) {
 }
 
 /**
- * Classifies every package as `identical` (same tarball already published, so the
- * release can be resumed), `pending` (version published but metadata still lagging),
- * or `available` (still to publish).
+ * Decides what a release does with one package, given what npm already holds for
+ * its version. A version that exists on npm is never published again, so a release
+ * of an older version number can add the packages that are new without touching the
+ * ones that already have it.
+ *
+ * - `identical`: the same tarball is published, so a rerun resumes the release.
+ * - `pending`: the version is published but npm metadata is still lagging.
+ * - `published`: the version exists with other contents. The package is skipped.
+ * - `available`: the version does not exist yet, so it is published.
  */
+export function classifyPackage({ integrity, publishedIntegrity, publishedTags, version }) {
+  if (publishedIntegrity && publishedIntegrity !== integrity)
+    return 'published'
+  if (publishedIntegrity === integrity)
+    return 'identical'
+  if (Object.values(publishedTags ?? {}).includes(version))
+    return 'pending'
+  return 'available'
+}
+
+/** Packages that this run will leave alone because npm already has their version. */
+export function isSkippedState(state) {
+  return state === 'published'
+}
+
+/** Classifies every package, see `classifyPackage`. */
 export async function inspectRegistry(packages, registry, tag) {
   logStep('Checking npm version availability')
   const states = new Map()
@@ -166,18 +188,20 @@ export async function inspectRegistry(packages, registry, tag) {
       getPublishedTags(packageInfo.name, registry),
     ])
 
-    if (publishedIntegrity && publishedIntegrity !== packageInfo.integrity) {
-      throw new Error(
-        `${packageInfo.name}@${packageInfo.version} already exists with different contents.`,
-      )
-    }
+    const state = classifyPackage({
+      integrity: packageInfo.integrity,
+      publishedIntegrity,
+      publishedTags,
+      version: packageInfo.version,
+    })
+    states.set(packageInfo.name, state)
 
-    if (publishedIntegrity === packageInfo.integrity)
-      states.set(packageInfo.name, 'identical')
-    else if (Object.values(publishedTags ?? {}).includes(packageInfo.version))
-      states.set(packageInfo.name, 'pending')
-    else
-      states.set(packageInfo.name, 'available')
+    if (isSkippedState(state)) {
+      logWarning(
+        `${packageInfo.name}@${packageInfo.version} is already on npm with other contents; skipping it. Bump the version to publish its current source.`,
+      )
+      continue
+    }
 
     const current = publishedTags?.[tag]
     if (current && compareSemver(parseSemver(current), parseSemver(packageInfo.version)) > 0) {
@@ -189,9 +213,11 @@ export async function inspectRegistry(packages, registry, tag) {
 
   const available = [...states.values()].filter(state => state === 'available').length
   const identical = [...states.values()].filter(state => state === 'identical').length
-  const pending = states.size - available - identical
+  const skipped = [...states.values()].filter(isSkippedState).length
+  const pending = states.size - available - identical - skipped
   const details = [
     identical ? `${identical} identical` : '',
+    skipped ? `${skipped} already published, skipped` : '',
     pending ? `${pending} awaiting npm metadata` : '',
   ].filter(Boolean).join('; ')
   logSuccess(`${available} versions available${details ? `; ${details}` : ''}`)
