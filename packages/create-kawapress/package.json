@@ -1,7 +1,7 @@
 {
   "name": "create-kawapress",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Create a new KawaPress site",
   "license": "MIT",
   "homepage": "https://shenqingchuan.github.io/kawapress/",

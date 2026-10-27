@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-code-group",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Accessible code group tabs for KawaPress",
   "license": "MIT",
   "homepage": "https://shenqingchuan.github.io/kawapress/",

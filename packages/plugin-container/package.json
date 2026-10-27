@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-container",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Semantic custom containers for KawaPress",
   "license": "MIT",
   "homepage": "https://shenqingchuan.github.io/kawapress/",
