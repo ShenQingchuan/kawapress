@@ -53,7 +53,7 @@ KawaPress 期望成为一个更好的 VitePress，是由 Vue 社区成员自主�
 
 0.1 不提供插件虚拟页面 API，也不提供 `addPage()`。
 
-非 Markdown 内容源、动态路由、RSS、sitemap、归档页等能力留到后续内容层与路由方案中统一设计。
+非 Markdown 内容源、动态路由、RSS、归档页等能力留到后续内容层与路由方案中统一设计。sitemap 由独立插件提供，见 `plugin-sitemap-plan.md`。
 
 ## 三、生成侧与运行侧
 
@@ -238,12 +238,13 @@ export default defineRuntimePlugin({
 })
 ```
 
-MVP 只公开两个 Runtime 注册方法：
+Runtime Plugin 有三个注册方法：
 
 | 方法 | 得到的对象 | 用途 |
 |---|---|---|
 | `vueApp(handler)` | 真实 Vue `App` | `app.use`、全局组件、provide、errorHandler 等 |
 | `router(handler)` | Core 的站内 `Router` | 导航守卫与站内跳转 |
+| `addToOutlet(outlet, { id, component })` | 无 | 把插件界面交给主题摆放，见第六章 6.1 |
 
 执行时机：
 
@@ -257,7 +258,7 @@ MVP 只公开两个 Runtime 注册方法：
 
 规则：
 
-- `vueApp()` 与 `router()` 都按需使用；Runtime Plugin 不需要为未使用的能力注册空 handler。
+- 三个方法都按需使用；Runtime Plugin 不需要为未使用的能力注册空 handler。
 - handler 可以同步或异步。
 - Runtime Plugin 在每个 Vue App 实例上执行：SSR 每次渲染创建新 App，浏览器启动时创建一次。
 - Runtime Plugin 代码已经位于 Vite module graph，可以静态导入 `.vue`、CSS 和普通 Vue plugin，并直接传真实对象。
@@ -345,6 +346,85 @@ defineRuntimePlugin({
 
 主题组件使用框架能力时，从 `kawapress/client` 导入公开 composables 与组件，不依赖 KawaPress 内部文件。
 
+主题与插件之间的界面契约只有三样：Outlet 决定插件界面放在哪，Token 统一颜色、字体等数值，Layer 决定样式冲突时谁优先。目标是任何官方或第三方 UI 插件放进任何遵循这套契约的主题，都不需要胶水代码，并自动继承主题外观；更换主题不需要改插件。因此 nagi 不直接导入任何插件组件，插件 CSS 不读取 `--nagi-*` 等主题私有变量。
+
+插件界面分三类，只有第一类需要 Outlet：
+
+| 类型 | 示例 | 位置由谁决定 |
+|---|---|---|
+| 挂在页面框架上的界面 | 搜索按钮、LLMS 复制按钮、最后更新时间、评论区 | Outlet |
+| Markdown 正文内的界面 | 代码块、代码组、容器、GitHub 警报、数学公式 | 作者在 Markdown 中写的位置 |
+| 浮层 | 搜索弹窗、图片缩放、Twoslash 浮窗 | 原生 `<dialog>` 或 popover |
+
+### 6.1 Outlet
+
+插件在 Runtime Plugin 中调用 `api.addToOutlet(outlet, { id, component })`：
+
+```ts
+defineRuntimePlugin({
+  name: '@kawapress/plugin-comments',
+  setup(api) {
+    api.addToOutlet('doc.after', { id: 'comments', component: Comments })
+  },
+})
+```
+
+- `id` 在同一插件内唯一；完整标识为 `<插件名>:<id>`，插件名由 Core 补全，插件无法伪造。
+- 同一 Outlet 内先按插件在 `plugins` 数组中的顺序，再按同一插件内的调用顺序渲染。不提供数字权重与 before/after。
+- `KawaOutlet` 由 `kawapress/client` 导出，并由 Core 注册为全局组件。主题写 `<KawaOutlet name="header.actions" />` 时按顺序渲染全部条目，外面不多包元素；需要筛选、排序、包裹或替换时使用 Vue 作用域插槽 `v-slot="{ items }"`，每个条目包含 `id`、`owner` 与 `component`。
+- 深度替换不需要额外机制：插件可以导出组合式函数（如 Search 的 `useLocalSearch()`），主题用它搭自己的界面，再在插槽中过滤掉默认组件。
+
+0.1 只有 4 个 Outlet，每个都有真实使用者：
+
+| Outlet | 渲染方 | 首个使用者 |
+|---|---|---|
+| `header.actions` | 主题 | Search 搜索按钮 |
+| `doc.header` | Core，在 Markdown 第一个 H1 之后 | LLMS 复制页面按钮 |
+| `doc.footer` | 主题 | 最后更新时间与编辑此页链接 |
+| `doc.after` | 主题 | 评论区 |
+
+`doc.header` 由 Core 渲染，因为第一个 H1 位于编译生成的页面组件内部，主题模板伸不进去；没有 H1 的页面不出现该 Outlet。
+
+诊断只有三种：未知 Outlet 名在 TypeScript 中报类型错误、运行时抛出带插件名的错误；同一页面重复渲染同一 Outlet 时开发模式警告一次，防止桌面端与移动端各渲染一份；`kawapress build` 结束时，插件放了内容而全站没有页面渲染的 Outlet 按插件各给一行警告。`id` 为空或同一插件内重复同样直接报错。
+
+主题渲染了某个 Outlet 就表示支持它，不需要声明兼容。Outlet 清单与 Token 清单都是 `kawapress` 的公开 API，跟随 `kawapress` 版本号，不设独立契约版本。0.1 不提供 `aside`、`overlay` Outlet，也不允许主题自建私有 Outlet。
+
+### 6.2 Token
+
+Core 在每个页面 `<head>` 最前面注入一组中立的默认 Token，dev 与构建一致。Core 不内置界面，但 Token 只是样式数值，由 Core 统一提供可以避免每个插件重复书写备用颜色。
+
+0.1 的 17 个 Token 是 `--kawa-c-bg`、`--kawa-c-bg-soft`、`--kawa-c-bg-elv`、`--kawa-c-border`、`--kawa-c-divider`、`--kawa-c-text-1`、`--kawa-c-text-2`、`--kawa-c-text-3`、`--kawa-c-brand`、`--kawa-c-info`、`--kawa-c-success`、`--kawa-c-warning`、`--kawa-c-danger`、`--kawa-font-sans`、`--kawa-font-mono`、`--kawa-radius` 与 `--kawa-shadow-overlay`。新增 Token 的规则是至少有两个插件会用到。
+
+- 默认值使用 `light-dark()` 编写，`color-scheme: light dark` 与默认值同在 `kawa.base` 层，因此不装主题也有可用的浅色与深色外观。
+- 主题只重写这些变量来调整全局外观；nagi 在 `vars.css` 中把自己的调色板一次映射到 17 个 Token。
+- 插件只读取 `--kawa-*`，CSS 中不写 fallback 颜色，也不另定义一套通用颜色变量。只属于插件自己的数值（如搜索弹窗宽度、Twoslash 浮窗的 `--twoslash-*`）保留为插件私有变量。
+
+### 6.3 Layer 与样式钩子
+
+Core 在 `<head>` 最前面声明层级顺序，dev 与构建一致：
+
+```css
+@layer kawa.base, kawa.plugin, kawa.theme;
+```
+
+| 层 | 内容 |
+|---|---|
+| `kawa.base` | Core 默认 Token 与主题的全局重置 |
+| `kawa.plugin` | 插件自带的完整默认样式 |
+| `kawa.theme` | 主题的全部样式 |
+| 不在任何层中 | 站点作者自己写的 CSS，优先级最高 |
+
+因此主题样式永远盖过插件样式，与加载顺序无关；站点作者用普通 CSS 即可覆盖主题，不需要 `!important`。
+
+- 主题的全局重置放进 `kawa.base`，不放进 `kawa.theme`：层级优先于选择器权重，放在 `kawa.theme` 的重置会抹掉插件的内边距与边框。nagi 用 `@import './styles/preflight.css'` 导入一个内部包在 `@layer kawa.base` 中的重置文件。
+- 第三方 CSS 必须用 `@import url(...) layer(kawa.theme)` 一类写法放进层里，否则它会盖过主题。nagi 以这种方式导入 `overlayscrollbars.css`。
+- UnoCSS 生成的工具类不进任何层，因为它们写在站点作者的模板里，属于站点 CSS。
+- 插件选择器只基于自己的 `.kawa-*` class 以及 ARIA 和原生属性（如 `[aria-selected="true"]`、`[open]`），不限定在某个主题的容器（如 `.nagi-doc`）内。不引入 `data-kawa-part` 一类新属性，不提供界面替换适配器。
+- 主题在外层包裹 Outlet 时，插件可能在某些页面不渲染内容（例如 `llms: false`），主题可用 `:empty` 隐藏空容器。
+- `light-dark()` 与 `@layer` 需要现代浏览器；nagi 在此之前已经依赖 `light-dark()`，没有新增门槛。
+
+仓库内用一个只依赖公开 API 的最小参考主题与 E2E 矩阵验证官方 UI 插件在 nagi 之外同样可用；不对外发布兼容性测试库。
+
 ## 七、Markdown 管线
 
 Markdown 引擎使用 `markdown-exit`：
@@ -366,7 +446,7 @@ Markdown 引擎使用 `markdown-exit`：
 
 markdown-it 生态插件的公开类型把第一个参数绑定为 `MarkdownIt`，与运行时兼容的 `MarkdownExit` 仍因递归 parser state 类型不同而不能直接通过 TypeScript 检查。KawaPress 从主入口公开 `useMarkdownItPlugin()` 作为唯一兼容边界：它保留插件参数类型，只在内部集中一次经过审计的类型转换。Core、官方 Plugin 与第三方 Plugin 均使用该 helper，不在各调用点散落 `as any`。
 
-代码高亮使用 Shiki，并作为原子 Plugin 接入 `markdown()`。Shiki transformer 保持可配置。Twoslash 不属于 0.1 范围，等待 Runtime Plugin 与浮层 UI 能力稳定后再实现。
+代码高亮使用 Shiki，并作为原子 Plugin 接入 `markdown()`。Shiki transformer 保持可配置。Shiki 与 Twoslash 的完整规则见 7.2。
 
 Markdown 页面链接属于 Core 的文件路由契约，不拆成可选 Plugin。相对链接根据当前 Markdown 源文件位置解析，避免目录 `index.md` 的公开无后缀路由丢失源目录语义；无后缀、`.md` 与 `.html` 三种页面链接写法均归一化为 KawaPress 的无后缀公开路由，根路径与相对路径统一应用站点 `base`。浏览器 hydration 后，同源页面链接由 Core 的站内路由接管。外部 Markdown 链接默认添加 `target="_blank"` 与 `rel="noreferrer"`；页面内 hash 链接保持原生锚点行为。
 
@@ -382,7 +462,7 @@ GitHub 风格表格由 Markdown 引擎的默认规则直接提供，是 Core 基
 
 ### 7.2 Shiki 与 Twoslash 增强
 
-0.1 检查点完成后，Shiki 从核心包迁移为普通逻辑插件包 `@kawapress/plugin-shiki`：
+Shiki 是普通逻辑插件包 `@kawapress/plugin-shiki`，不在核心包中：
 
 ```text
 @kawapress/plugin-shiki
@@ -406,18 +486,18 @@ shikiPlugin({ twoslash: { /* TwoslashOptions */ } })
 - 对象形式使用 KawaPress 导出的 `TwoslashOptions`，它基于通用 `TransformerTwoslashOptions`，不暴露自定义 renderer 与 twoslasher；其中的函数、缓存和 TypeScript 对象只留在生成侧，不传入 Runtime graph。
 - nagi 明确组合 `shikiPlugin({ twoslash: true })`，不在 Preset 内实现私有 Twoslash 逻辑。
 - KawaPress 自己维护 Floating Vue renderer、Runtime Plugin 和 CSS，不依赖 `@shikijs/vitepress-twoslash` 或 VitePress 运行时。
-- Runtime Plugin 不再安装 `floating-vue`，只静态导入通用 Twoslash 样式及 KawaPress 自有适配样式。`KawaTwoslashMenu` 与 `floating-vue` 由 `addPageComponent()` 按页面导入，只有真正渲染出浮层的页面加载它们，SSR 与 client 使用同一个页面组件，hydration 保持一致。
+- Runtime Plugin 不安装 `floating-vue`，只静态导入通用 Twoslash 样式及 KawaPress 自有适配样式。`KawaTwoslashMenu` 与 `floating-vue` 由 `addPageComponent()` 按页面导入，只有真正渲染出浮层的页面加载它们，SSR 与 client 使用同一个页面组件，hydration 保持一致。
 - 当前 Runtime Plugin 协议不传递生成侧选项，因此只要安装 `@kawapress/plugin-shiki` 就会加载其 Runtime Plugin；`twoslash: false` 只关闭生成侧分析，不作为运行侧裁剪开关。
 - Shiki Plugin 默认依次安装官方 `transformerMetaHighlight()`、`transformerNotationDiff()`、`transformerNotationFocus()`、`transformerNotationHighlight()` 与 `transformerNotationErrorLevel()`，支持 fence meta `{1,3-5}` 以及语言感知的 `[!code highlight]`、`[!code focus]`、`[!code ++]`、`[!code --]`、`[!code warning]`、`[!code error]` 注释。默认数组顺序为官方标注、KawaPress 语义补充、`v-pre`、Twoslash、用户 transformers 和最终可见行计数；用户仍可使用 Shiki 原生 `enforce` 显式调整自己的执行阶段。控制注释不进入最终可见代码；高亮与聚焦行使用语义 `mark`，新增与删除行使用 `ins`/`del`，同时保留官方稳定 class。Shiki 把最终可见行数写入稳定的 `data-kawa-line-count`，Code Block Plugin 优先使用它生成行号，避免独占控制注释删除整行后数字与代码错位。nagi 只解释这些结构和 class，不增加浏览器 Runtime 行为。
 - 生成侧与运行侧之间只通过生成后的 Vue template 标记、class 和 CSS 约定衔接，不共享 transformer、TypeScript Program、闭包或模块实例。
-- 普通代码块使用 KawaPress 自有的 `v-pre` Shiki transformer 保护 Vue 插值；活跃 Twoslash 代码块由 KawaPress transformer 移除 `v-pre` 并完成花括号转义，不再使用高亮后恢复 `{{ }}` 的方案。
+- 普通代码块使用 KawaPress 自有的 `v-pre` Shiki transformer 保护 Vue 插值；活跃 Twoslash 代码块由 KawaPress transformer 移除 `v-pre` 并完成花括号转义，不在高亮后恢复 `{{ }}`。
 - Twoslash 的浮层 UI 使用 Floating Vue；本阶段不自制 Tooltip/Popover 组件，也不开放 Floating Vue 运行侧配置。KawaPress 只提供一层透明的 `KawaTwoslashMenu` 适配组件，用 Vue `useId()` 向 Floating Vue 传入 SSR/client 稳定一致的 `ariaId`，避免其随机 ID 造成 hydration mismatch。`floating-vue` 的主题是模块级全局配置，`twoslash`、`twoslash-query`、`twoslash-completion` 三个主题与 `strategy: 'fixed'` 由菜单模块在求值时写入，不经过 `app.use()`。
 
 ### 7.3 Code Group
 
 通用代码 Tab 能力由独立逻辑插件包 `@kawapress/plugin-code-group` 提供，不写死在 Core 或 nagi 组件中。默认入口在 Markdown 管线解析 VitePress 风格的 `::: code-group` 容器与代码围栏后的 `[标签]`，生成结构稳定的 `KawaCodeGroup` 组件槽位；`./runtime-plugin` 注册真实 Vue 组件，负责 Tab 选择、方向键、Home、End、ARIA 关系与 SSR/client 稳定 ID。容器只接受 fenced code block，其他正文直接给出可执行的编译错误。
 
-插件只负责结构、状态和 `.kawa-code-group*` 稳定 class；nagi 负责其视觉样式。nagi 的 Code Group Tab 栏纵向严格裁切，不出现原生滚动条或越界滚动；Tab 过多时仍可横向滑动，但隐藏原生滚动条并阻止滚动越界传递。nagi Preset 默认组合该插件，官方《快速开始》使用它展示 npm、pnpm 与 Yarn 命令，不能把三个高频包管理器命令堆成连续普通代码块。
+插件负责结构、状态、`.kawa-code-group*` 稳定 class，以及放在 `kawa.plugin` 层、只读公共 Token 的完整默认外观；主题只在 `kawa.theme` 层微调。Tab 栏纵向严格裁切，不出现原生滚动条或越界滚动；Tab 过多时仍可横向滑动，但隐藏原生滚动条并阻止滚动越界传递。nagi Preset 默认组合该插件，官方《快速开始》使用它展示 npm、pnpm 与 Yarn 命令，不能把三个高频包管理器命令堆成连续普通代码块。
 
 ### 7.4 UnoCSS
 
@@ -427,29 +507,29 @@ nagi Preset 默认组合该插件，并默认启用 `presetWind4`、`presetIcons
 
 ### 7.5 Custom Container
 
-通用提示容器由独立生成侧插件包 `@kawapress/plugin-container` 提供，不写死在 Core、nagi 或 Shiki 中。0.1 支持 `info`、`tip`、`warning`、`danger` 与使用原生 `<details>/<summary>` 的 `details`；标题可以省略或在容器类型后显式填写，并允许普通 Markdown 行内内容。插件只输出语义 HTML 与 `.kawa-container*` 稳定 class，不需要浏览器 Runtime Plugin；nagi 默认组合该插件并负责明暗主题视觉。
+通用提示容器由独立生成侧插件包 `@kawapress/plugin-container` 提供，不写死在 Core、nagi 或 Shiki 中。0.1 支持 `info`、`tip`、`warning`、`danger` 与使用原生 `<details>/<summary>` 的 `details`；标题可以省略或在容器类型后显式填写，并允许普通 Markdown 行内内容。插件输出语义 HTML 与 `.kawa-container*` 稳定 class，并通过只导入 CSS 的 Runtime Plugin 提供 `kawa.plugin` 层的默认外观，颜色只读公共 Token；nagi 默认组合该插件，只微调正文中的间距节奏。
 
 默认标题根据当前页面 URL locale 对应配置的 `lang` 决定，内置中文和英文，其他语言回退英文；插件选项允许按全局或 locale key 覆盖标题。原生 `<summary>` 在鼠标或触控快速连续触发时禁止标题文字选择，容器展开后的正文仍可正常选择和复制。Core 在 Markdown env 中提供当前公开路由 `path`，只用于生成期插件解析当前页面上下文，不进入 pageData 或公开运行时 API。`raw` 不进入本插件：它同时涉及主题 CSS 隔离与 Router 链接接管，是未来单独设计的沙箱边界。GitHub 风格 Alerts 也使用独立插件，避免把两种作者语法绑定为同一安装单元。
 
 ### 7.6 GitHub Alerts
 
-GitHub 风格警报由独立生成侧插件包 `@kawapress/plugin-github-alerts` 提供，不依赖 Custom Container Plugin。插件使用 `@mdit/plugin-alert` 解析根层级 blockquote 中的 `[!NOTE]`、`[!TIP]`、`[!IMPORTANT]`、`[!WARNING]` 与 `[!CAUTION]`，输出 `.kawa-alert*` 稳定结构 class；它不需要 Runtime Plugin，nagi 默认组合并负责图标、颜色和明暗主题样式。默认保持 GitHub 的根层级语义，不启用嵌套 alert 扩展。
+GitHub 风格警报由独立生成侧插件包 `@kawapress/plugin-github-alerts` 提供，不依赖 Custom Container Plugin。插件使用 `@mdit/plugin-alert` 解析根层级 blockquote 中的 `[!NOTE]`、`[!TIP]`、`[!IMPORTANT]`、`[!WARNING]` 与 `[!CAUTION]`，输出 `.kawa-alert*` 稳定结构 class；图标、颜色与明暗外观由插件在 `kawa.plugin` 层提供，颜色只读公共 Token，nagi 默认组合并只微调正文中的间距节奏。默认保持 GitHub 的根层级语义，不启用嵌套 alert 扩展。
 
 Alert 标题与 Custom Container 一样由生成期页面 `path` 和 locale `lang` 决定，内置中英文并允许全局或 locale key 覆盖。标题文本始终真实存在于 HTML 中，类型图标只作视觉补充，不能用 `role="alert"` 打断屏幕阅读器。Search Plugin 建索引时删除 `[!TYPE]` 控制标记但保留标题与正文。Custom Container 与 GitHub Alerts 可以在同一 Preset 中组合，却保持独立安装、独立 parser 和独立稳定 class。
 
 ### 7.7 Code Block UI
 
-代码块外壳由独立逻辑插件包 `@kawapress/plugin-code-block` 提供，不依赖 Shiki。Generator Plugin 在标准 fence renderer 外增加 `.kawa-code-block*` 稳定结构，显示语言标签、可访问的复制按钮和可选行号；Runtime Plugin 只使用一次 document 事件委托处理复制，不为每个代码块创建 Vue App 或组件。nagi 在 Code Group 之前安装本插件，使每个 Tab panel 包含完整代码块外壳，再由主题负责图标、颜色、间距和复制成功状态。nagi 从顶层 `codeBlock` 字段接收这一个内置插件的选项并在生成 Config 前移除该字段，用户不通过追加第二个同名 Plugin 来覆盖默认实例。
+代码块外壳由独立逻辑插件包 `@kawapress/plugin-code-block` 提供，不依赖 Shiki。Generator Plugin 在标准 fence renderer 外增加 `.kawa-code-block*` 稳定结构，显示语言标签、可访问的复制按钮和可选行号；Runtime Plugin 只使用一次 document 事件委托处理复制，不为每个代码块创建 Vue App 或组件。nagi 在 Code Group 之前安装本插件，使每个 Tab panel 包含完整代码块外壳。图标、颜色、间距和复制成功状态由插件在 `kawa.plugin` 层提供，主题只做微调。nagi 从顶层 `codeBlock` 字段接收这一个内置插件的选项并在生成 Config 前移除该字段，用户不通过追加第二个同名 Plugin 来覆盖默认实例。
 
 普通代码块默认不显示行号；围栏语言后的 `:line-numbers` 显式开启，`:line-numbers=N` 指定起始数字，站点全局开启后可用 `:no-line-numbers` 对单个代码块关闭。插件在调用后续 fence renderer 前只临时移除自己的指令，必须保留 Twoslash、代码组标题和其他 meta，并同时兼容同步与异步 renderer。行号由源码行数生成到 `aria-hidden` 的独立列，不进入 `<code>` 或复制文本。
 
-复制按钮在 SSR HTML 中包含当前 locale 的 `aria-label`、tooltip 和 `aria-live` 状态节点；复制时优先使用 Clipboard API，失败后使用隐藏 textarea 回退。成功状态持续两秒后恢复，不能改变 SSR/client 初始节点结构。复制内容来自 `<pre><code>`，排除 `.kawa-code-block__copy-ignore` 与 diff 删除行，不包含行号。语言 label、复制文案与 locale 覆盖属于插件配置，nagi 只提供默认视觉。
+复制按钮在 SSR HTML 中包含当前 locale 的 `aria-label`、tooltip 和 `aria-live` 状态节点；复制时优先使用 Clipboard API，失败后使用隐藏 textarea 回退。成功状态持续两秒后恢复，不能改变 SSR/client 初始节点结构。复制内容来自 `<pre><code>`，排除 `.kawa-code-block__copy-ignore` 与 diff 删除行，不包含行号。语言 label、复制文案与 locale 覆盖属于插件配置。
 
 ### 7.8 MathJax
 
 数学公式由独立逻辑插件包 `@kawapress/plugin-mathjax` 提供，不写死在 Core、Shiki 或 nagi 的插件组合中。Generator Plugin 使用与 MarkdownIt 14 兼容的 `@mdit/plugin-mathjax` 1.1 和 MathJax 4，在 Markdown 编译期把 `$…$` 与 `$$…$$` 渲染为包含辅助 MathML 的 SVG。每个页面使用独立的同步 MathJax 实例，页面内公式编号与 `\\label`/`\\ref` 可以连续工作，页面之间不会因构建或访问顺序共享计数器和标签。站点按需安装并显式加入 `plugins`，因此默认 nagi 站点不承担 MathJax 的安装和启动成本；官方文档把本插件声明为构建期开发依赖并通过站点 Config dogfood，`kawapress` 仍是文档站唯一的框架运行依赖。
 
-插件公开 `tex` 配置与适合静态 SVG 的 `svg` 安全子集，并固定使用 SVG、辅助 MathML、无跨公式字体缓存与不拆分行内公式的安全默认值。依赖浏览器事件的 `action` TeX package 不进入默认包集合；用户显式启用时在构建开始阶段给出可执行错误，而不是在 Lite adaptor 中崩溃。生成 HTML 的根节点使用 `data-kawa-math="inline"` 或 `data-kawa-math="block"` 作为稳定边界，并增加 `v-pre` 防止 Vue 编译 MathJax 内部结构；块公式额外使用 `tabindex="0"`，让超宽公式的滚动区域可以通过键盘聚焦。`./runtime-plugin` 只静态导入通用 MathJax 结构和辅助 MathML CSS，不发送或执行浏览器 MathJax JavaScript；nagi 只负责最大宽度、横向滚动、SVG 对齐和焦点样式。货币等普通美元符号继续遵循 Pandoc 风格 delimiter 规则，并可使用反斜杠转义。
+插件公开 `tex` 配置与适合静态 SVG 的 `svg` 安全子集，并固定使用 SVG、辅助 MathML、无跨公式字体缓存与不拆分行内公式的安全默认值。依赖浏览器事件的 `action` TeX package 不进入默认包集合；用户显式启用时在构建开始阶段给出可执行错误，而不是在 Lite adaptor 中崩溃。生成 HTML 的根节点使用 `data-kawa-math="inline"` 或 `data-kawa-math="block"` 作为稳定边界，并增加 `v-pre` 防止 Vue 编译 MathJax 内部结构；块公式额外使用 `tabindex="0"`，让超宽公式的滚动区域可以通过键盘聚焦。`./runtime-plugin` 只静态导入 MathJax 结构、辅助 MathML 以及最大宽度、横向滚动、SVG 对齐和焦点样式，全部位于 `kawa.plugin` 层，不发送或执行浏览器 MathJax JavaScript。货币等普通美元符号继续遵循 Pandoc 风格 delimiter 规则，并可使用反斜杠转义。
 
 ### 7.9 SSG-MD、llms.txt 与页面复制
 
@@ -486,13 +566,23 @@ Markdown source
 
 静态通道保留标题、强调、列表、表格、引用、代码 fence、fence meta、自定义容器、Alert 与 TeX 源语义，只统一换行和最终空行；它对链接、图片与 include 结果做定向改写：内部页面链接指向最终 `.md`，相对资源使用 Vite 最终可访问 URL，不能因目录 `index.md` 折叠路由而改变资源位置。Code Group 输出全部 panel，不把选中的单个 Tab 当成完整内容；Shiki 的高亮 span、代码复制 UI 与行号不进入 Markdown。
 
-插件 Runtime Plugin 注册公开的 `KawaSsgMarkdown` 组件。自定义 Vue 组件可以检查 `import.meta.env.SSG_MD`，在专用分支用该组件直接交付 Markdown 字符串；这条显式适配优先于通用动态 HTML serializer。nagi、Code Group、Container、GitHub Alerts、Code Block 与 MathJax 等官方内容组件或语法必须提供稳定的 Markdown 语义，不能从 nagi 的视觉 DOM 和 CSS class 猜回内容。
+插件从 `@kawapress/plugin-llms/client` 公开 `SsgMarkdown` 组件。自定义 Vue 组件可以检查 `import.meta.env.SSG_MD`，在专用分支导入该组件直接交付 Markdown 字符串；这条显式适配优先于通用动态 HTML serializer。nagi、Code Group、Container、GitHub Alerts、Code Block 与 MathJax 等官方内容组件或语法必须提供稳定的 Markdown 语义，不能从 nagi 的视觉 DOM 和 CSS class 猜回内容。
 
 `kawapress build` 在全部 Vite environment 完成后通过 `buildArtifacts()` 导入临时 SSG-MD server bundle、逐 route 渲染，再用受控 `emitFile()` 写出页面与聚合文件；临时 bundle 不进入最终部署目录。开发服务器运行同一个 `ssgMarkdown` environment，并按请求即时返回 `.md`、`llms.txt` 与 `llms-full.txt`，因此开发与构建不能使用两套质量不同的内容。每页 `.md` 默认在正文前加入简短的 AI 提示，指向当前 locale 的 `llms.txt` 与 `llms-full.txt`；全文合集只保留一次站点级提示，不在每页重复。
 
-页面操作 UI 由同一个逻辑插件实现：Generator Plugin 在首个文档 H1 后注入稳定的 `KawaLlmsActions` 组件，Runtime Plugin 注册真实 Vue 组件并导入基础样式，nagi 只使用 `.kawa-llms*` 稳定 class 适配主题视觉。主按钮按需 fetch 当前页面 `.md` 并复制完整正文，相邻菜单复制基于当前 origin、`base` 与 route 计算出的绝对 Markdown URL；正文不进入 client bundle。0.1 不内置 ChatGPT、Claude 等供应商跳转。按钮和菜单内置中英文、其他语言回退英文，具备键盘焦点、Escape 与点击外部关闭、`aria-expanded`、`aria-live`、复制失败状态和 Clipboard API 的 textarea 回退；当前 route path 变化时立即清除正文与链接的临时复制状态、停止旧页面的待处理正文请求，并禁止旧异步结果回写新页面；SSR 与 hydration 初始时菜单都保持关闭。
+页面操作 UI 由同一个逻辑插件实现：Runtime Plugin 用 `api.addToOutlet('doc.header', …)` 把复制组件放进 Core 在首个 H1 后渲染的 `doc.header` Outlet，并导入 `kawa.plugin` 层的默认样式；插件不在 Markdown 编译期自行插入组件，主题也不需要知道它。主按钮按需 fetch 当前页面 `.md` 并复制完整正文，相邻菜单复制基于当前 origin、`base` 与 route 计算出的绝对 Markdown URL；正文不进入 client bundle。0.1 不内置 ChatGPT、Claude 等供应商跳转。按钮和菜单内置中英文、其他语言回退英文，具备键盘焦点、Escape 与点击外部关闭、`aria-expanded`、`aria-live`、复制失败状态和 Clipboard API 的 textarea 回退；当前 route path 变化时立即清除正文与链接的临时复制状态、停止旧页面的待处理正文请求，并禁止旧异步结果回写新页面；SSR 与 hydration 初始时菜单都保持关闭。
 
 KawaPress 0.1 不维护独立 Vue-to-Markdown renderer。Vue 的公开 `createRenderer()` 使用客户端式 mount 生命周期，而官方 server renderer 的优化 SFC 路径直接写 HTML，没有可替换的 Markdown host；fork Vue 私有 SSR 组件实例、buffer、shape flag 与 compiler helper 会把一个内容插件绑定到 Vue 内部实现。完整源码复制会丢失动态 Vue 内容，整页 HTML 转换会丢失 Markdown 语义并混入主题 UI，这两条路线同样不采用。
+
+### 7.10 最后更新时间、评论与图片缩放
+
+这三个插件独立安装，nagi 不默认组合；它们只使用公开 API，在 nagi 和任何遵循第六章契约的主题中都无需适配代码。
+
+- `@kawapress/plugin-last-updated`：Generator Plugin 用一次 git 查询取得每个源文件的最后提交时间，在 `pageData()` 中写入 `lastUpdated` 与编辑链接；Runtime Plugin 把显示组件放进 `doc.footer` Outlet。时间只来自 git 提交，不读文件 mtime；浅克隆或不在 git 仓库时输出 warning 并跳过，不输出错误日期。`editLink.pattern` 必须包含 `:path`。frontmatter `lastUpdated: false` 与 `editLink: false` 分别关闭单页对应项。
+- `@kawapress/plugin-comments`：使用 Giscus，配置 `repo`、`repoId`、`category`、`categoryId` 四个必填标识，缺失时构建报错并指出配置路径；不支持需要逐页手写编号的 `specific` 与 `number` 映射。Runtime Plugin 把评论区放进 `doc.after` Outlet。SSR 只输出标题和空容器；评论区进入视口前方 200px 时才请求 `giscus.app/client.js`；外观跟随根元素的 `dark`/`light` class 或系统偏好切换且不整块重载；站内跳转后显示新页面的讨论。frontmatter `comments: false` 关闭单页评论。
+- `@kawapress/plugin-image-zoom`：Generator Plugin 只给 Markdown 图片加上 `data-kawa-zoom`、`role="button"`、`tabindex` 与本地化 `aria-label`；HTML `<img>` 与组件渲染的图片不处理。图片地址的 `#no-zoom` 片段关闭单张缩放并在输出中去掉，frontmatter `imageZoom: false` 关闭整页。浏览器侧使用原生 `<dialog>`，支持点击、Enter、空格打开，Escape、点击与滚轮关闭，关闭后焦点回到原图，站内跳转时关闭，并尊重 `prefers-reduced-motion`。
+
+三者的提示文字都内置中英文、其他语言回退英文，并允许用 `labels` 与按 locale 键的 `localeLabels` 覆盖；样式位于 `kawa.plugin` 层并只读公共 Token。
 
 ## 八、配置与数据
 
@@ -505,6 +595,7 @@ interface LocaleConfig<ThemeConfig> {
   dir?: 'ltr' | 'rtl'
   link?: string
   title?: string
+  head?: HeadConfig[]
   themeConfig?: ThemeConfig
 }
 
@@ -512,11 +603,16 @@ interface KawaPressConfig<ThemeConfig extends object = object> {
   title?: string
   base?: string
   srcDir?: string
+  publicDir?: string
+  head?: HeadConfig[]
   themeConfig?: ThemeConfig
   locales?: Record<string, LocaleConfig<ThemeConfig>>
   plugins?: KawaPressPlugin[]
+  deadLinks?: false | DeadLinkConfig
 }
 ```
+
+`head` 与 `deadLinks` 的规则见 `0.2-core-plan.md` 第一、二节。
 
 `defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型使用 ThemeConfig 泛型，使 Preset 能为顶层与各语言的 `themeConfig` 提供同一份类型推断，Core 不解释主题私有字段。`base` 表示站点部署路径，归一化为以 `/` 开头和结尾的绝对路径；Vite 资源、站内路由、Markdown 根路径链接、站点与 locale 首页链接、开发 SSR 和预渲染 HTML 必须统一使用它，保证 GitHub Pages 等子路径部署可用。
 
@@ -528,12 +624,13 @@ interface PageData {
   title: string
   description?: string
   titleTemplate?: string | false
+  head?: HeadConfig[]
   frontmatter: Record<string, unknown>
   headers: PageHeader[]
 }
 ```
 
-Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAML 或花括号包围的 JSON 对象。它是开放的、严格 JSON 可序列化的数据对象：Core 保留所有键值，不建立通用 schema；字段 schema 与构建校验仍留到 0.3。Core 只赋予 `title`、`description` 与 `titleTemplate` 页面元数据语义：字符串 `title` 优先于第一个 h1，否则回退 h1；标题的纯文本是作者写在标题行上的文字去掉 Markdown 格式：强调、加粗、删除线与链接的标记消失而文字保留（图片同样只保留 alt 文字），行内代码保留内容去掉反引号，公式、行内 HTML、表情短代码等其他扩展语法按源码原样保留，自定义 ID 后缀与永久链接符号不进入标题，空白折叠并去除首尾；该纯文本标题同时用于 `pageData.title`、`pageData.headers` 的标题与纯解析页面摘要、搜索索引，且不随站点安装了哪些 Markdown 插件而变；字符串 `description` 生成唯一的 description meta；`titleTemplate` 可以是字符串模板，其中的 `%s` 替换为页面标题，或为 `false` 以只使用页面标题。其他值保持原样供主题、插件或用户代码读取。Core 在 SSR 与浏览器导航中统一生成 title 与 description；页面级 `head`、`dir` 和 VitePress 的 `$frontmatter` 模板全局不进入 0.1，用户使用 `usePageData()` 读取当前页面数据。
+Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAML 或花括号包围的 JSON 对象。它是开放的、严格 JSON 可序列化的数据对象：Core 保留所有键值，不建立通用 schema；字段 schema 与构建校验仍留到 0.3。Core 只赋予 `title`、`description` 与 `titleTemplate` 页面元数据语义：字符串 `title` 优先于第一个 h1，否则回退 h1；标题的纯文本是作者写在标题行上的文字去掉 Markdown 格式：强调、加粗、删除线与链接的标记消失而文字保留（图片同样只保留 alt 文字），行内代码保留内容去掉反引号，公式、行内 HTML、表情短代码等其他扩展语法按源码原样保留，自定义 ID 后缀与永久链接符号不进入标题，空白折叠并去除首尾；该纯文本标题同时用于 `pageData.title`、`pageData.headers` 的标题与纯解析页面摘要、搜索索引，且不随站点安装了哪些 Markdown 插件而变；字符串 `description` 生成唯一的 description meta；`titleTemplate` 可以是字符串模板，其中的 `%s` 替换为页面标题，或为 `false` 以只使用页面标题。其他值保持原样供主题、插件或用户代码读取。Core 在 SSR 与浏览器导航中统一生成 title 与 description；frontmatter `head` 进入 `pageData.head`，规则见 `0.2-core-plan.md` 第一节。页面级 `dir` 和 VitePress 的 `$frontmatter` 模板全局不进入 0.1，用户使用 `usePageData()` 读取当前页面数据。
 
 `PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与 pageData，保证 Generator Plugin 的 `pageData()` 修改只执行一次。进入浏览器的页面表只携带每页的加载函数，不携带标题、layout 或其他摘要：标题属于需要它的主题，不属于 Core 的路由数据。题目与 layout 的读取能力由 `kawapress/generator` 提供：`listMarkdownPages()` 给出页面文件，`createPageSummaryReader()` 读出作者写下的 `PageSummary`（`title` 与可选的 `layout`），都不渲染页面、不执行 `pageData()`。`kawapress/client` 只公开当前页面数据：
 
@@ -566,17 +663,17 @@ nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可�
 
 本地全文搜索由独立逻辑插件包 `@kawapress/plugin-search` 提供，不写死在 Core 或 nagi 内部。Generator Plugin 独立扫描 `srcDir` 下的 Markdown，按标题层级切成搜索段落，以公开路由作为结果地址；frontmatter 中显式设置 `search: false` 的页面不进入索引。Search 使用与 Core 相同的 Frontmatter 标题解析规则，但它按源文件独立建索引，Generator Plugin 的 `pageData()` 修改不会回写搜索索引。Search 不擅自把可选语法当成已安装能力：只有 `searchPlugin()` 显式启用 `containers` 或 `githubAlerts` 时才按对应 parser 语义移除控制标记，nagi 因为默认组合这两个插件而同步启用；自定义 Preset 覆盖 Alert 标题时把同一组全局与 locale labels 同时传给 Search，保证索引标题与可见标题一致。索引使用 MiniSearch 在生成侧预构建，并按 Core locale 路径拆成独立虚拟模块；浏览器首屏只得到很小的 locale loader 映射，用户首次打开搜索时才加载 MiniSearch 运行时和当前语言索引，不能把索引或全站正文打进主入口。中英文共用大小写归一化与 CJK 感知分词，搜索只返回当前 URL locale 的结果。插件不向 Core 增加 `usePages()`、全量 pageData 或搜索专用运行时 API。
 
-`@kawapress/plugin-search/runtime-plugin` 注册可复用的真实 Vue 搜索组件并自动导入基础样式，稳定结构 class 使用 `.kawa-search*` 命名空间；其他 Preset 可以组合同一插件并把组件放进自己的界面。nagi Preset 默认组合 `searchPlugin()`，NavBar 只引入公开搜索组件并通过 CSS 变量适配主题视觉，不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。静态 SSR 无法从构建环境预知访客平台；Search Runtime Plugin 在 SSR `<head>` 注入一段内容固定的同步平台检测脚本，在浏览器绘制正文前为 `<html>` 写入平台属性。搜索按钮始终输出同时包含 `⌘` 与 `Ctrl` 的稳定 DOM，由 CSS 根据该属性从首帧开始只显示正确标记；Vue hydration 不再替换文字，避免首屏文案与宽度跳变。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
+`@kawapress/plugin-search/runtime-plugin` 用 `api.addToOutlet('header.actions', …)` 把搜索按钮放进主题的顶栏 Outlet，并自动导入 `kawa.plugin` 层的默认样式，稳定结构 class 使用 `.kawa-search*` 命名空间。任何渲染了 `header.actions` 的主题都会得到搜索；想自建界面的主题可以使用 `@kawapress/plugin-search/client` 导出的组件与 `useLocalSearch()`。nagi Preset 默认组合 `searchPlugin()`，NavBar 只渲染 `header.actions` Outlet，不导入搜索组件，也不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。静态 SSR 无法从构建环境预知访客平台；Search Runtime Plugin 在 SSR `<head>` 注入一段内容固定的同步平台检测脚本，在浏览器绘制正文前为 `<html>` 写入平台属性。搜索按钮始终输出同时包含 `⌘` 与 `Ctrl` 的稳定 DOM，由 CSS 根据该属性从首帧开始只显示正确标记；Vue hydration 不再替换文字，避免首屏文案与宽度跳变。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
 
 pageData 与 Data Loader 结果必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含对应页面路由或 Loader 路径、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
 
-nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。任何其他值回退 `doc`。只有 `doc` 页面显示并进入自动侧边栏。页面可以用字面量 `false` 关闭 `navbar`、`sidebar`、`aside`、`outline` 或 `footer`，并可用字符串 `pageClass` 为 nagi 页面外壳附加 CSS class：`sidebar: false` 只隐藏当前页的侧栏与菜单，不移出自动侧边栏索引；`aside: false` 只隐藏宽屏目录栏；`outline: false` 关闭所有目录 UI；`footer: false` 只影响 `home` 和 `page` 布局。`editLink`、`lastUpdated`、`prev`、`next`、自定义或 `false` layout、outline 级别范围和页面级 `head` 不属于 nagi 0.1。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层；右侧图片是与左侧标题相当的主视觉，不能缩成辅助性图标。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。nagi 默认复用当前 `themeConfig.logo` 作为 favicon：单图生成一个 SSR `<link rel="icon">`，明暗图片生成带 `prefers-color-scheme` media 的两条 link，并统一应用站点 `base`，不要求官方文档再维护第三份 Logo 资源。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
+nagi 通过 frontmatter 的 `layout` 区分页面：未填写时为 `doc`，`home` 用于落地页，`page` 用于无文档框架的普通自定义页。任何其他值回退 `doc`。只有 `doc` 页面显示并进入自动侧边栏。页面可以用字面量 `false` 关闭 `navbar`、`sidebar`、`aside`、`outline` 或 `footer`，并可用字符串 `pageClass` 为 nagi 页面外壳附加 CSS class：`sidebar: false` 只隐藏当前页的侧栏与菜单，不移出自动侧边栏索引；`aside: false` 只隐藏宽屏目录栏；`outline: false` 关闭所有目录 UI；`footer: false` 只影响 `home` 和 `page` 布局。`prev`、`next`、自定义或 `false` layout 与 outline 级别范围不属于 nagi 0.1；最后更新时间与编辑链接由独立插件提供（7.10），页面级 `head` 由 Core 提供。任何 `index.md` 都不因文件名获得隐藏侧边栏的特权；首页文档显式填写 `layout: home`。`home` frontmatter 提供与现代文档站一致的结构化 `hero`、`hero.actions` 和 `features` 字段；nagi 分别用 Home、HomeHero 与 HomeFeatures 组件渲染，Hero 在桌面端使用左侧信息和右侧图片的双栏结构，在小屏幕上纵向排列，并把图片与其背后的渐变光晕作为两个独立图层；右侧图片是与左侧标题相当的主视觉，不能缩成辅助性图标。首页仍可在结构化区域之后渲染额外 Markdown 内容。nagi 的站点 Logo 与 Hero 图片同时接受单一图片或 `{ light, dark, alt }` 明暗图片；两张图片都进入 SSR HTML，再由当前 `color-scheme` 的 CSS 选择显示，不能在客户端读取媒体查询后临时换图。nagi 默认复用当前 `themeConfig.logo` 作为 favicon：单图生成一个 SSR `<link rel="icon">`，明暗图片生成带 `prefers-color-scheme` media 的两条 link，并统一应用站点 `base`，不要求官方文档再维护第三份 Logo 资源。没有 Markdown 正文的结构化首页由 Core 输出稳定的隐藏页面根节点，保证 SSR 与客户端 hydration 的节点结构一致。
 
 nagi 的 `doc` 使用固定视口应用壳：NavBar 下方由 Sidebar 与正文滚动容器占满剩余高度，页面外壳和 `body` 不滚动，长正文只在右侧内容区域滚动；Sidebar 菜单过长时在自己的区域内滚动。桌面 Sidebar 的右侧分隔线可以拖拽，宽度范围为 `14rem` 至 `17rem`，默认与最大宽度均保持当前 `17rem`，因此用户只能缩窄 Sidebar 为正文腾出空间；宽度保存在浏览器并在首屏绘制前恢复，双击分隔线恢复默认，键盘方向键、Home 与 End 提供同等操作，移动端抽屉宽度不受影响。`doc` 不渲染 Footer。正文末尾根据当前已解析 Sidebar 的叶子链接顺序显示上一篇与下一篇，跨顶层分组时仍连续翻页；不显示 Edit this page on GitHub 或更新时间区域。`home` 与 `page` 在 nagi 自己的页面滚动容器内滚动并渲染 Footer；未命中页面按 `page` 布局处理。Footer 默认显示本地化的 MIT 许可与 KawaPress 驱动信息，年份由运行时当前年份生成：中文为“基于 MIT 许可发布”和“© {year} KawaPress 强力驱动”，英文为“Released under the MIT License”和“© {year} Powered by KawaPress”。
 
 nagi 的主要滚动区域统一使用 `OsScroll`，配置 `os-theme-nagi`、离开时自动隐藏、轨道点击滚动和 6px 圆角滑块。`OsScroll` 是渐进增强：首屏与 hydration 期间是同一配色的 CSS 滚动条，hydration 完成后才按需加载 `overlayscrollbars` 并接管已有的滚动元素，因此 DOM 结构与滚动位置不依赖它是否已加载，SSR 与客户端输出始终一致。正文、Sidebar、Home/Page 页面不得暴露操作系统原生滚动条外观。代码块、浮层等无法包裹组件的嵌套原生滚动区使用同一套 CSS scrollbar fallback，颜色与深浅色主题变量保持一致。
 
-nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它按顺序导入 `styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。代码块与 Code Group 在所有断点都保持与正文相同的左右内边距和圆角，不向视口左右边缘拉满；独立代码块与 Code Group 外壳使用 1px 主题分隔色边框，让浅色模式的代码区域能从页面背景中轻微分离，Code Group 内部代码块不重复套框。NavBar 在桌面端提供语言菜单、明暗模式切换按钮，以及可选的 GitHub 图标链接。语言菜单默认只显示图标，点击后弹出浮层列出全部语言，当前语言高亮。明暗模式未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。小于 60rem 时，NavBar 右侧只保留菜单按钮；点击后从 Header 下方向下渐变展开导航区，展示语言列表、明暗切换与 GitHub 链接，展开区域不得盖住顶部 Header。nagi 在 SSR `<head>` 注入内容固定的同步初始化脚本，在首次绘制前恢复保存的根元素 class；Runtime Plugin 在客户端模块求值、Vue hydration 之前再次同步同一状态。图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
+nagi 只有一个由 Runtime Plugin 静态导入的 `theme.css` 主题入口；它先以 `layer(kawa.theme)` 导入 `overlayscrollbars.css`，再按顺序导入 `styles/preflight.css`（`kawa.base` 层的重置）、`styles/vars.css`、`styles/base.css`、`styles/layout.css`、`styles/content.css` 与 `styles/responsive.css`，后五个文件的全部规则位于 `kawa.theme` 层。主题 SFC 负责结构、状态和无障碍语义，不存放非 scoped 全局样式；稳定的主题组件 class 统一使用 `.nagi-*` 命名空间并集中维护，方便用户覆盖。Markdown 排版只作用于 `.nagi-doc` 边界，按照 VitePress 默认主题的标题、段落、列表、引用、表格、行内代码和代码块节奏适配，不把正文行高泄漏到整个应用或第三方 Vue 组件。代码块与 Code Group 在所有断点都保持与正文相同的左右内边距和圆角，不向视口左右边缘拉满；独立代码块与 Code Group 外壳使用 1px 主题分隔色边框，让浅色模式的代码区域能从页面背景中轻微分离，Code Group 内部代码块不重复套框。NavBar 在桌面端提供语言菜单、明暗模式切换按钮，以及可选的 GitHub 图标链接。语言菜单默认只显示图标，点击后弹出浮层列出全部语言，当前语言高亮。明暗模式未选择时跟随系统，用户点击后在 `light` 与 `dark` 间切换并保存到浏览器。可选的 `themeConfig.githubUrl` 在 NavBar 右侧增加 GitHub 图标链接，首页 Hero 不重复展示 GitHub 行动按钮。小于 60rem 时，NavBar 右侧只保留菜单按钮；点击后从 Header 下方向下渐变展开导航区，展示语言列表、明暗切换与 GitHub 链接，展开区域不得盖住顶部 Header。nagi 在 SSR `<head>` 注入内容固定的同步初始化脚本，在首次绘制前恢复保存的根元素 class；Runtime Plugin 在客户端模块求值、Vue hydration 之前再次同步同一状态。图标与明暗图片始终保持相同 DOM 节点，只通过 CSS 切换显示，不能根据客户端状态条件渲染不同节点。
 
 nagi 文档布局使用两级响应式断点：小于 60rem 时隐藏桌面 Sidebar，在正文工具条显示 Menu 并用带遮罩的左侧抽屉承载全站目录；60rem 至 80rem 保留桌面 Sidebar，只在工具条显示当前页目录；80rem 及以上隐藏工具条，在正文右侧显示独立当前页目录。文档正文默认最大宽度为 54rem；右侧目录退出布局时，正文可以使用释放后的目录宽度，最大扩展到 70rem。宽屏右侧目录默认展开，目录右上角提供无边框的面板收起图标；收起后目录完全退出布局，正文最大宽度同步使用释放出的全部空间，并在导航栏下方、距视口右上边缘留有安全间距的位置固定显示另一个无边框面板展开图标；没有可显示标题的页面直接回收目录空间。收起状态在当前 Vue App 的站内跳转期间保留，重新加载页面后恢复默认展开。Menu 抽屉、NavBar 导航展开区、目录下拉和遮罩必须支持 Escape、焦点、`aria-expanded`、路由后关闭及 `prefers-reduced-motion`。nagi只定义一次必填的 `ResolvedNagiThemeConfig`，公开的 `NagiThemeConfig` 由 `Partial<ResolvedNagiThemeConfig>` 得到。nagi根据 Core 当前 locale 的 `lang` 内置中文与英文的 `sidebarMenuLabel`、`sidebarResizeLabel`、`navMenuLabel`、`outlineLabel`、`returnToTopLabel`、`langMenuLabel`、`previousPageLabel`、`nextPageLabel`、`notFoundMessage` 和 `notFoundHomeLabel`；其他语言回退英文。404 页的返回链接指向当前语言首页，并带上站点 `base`。用户无需在 `kawapress.config.ts` 重复配置内置语言文案，但仍可在顶层或 locale 的 `themeConfig` 中按需覆盖。nagi 不建立主题私有虚拟配置模块。
 
@@ -613,12 +710,12 @@ docs
 - Runtime Plugin 静态导入的 Vue SFC 与 CSS 由用户站点的 Vite 自动打包；用户不需要单独导入主题或插件 CSS。
 - KawaPress 使用 `docs` 工作区维护并构建自己的真实文档，不保留独立 playground；根目录的 `pnpm dev`、`pnpm build` 与 `pnpm preview` 分别代理文档站命令。新增功能直接进入真实文档，文档写作与构建过程作为持续 dogfooding。
 - 官方文档以中文 `root` 为默认语言，英文放在 `en`；两种语言使用完全相同的相对文件路径，使语言菜单始终能切换到对应页面。文档按用户指定的篇目逐篇撰写，每次同时交付中英文版本，不提前铺写整套章节。简介分组依次放置《KawaPress 是什么？》《快速开始》《面向 AI 的文档 / AI-Ready Documentation》《路由》《部署》；《面向 AI 的文档》只正面说明 nagi 默认能力、复制操作、页面 `.md`、多语言 `llms.txt` / `llms-full.txt`、配置、frontmatter、Vue 动态渲染与 `SsgMarkdown` 显式适配，并用 warning 说明自动转换只能读取服务端渲染内容、复杂组件需要检查 `.md` 并按需显式适配；不记录实验状态或实现缺陷；《部署》只说明构建、生产预览、`base`、通用静态托管要求与缓存，不维护重复前文的发布检查清单，也不维护各托管平台的专属部署指南。简介之后建立“写作 / Writing”分组，第一篇为《Markdown 语法扩展 / Markdown Extensions》；自定义锚点章节只解释语法、slugify、稳定章节链接和跨语言共享英文语义 ID 的用途。《在 Markdown 中使用 Vue / Using Vue in Markdown》专注模板语法、SFC 区块、组件和转义；SSR 环境、浏览器 API、动态导入、客户端组件边界与 hydration 稳定性使用“自定义 / Customization”分组下的独立《SSR 兼容性 / SSR Compatibility》，不混入 Vue 基础用法正文。
-- 文档面向没有技术背景的初学者，使用朴实、温暖、亲和的语言，先解释日常含义，再引入术语；不为追求短句而省略读者必须知道的前提、边界或下一步。表达节奏以 VitePress 指南为参考：先给可执行的结论和最小示例，再只在容易误用的边界补充原因；不重复铺垫、不用故事化叙述填充简单事实。中文使用自然的高语境表达；英文同样友好、具体、直接，采用低语境组织而不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。“自定义 / Customization”分组以《插件体系 / Plugin System》开篇，使用一个真实能力从简单需求逐渐跨越生成与运行阶段的连贯叙事，先让读者自然看到 VitePress 各类扩展入口没有收束为统一插件身份的问题，再建立 KawaPress Plugin、Generator Plugin、Runtime Plugin 与 Preset 的整体心智模型，说明生成与运行边界、单次安装、显式顺序、nagi 组合方式和官方无私有通道等独有取舍；本篇面向插件开发者，不另写面向普通文档作者的价值总结，Runtime Plugin 的 SSR 提醒就近放在其概念说明中；比较保持克制，不使用攻击性结论或机械对照表；总览直接说明默认入口与 `./runtime-plugin` 的 package exports 约定，以及 TypeScript、Vue SFC 和 CSS 源码可由 KawaPress 的 Vite 直接加载、无需预打包的推荐发布方式，具体 API 与其余发布细节留给后续开发文档。《插件开发 / Plugin Development》紧随《插件体系》，承载六个生成侧方法与两个运行侧方法的说明、示例、包结构与发布检查，具体 API 与发布细节不再写入《插件体系》；《构建时数据加载 / Build-Time Data Loading》归入“自定义 / Customization”并紧随《插件开发》，说明 Data Loader、文件监听、Markdown 内容汇总、类型、站点配置与 JSON 边界。《主题定制 / Theme Customization》排在数据加载之后，面向主题开发者说明主题作为普通 Plugin 的架构位置、Generator/Runtime 两侧分工、`Layout` 与 `NotFound` 必需组件约定、`RouterView` 放置、`themeConfig` 类型与 locale 浅合并、主题 Frontmatter 语义、公开 client API、CSS 入口与 SSR 边界；Preset 的组合关系只在《插件体系》中说明，本篇不是只介绍修改 nagi 颜色变量的样式教程。
+- 文档面向没有技术背景的初学者，使用朴实、温暖、亲和的语言，先解释日常含义，再引入术语；不为追求短句而省略读者必须知道的前提、边界或下一步。表达节奏以 VitePress 指南为参考：先给可执行的结论和最小示例，再只在容易误用的边界补充原因；不重复铺垫、不用故事化叙述填充简单事实。中文使用自然的高语境表达；英文同样友好、具体、直接，采用低语境组织而不逐字翻译中文语序。两种语言传递相同事实，但根据各自语言习惯独立组织句子。“自定义 / Customization”分组以《插件体系 / Plugin System》开篇，使用一个真实能力从简单需求逐渐跨越生成与运行阶段的连贯叙事，先让读者自然看到 VitePress 各类扩展入口没有收束为统一插件身份的问题，再建立 KawaPress Plugin、Generator Plugin、Runtime Plugin 与 Preset 的整体心智模型，说明生成与运行边界、单次安装、显式顺序、nagi 组合方式和官方无私有通道等独有取舍；本篇面向插件开发者，不另写面向普通文档作者的价值总结，Runtime Plugin 的 SSR 提醒就近放在其概念说明中；比较保持克制，不使用攻击性结论或机械对照表；总览直接说明默认入口与 `./runtime-plugin` 的 package exports 约定，以及 TypeScript、Vue SFC 和 CSS 源码可由 KawaPress 的 Vite 直接加载、无需预打包的推荐发布方式，具体 API 与其余发布细节留给后续开发文档。《插件开发 / Plugin Development》紧随《插件体系》，承载六个生成侧方法与三个运行侧方法的说明、示例、包结构与发布检查，具体 API 与发布细节不再写入《插件体系》；《构建时数据加载 / Build-Time Data Loading》归入“自定义 / Customization”并紧随《插件开发》，说明 Data Loader、文件监听、Markdown 内容汇总、类型、站点配置与 JSON 边界。《主题定制 / Theme Customization》排在数据加载之后，面向主题开发者说明主题作为普通 Plugin 的架构位置、Generator/Runtime 两侧分工、`Layout` 与 `NotFound` 必需组件约定、`RouterView` 放置、Outlet、公共 Token 与样式层级、`themeConfig` 类型与 locale 浅合并、主题 Frontmatter 语义、公开 client API、CSS 入口与 SSR 边界；Preset 的组合关系只在《插件体系》中说明，本篇不是只介绍修改 nagi 颜色变量的样式教程。
 - 官方文档以 KawaPress 0.1 的预期终态为准，按正式发布后用户真正使用产品的方式编写，不暴露 `workspace:*`、未发布版本号、仓库内部代理命令等开发期临时状态。文档可以先于对应实现成文，但不得超出本文确定的 0.1 交付范围；功能完成后必须通过 `docs` dogfooding 校验文档中的命令、配置与行为。
 - `packageManager: pnpm@11.22.0` 是 KawaPress 仓库开发与复现构建的固定工具链，不是 KawaPress 站点用户的运行时要求。用户包发布后可使用满足依赖要求的 npm、pnpm、Yarn 等包管理器；文档不得把 pnpm 11 写成框架硬性前提。
 - 官方文档同时部署到 GitHub Pages 与 Cloudflare Pages；`main` 每次推送各自构建并发布 `docs/dist`。GitHub Actions 使用 `KAWAPRESS_BASE=/kawapress/` 部署到 GitHub Pages；Cloudflare Pages 直连 GitHub 仓库，不设置该变量，站点挂在自定义域名根路径。本地开发未设置该变量时继续使用根路径 `/`。Cloudflare Pages 构建在仓库根目录执行 `pnpm build`，构建环境使用 Node.js 22.12 及以上与 pnpm 11.22.0。
 - Node.js 正式支持版本与 Vite 8 对齐，为 22.12 及以上。
-- CLI 提供 `kawapress dev` 与 `kawapress build`。KawaPress 的基础 Vite 配置默认使用 `clearScreen: false`，保留启动、依赖优化与 HMR 的连续日志；用户 Generator Plugin 仍可显式覆盖该 Vite 配置。Dev 就绪信息使用 Vite Logger 的前置时间格式和 `[kawapress]` 前缀，与同屏 Vite 日志对齐；启动耗时使用单调高精度时钟，从 dev 命令开始执行计到 HTTP server 完成监听，不使用固定值或估算值。
+- CLI 提供 `kawapress dev`、`kawapress build` 与 `kawapress preview`。KawaPress 的基础 Vite 配置默认使用 `clearScreen: false`，保留启动、依赖优化与 HMR 的连续日志；用户 Generator Plugin 仍可显式覆盖该 Vite 配置。Dev 就绪信息使用 Vite Logger 的前置时间格式和 `[kawapress]` 前缀，与同屏 Vite 日志对齐；启动耗时使用单调高精度时钟，从 dev 命令开始执行计到 HTTP server 完成监听，不使用固定值或估算值。
 - 开源协议为 MIT。
 - 质量检查以终端命令为准：`pnpm lint`、`pnpm typecheck`、`pnpm test`。
 
@@ -626,11 +723,12 @@ docs
 
 0.1 必须完成：
 
-- `kawapress dev` 与 `kawapress build`。
+- `kawapress dev`、`kawapress build` 与 `kawapress preview`。
 - 开发和构建共用 Vite Environment SSR 渲染管线。
 - 默认 Plugin 与 Runtime Plugin 的加载、顺序、错误和 dev/build 闭环。
 - 对象形式的 `definePlugin({ name, setup })` 与六个生成侧注册方法，包括只读的 `pageArtifact()` 和受控的 `buildArtifacts()` 静态产物边界。
-- 对象形式的 `defineRuntimePlugin({ name, setup })` 与 `vueApp()`、`router()`（Core 的站内 `Router`）。
+- 对象形式的 `defineRuntimePlugin({ name, setup })` 与 `vueApp()`、`router()`（Core 的站内 `Router`）、`addToOutlet()`。
+- 主题界面契约：4 个 Outlet 与 `KawaOutlet`、17 个公共 Token、`kawa.base` / `kawa.plugin` / `kawa.theme` 三层样式顺序。
 - 插件默认工厂只安装一次，自动关联可选的 `./runtime-plugin` 运行侧。
 - `defineConfig()` 与 `definePreset()`。
 - 默认 `@kawapress/preset-nagi`。
@@ -638,8 +736,8 @@ docs
 - frontmatter 与 pageData。
 - `.data.ts` / `.data.js` 构建时 Data Loader、文件监听 HMR、`defineLoader()` 与 `createContentLoader()`。
 - Shiki 双主题高亮、Twoslash 与 Floating Vue 浮层。
-- 独立 Code Group Plugin、可访问代码 Tab 与 nagi 默认样式。
-- 独立 LLMS Plugin、双通道 SSG-MD、每页 `.md`、每 locale 的 `llms.txt` / `llms-full.txt`、开发期同源 Markdown 响应，以及 nagi 标题下复制正文与链接 UI。
+- 独立 Code Group Plugin、可访问代码 Tab 与插件自带的默认样式。
+- 独立 LLMS Plugin、双通道 SSG-MD、每页 `.md`、每 locale 的 `llms.txt` / `llms-full.txt`、开发期同源 Markdown 响应，以及放进 `doc.header` Outlet 的复制正文与链接 UI。
 - 文件路径路由、SSR 首屏和浏览器内导航。
 - Core 自带的站内路由与页面表（不依赖 vue-router）、nagi 自动侧边栏与独立的本地全文搜索索引。
 - nagi 的 `doc`、`home` 与 `page` 布局语义、上一篇/下一篇导航及系统深浅色模式。
@@ -659,7 +757,7 @@ docs
 
 ### 0.2：文档站日常体验
 
-- `create-kawapress` 脚手架。
+已随 0.1.0 一并发布：`create-kawapress` 脚手架、站点与页面 `head`、死链检查、`kawapress preview`、sitemap、最后更新时间、评论与图片缩放插件，见 `0.2-core-plan.md`、`plugin-sitemap-plan.md` 与 7.10。
 
 ### 0.3：内容与生态
 
