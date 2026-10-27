@@ -7,7 +7,7 @@ description: Learn the architectural role, component contract, and configuration
 
 A KawaPress theme is more than a color palette and font stack. It decides where page content appears and how navigation, sidebars, footers, and not-found pages form a complete interface.
 
-KawaPress does not provide that interface itself. It creates the Vue App, Vue Router, and Markdown pages, then lets the theme display them.
+KawaPress does not provide that interface itself. It creates the Vue App, the client router and the Markdown pages, then lets the theme display them.
 
 ## A Theme Is a Regular Plugin {#a-theme-is-a-regular-plugin}
 
@@ -67,7 +67,7 @@ import { RouterView } from 'kawapress/client'
 
 ### `NotFound` Handles Unmatched Routes {#notfound-handles-unmatched-routes}
 
-When Vue Router cannot match a route, `RouterView` displays the global `NotFound` component:
+When no page matches the current path, `RouterView` displays the global `NotFound` component:
 
 ```vue
 <script setup lang="ts">
@@ -323,7 +323,8 @@ Theme components import public capabilities from `kawapress/client`:
 | `useSite()` | Site title, `base`, `lang`, `dir`, and home link for the current language. |
 | `useThemeConfig()` | Theme configuration merged for the current language. |
 | `useLocale()` | Current locale, locale list, and matching page links. |
-| `useRouter()` | The Vue Router instance used by KawaPress. |
+| `useRoute()` | The current route: `path`, `fullPath`, `query`, `hash` and whether a page matched. |
+| `useRouter()` | The client router: `push()`, `replace()`, `beforeEach()` and `afterEach()`. |
 | `RouterLink`, `RouterView` | Internal navigation and current route content. |
 | `KawaOutlet` | Interface pieces plugins placed in one outlet. |
 | `withBase()` | Deployment base for dynamic public asset URLs. |
@@ -332,23 +333,11 @@ A theme does not import internal KawaPress files or maintain another router or l
 
 ### List Pages for Navigation {#list-pages-for-navigation}
 
-`usePageData()` returns the current page only. To list other pages, for example for an automatic sidebar or previous and next links, read `route.meta.page` of every route. Its type is `PageRouteMeta`:
+`usePageData()` returns the current page only, and `kawapress/client` has no "list every page" API: the page table carries loaders alone, while titles and layouts belong to the theme.
 
-```ts
-import { useRouter } from 'kawapress/client'
-import { computed } from 'vue'
+nagi shows how to do it: its Generator Plugin walks the Markdown sources once, reads the title and `layout` each author wrote with `createPageSummaryReader()` (no page is rendered and no `pageData()` handler runs), and hands the result to the client through a virtual module of its own. Routes a hand-written sidebar already covers are left out, so a site like this documentation, which configures every sidebar by hand, does not compute the list at all.
 
-const router = useRouter()
-const pages = computed(() =>
-  router.getRoutes()
-    .map(route => route.meta.page)
-    .filter(page => page !== undefined),
-)
-```
-
-A `PageRouteMeta` has three fields: `path` (the public route), `title` (the page title), and an optional `layout` (the `layout` string from Frontmatter). These summaries ship with the route list and stay small. The page body, the remaining Frontmatter fields, and the heading outline load only when someone visits that page.
-
-The summaries come from the Frontmatter and the first level-1 heading the author wrote. They run no Markdown rendering and no plugin `pageData()`. When you need more fields, publish your own virtual module from a Generator Plugin with `vite()`, like nagi does for its `_meta.json` module.
+To build your own, publish a virtual module that holds plain JSON through a Generator Plugin's `vite()`, the same way. Do not read source files in the browser or derive a file name from a route.
 
 ## Import Theme Styles from the Runtime Plugin {#import-theme-styles-from-the-runtime-plugin}
 

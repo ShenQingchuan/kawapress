@@ -58,7 +58,7 @@ export default nagi({
 })
 ```
 
-`base` 会同时应用到静态资源、Vue Router、站内根路径链接和多语言入口。它必须与实际部署路径一致，并在构建前确定。路径如何映射到 Markdown 文件，请参阅[路由](/guide/routing)。
+`base` 会同时应用到静态资源、站内路由、站内根路径链接和多语言入口。它必须与实际部署路径一致，并在构建前确定。路径如何映射到 Markdown 文件，请参阅[路由](/guide/routing)。
 
 ## 配置静态托管 {#configure-static-hosting}
 

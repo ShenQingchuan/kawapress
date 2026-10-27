@@ -58,7 +58,7 @@ export default nagi({
 })
 ```
 
-`base` applies to static assets, Vue Router, root-relative internal links, and locale entry points. It must match the deployed path and be known before the build starts. See [Routing](/en/guide/routing) for the mapping between URLs and Markdown files.
+`base` applies to static assets, the client router, root-relative internal links, and locale entry points. It must match the deployed path and be known before the build starts. See [Routing](/en/guide/routing) for the mapping between URLs and Markdown files.
 
 ## Configure Static Hosting {#configure-static-hosting}
 

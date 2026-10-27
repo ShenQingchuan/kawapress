@@ -178,7 +178,7 @@ export default nagi({
 })
 ```
 
-`base` must start with `/`. KawaPress normalizes the trailing slash and applies the same prefix to Vite assets, Vue Router, prerendered pages, and root-relative Markdown links.
+`base` must start with `/`. KawaPress normalizes the trailing slash and applies the same prefix to Vite assets, the client router, prerendered pages, and root-relative Markdown links.
 
 Keep using logical routes in Markdown instead of repeating `/my-docs/` throughout the content:
 
@@ -192,35 +192,41 @@ The built link points to `/my-docs/en/guide/getting-started`. Moving the site la
 
 On the initial request, KawaPress renders the matched route on the server. The browser then hydrates that HTML. Readers see complete content before client-side rendering takes over.
 
-After hydration, Vue Router handles normal same-site links:
+After hydration, the documentation router KawaPress ships with handles normal same-site links:
 
 ```text
 Initial request
   → render the current page on the server
   → hydrate in the browser
   → follow an internal link
-  → load and display the target page with Vue Router
+  → the router loads and shows the target page
 ```
 
 The initial request and production build therefore share SSR semantics, while later navigation avoids a full-page reload. External links, downloads, links with a `target`, and modified clicks that open a new tab keep their native browser behavior.
 
 When the address bar carries a query or an anchor, such as `/guide/routing?from=search#links`, a static host still answers with the HTML of the path alone, and browsers never send the anchor to the server. KawaPress therefore hydrates that path first and switches the router to the full URL right after: the address bar keeps what the visitor typed, no extra history entry appears, and the page still lands on the target heading. Until that switch, code that reads `route.query` or `route.hash` sees empty values; read them after hydration, for instance inside `watch` or `onMounted`, when their output has to reflect the URL.
 
-## Why Vue Router? {#why-vue-router}
+## Why a built-in router? {#why-a-built-in-router}
 
-VitePress does not ship Vue Router as a runtime dependency. Its client includes a [small, purpose-built router](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts) that handles page-module loading, browser history, scroll positions, and navigation hooks. This keeps the dependency surface focused and gives VitePress direct control over its page-loading pipeline.
+Routing in a documentation site is a lookup table from a path to a page. It needs no matcher, no nested routes, no named routes and no dynamic parameters. KawaPress therefore does not pull in Vue Router: it ships a small router that covers exactly what a documentation site needs. The page table is plain data, one loader fetches a page, and the router owns the URL and the browser history.
 
-KawaPress uses the official [Vue Router](https://router.vuejs.org/). Markdown files still become routes automatically, so site authors do not maintain a route table. Internally, however, those pages are managed by a real Vue Router instance: SSR uses memory history, the browser uses web history, and Runtime Plugins can use navigation guards and route records directly.
+VitePress made the same call and keeps its own [lightweight router](https://github.com/vuejs/vitepress/blob/main/src/client/app/router.ts) for documentation sites. The difference is that KawaPress hands that ability to themes and plugins as public API instead of keeping it internal.
 
-| Concern | VitePress router | Vue Router in KawaPress |
-| --- | --- | --- |
-| Runtime cost | No Vue Router dependency; the API covers documentation needs | Adds a general-purpose dependency and capabilities a basic documentation site may not use |
-| Extension model | Uses VitePress-specific routing and page-loading hooks | Uses the standard Vue Router instance, guards, and route-record APIs |
-| Maintenance | Owns and controls the full routing implementation | Reuses the Vue ecosystem's mature router while adapting it to KawaPress SSR and SSG boundaries |
+What the built-in router covers:
 
-Neither choice is universally better. VitePress optimizes for a small, specialized runtime. KawaPress prioritizes a shared Vue extension boundary, so themes and Runtime Plugins do not need to learn a framework-specific router.
+| Ability | Where |
+| --- | --- |
+| Navigation | `push()` and `replace()` on `useRouter()` |
+| The current route | `path`, `fullPath`, `query` and `hash` from `useRoute()` |
+| Guards | `beforeEach()` cancels a navigation by returning `false`; `afterEach()` runs once it committed |
+| Internal links | `RouterLink` renders a plain `<a>`; one global click listener turns internal clicks into navigations |
+| Page container | `RouterView` renders the current page, and `NotFound` when nothing matched |
 
-The static build generates pages from Markdown files discovered at build time. Use `router.addRoute()` for routes needed only while the client app is running. If a page must support direct visits and prerendering, create it as a Markdown file.
+What it does not provide: nested routes, named routes, dynamic parameters, `addRoute()`, `getRoutes()`, aliases, redirects from a guard, `scrollBehavior`, `isReady()` and `resolve()`. None of them is needed to serve documentation, and each one can be added when a real need shows up instead of carrying a whole general-purpose router up front.
+
+For themes and plugins, `useRoute()`, `useRouter()`, `RouterLink` and `RouterView` keep the names and the usage they have in Vue Router wherever the two overlap, so nobody has to learn a second set of concepts.
+
+The page table comes from the Markdown files found at build time, so a page has to be a Markdown file to be reachable directly and to be prerendered.
 
 ## Not Found Pages {#not-found-pages}
 

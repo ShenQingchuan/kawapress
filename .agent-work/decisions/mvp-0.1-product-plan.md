@@ -38,20 +38,20 @@ KawaPress 期望成为一个更好的 VitePress，是由 Vue 社区成员自主�
   → SSR 生成 HTML
   → 浏览器加载 client bundle
   → Vue hydration
-  → 后续站内跳转由 vue-router 接管
+  → 后续站内跳转由 Core 自带的站内路由接管
 ```
 
 ### 2.2 路由
 
-路由使用 vue-router：
+路由由 Core 自带，不依赖 vue-router，实现细节与验收见 `router-plan.md`：
 
-- SSR 使用 memory history。
-- 浏览器使用 web history。
-- Markdown 文件路径直接决定路由。
-- 路由路径清单可以进入浏览器，页面组件与 pageData 按需加载。
-- 0.1 不提供插件虚拟页面 API，也不提供 `addPage()`。
+- 路由只做“公开路径 → 页面”的查表，页面表是纯数据，页面由一个统一加载函数取回。
+- 浏览器拿下地址栏的 URL 与历史记录，站内链接由一个全局点击拦截器交给路由；SSR 每次渲染只查表并加载一个页面。
+- Markdown 文件路径直接决定路由；页面表进入浏览器，页面组件与 pageData 按需加载。
+- 公开 API 为 `useRoute()`、`useRouter()`、`RouterLink`、`RouterView` 与类型 `Route`、`Router`，Runtime Plugin 通过 `router(handler)` 拿到同一个 `Router`。名字与用法和 Vue Router 相同的部分保持相同，`beforeEach()` 返回 `false` 取消跳转。
+- 不提供嵌套路由、命名路由、动态参数、`addRoute()`、`getRoutes()`、别名、重定向、`scrollBehavior`、`isReady()` 与 `resolve()`。需要时再按真实需求增加。
 
-KawaPress 选择 Vue 官方的 Vue Router，而不是为静态文档场景维护一套框架私有的轻量 Router。这个选择会增加一个通用运行时依赖，并携带基础文档站暂时用不到的能力；换来的结果是 SSR memory history、浏览器 web history、导航守卫、路由记录与 Runtime Plugin 共用同一套 Vue 生态标准接口，Core 不需要长期自行维护 URL、history、导航竞态和扩展协议。`router.addRoute()` 只修改运行时 Router，不自动进入静态预渲染页面清单。
+0.1 不提供插件虚拟页面 API，也不提供 `addPage()`。
 
 非 Markdown 内容源、动态路由、RSS、sitemap、归档页等能力留到后续内容层与路由方案中统一设计。
 
@@ -243,7 +243,7 @@ MVP 只公开两个 Runtime 注册方法：
 | 方法 | 得到的对象 | 用途 |
 |---|---|---|
 | `vueApp(handler)` | 真实 Vue `App` | `app.use`、全局组件、provide、errorHandler 等 |
-| `router(handler)` | 真实 vue-router `Router` | 导航守卫与运行时路由调整 |
+| `router(handler)` | Core 的站内 `Router` | 导航守卫与站内跳转 |
 
 执行时机：
 
@@ -261,7 +261,7 @@ MVP 只公开两个 Runtime 注册方法：
 - handler 可以同步或异步。
 - Runtime Plugin 在每个 Vue App 实例上执行：SSR 每次渲染创建新 App，浏览器启动时创建一次。
 - Runtime Plugin 代码已经位于 Vite module graph，可以静态导入 `.vue`、CSS 和普通 Vue plugin，并直接传真实对象。
-- `router.addRoute()` 只修改运行时 Router；0.1 不承诺因此自动新增静态预渲染页面。
+- `router()` 得到的 `Router` 只覆盖文档站需要的能力；新增页面需要新增 Markdown 文件。
 - `head`、初始状态和 SSR request context 不进入 0.1 API；有明确需求时可在 Runtime API 上增加新的注册方法。
 
 ### 4.5 插件生命周期与错误
@@ -368,7 +368,7 @@ markdown-it 生态插件的公开类型把第一个参数绑定为 `MarkdownIt`�
 
 代码高亮使用 Shiki，并作为原子 Plugin 接入 `markdown()`。Shiki transformer 保持可配置。Twoslash 不属于 0.1 范围，等待 Runtime Plugin 与浮层 UI 能力稳定后再实现。
 
-Markdown 页面链接属于 Core 的文件路由契约，不拆成可选 Plugin。相对链接根据当前 Markdown 源文件位置解析，避免目录 `index.md` 的公开无后缀路由丢失源目录语义；无后缀、`.md` 与 `.html` 三种页面链接写法均归一化为 KawaPress 的无后缀公开路由，根路径与相对路径统一应用站点 `base`。浏览器 hydration 后，同源页面链接由 Vue Router 接管。外部 Markdown 链接默认添加 `target="_blank"` 与 `rel="noreferrer"`；页面内 hash 链接保持原生锚点行为。
+Markdown 页面链接属于 Core 的文件路由契约，不拆成可选 Plugin。相对链接根据当前 Markdown 源文件位置解析，避免目录 `index.md` 的公开无后缀路由丢失源目录语义；无后缀、`.md` 与 `.html` 三种页面链接写法均归一化为 KawaPress 的无后缀公开路由，根路径与相对路径统一应用站点 `base`。浏览器 hydration 后，同源页面链接由 Core 的站内路由接管。外部 Markdown 链接默认添加 `target="_blank"` 与 `rel="noreferrer"`；页面内 hash 链接保持原生锚点行为。
 
 静态资源使用 Vite 原生资源管线：Markdown 编译为 Vue SFC 后，Markdown 图片、Vue 组件和 CSS 中的静态相对或根绝对引用由 Vite 发现、按需输出，并自动适配 `base`。公共资源目录由 `publicDir` 配置，默认值为相对 `srcDir` 的 `public`；它只接受 `srcDir` 内的相对目录名或子路径。目录中的文件复制到构建产物根目录，保持文件名，不参与页面扫描或路由；Markdown 中的 PDF 等下载文件应放在这里并用根绝对路径引用。通过主题配置或其他运行时数据动态产生的公开资源 URL 不经过静态转换，主题或组件必须从 `kawapress/client` 使用 `withBase(path, site.base)`；调用方只写 `/logo.svg`，不手工拼接部署 `base`。动态资源选择继续遵循 Vite 的标准静态分析边界，不在 Core 增加私有资源加载 API。
 
@@ -518,7 +518,7 @@ interface KawaPressConfig<ThemeConfig extends object = object> {
 }
 ```
 
-`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型使用 ThemeConfig 泛型，使 Preset 能为顶层与各语言的 `themeConfig` 提供同一份类型推断，Core 不解释主题私有字段。`base` 表示站点部署路径，归一化为以 `/` 开头和结尾的绝对路径；Vite 资源、Vue Router history、Markdown 根路径链接、站点与 locale 首页链接、开发 SSR 和预渲染 HTML 必须统一使用它，保证 GitHub Pages 等子路径部署可用。
+`defineConfig()` 只提供类型推断与配置归一化，不引入额外生命周期。Core 的配置类型使用 ThemeConfig 泛型，使 Preset 能为顶层与各语言的 `themeConfig` 提供同一份类型推断，Core 不解释主题私有字段。`base` 表示站点部署路径，归一化为以 `/` 开头和结尾的绝对路径；Vite 资源、站内路由、Markdown 根路径链接、站点与 locale 首页链接、开发 SSR 和预渲染 HTML 必须统一使用它，保证 GitHub Pages 等子路径部署可用。
 
 pageData 至少包含：
 
@@ -535,7 +535,7 @@ interface PageData {
 
 Frontmatter 必须位于 Markdown 文件最前面，支持三横线包围的 YAML 或花括号包围的 JSON 对象。它是开放的、严格 JSON 可序列化的数据对象：Core 保留所有键值，不建立通用 schema；字段 schema 与构建校验仍留到 0.3。Core 只赋予 `title`、`description` 与 `titleTemplate` 页面元数据语义：字符串 `title` 优先于第一个 h1，否则回退 h1；字符串 `description` 生成唯一的 description meta；`titleTemplate` 可以是字符串模板，其中的 `%s` 替换为页面标题，或为 `false` 以只使用页面标题。其他值保持原样供主题、插件或用户代码读取。Core 在 SSR 与浏览器导航中统一生成 title 与 description；页面级 `head`、`dir` 和 VitePress 的 `$frontmatter` 模板全局不进入 0.1，用户使用 `usePageData()` 读取当前页面数据。
 
-`PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与 pageData，保证 Generator Plugin 的 `pageData()` 修改只执行一次。进入浏览器的路由摘要 `PageRouteMeta` 另算一等：它只携带 `path`、`title` 与 `layout`，由 Frontmatter 与第一个 h1 直接读出，不执行 `pageData()`。`kawapress/client` 只公开当前页面数据：
+`PageData.path` 始终是公开路由路径，不是磁盘绝对路径。核心使用同一个 Markdown page loader 生成页面组件与 pageData，保证 Generator Plugin 的 `pageData()` 修改只执行一次。进入浏览器的页面表只携带每页的加载函数，不携带标题、layout 或其他摘要：标题属于需要它的主题，不属于 Core 的路由数据。题目与 layout 的读取能力由 `kawapress/generator` 提供：`listMarkdownPages()` 给出页面文件，`createPageSummaryReader()` 读出作者写下的 `PageSummary`（`title` 与可选的 `layout`），都不渲染页面、不执行 `pageData()`。`kawapress/client` 只公开当前页面数据：
 
 ```ts
 declare function usePageData(): ComputedRef<PageData | undefined>
@@ -560,7 +560,7 @@ Core 同时公开 `createContentLoader()`。它接收相对 `srcDir` 的一个�
 
 构建时 Data Loader 是显式导入的数据模块，不是全站 Content Layer。远程数据只能由站点 Loader 主动读取；0.1 不提供远程内容源适配、内容查询、动态路由、增量构建或 CMS 协议。
 
-核心不提供 `usePages()` 或全站内容 composable。nagi 通过公开的 Vue Router 实例及其路由元数据 `route.meta.page`（`PageRouteMeta`）生成自动侧边栏，并读取各内容目录旁的 `_meta.json` 管理目录与页面的显示顺序和本地化名称，不使用 frontmatter `order`。`_meta.json` 使用按展示顺序排列的数组，字符串条目只声明文件或目录名，对象条目可以通过 `type`、`name` 与 `label` 区分文件、目录并覆盖显示名称；未列出的现有页面或目录继续按路径顺序追加。每个 locale 可以拥有自己目录下的 `_meta.json`，因此 Sidebar 结构与标签自然随路径语言切换。nagi 的 Generator Plugin 通过 JSON 虚拟模块把这些结构化内容元数据交给运行侧；该模块只传标准 JSON，不承载主题配置或生成侧对象。
+核心不提供 `usePages()` 或全站内容 composable。nagi 用自己的 Generator Plugin 通过 `kawapress/generator` 的页面发现与页面摘要读取能力生成自动侧边栏，再通过自己的虚拟模块把这份数据交给运行侧，并读取各内容目录旁的 `_meta.json` 管理目录与页面的显示顺序和本地化名称，不使用 frontmatter `order`。`_meta.json` 使用按展示顺序排列的数组，字符串条目只声明文件或目录名，对象条目可以通过 `type`、`name` 与 `label` 区分文件、目录并覆盖显示名称；未列出的现有页面或目录继续按路径顺序追加。每个 locale 可以拥有自己目录下的 `_meta.json`，因此 Sidebar 结构与标签自然随路径语言切换。nagi 的 Generator Plugin 通过 JSON 虚拟模块把这些结构化内容元数据交给运行侧；该模块只传标准 JSON，不承载主题配置或生成侧对象。
 
 nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可以提供全局 Sidebar 数组，也可以用路径前缀对象为不同区域提供数组或 `{ base, items }`。当前路由命中手写配置时以手写配置为准；没有命中时回退到 `_meta.json` 自动 Sidebar。Core 的 locale `themeConfig` 浅合并允许各语言覆盖 Sidebar。nagi 另外公开 `defineLocalizedSidebars()`：站点只写一次 Sidebar 结构和无语言前缀的路由，为每个 locale 提供前缀和本地化文字，helper 自动生成各语言的配置，避免复制整棵 Sidebar。官方双语文档使用该 helper Dogfood 配置式 Sidebar。Sidebar 顶层分组之间使用主题 divider 分割，不要求配置作者插入装饰性条目。
 
@@ -630,7 +630,7 @@ docs
 - 开发和构建共用 Vite Environment SSR 渲染管线。
 - 默认 Plugin 与 Runtime Plugin 的加载、顺序、错误和 dev/build 闭环。
 - 对象形式的 `definePlugin({ name, setup })` 与六个生成侧注册方法，包括只读的 `pageArtifact()` 和受控的 `buildArtifacts()` 静态产物边界。
-- 对象形式的 `defineRuntimePlugin({ name, setup })` 与 `vueApp()`、`router()`。
+- 对象形式的 `defineRuntimePlugin({ name, setup })` 与 `vueApp()`、`router()`（Core 的站内 `Router`）。
 - 插件默认工厂只安装一次，自动关联可选的 `./runtime-plugin` 运行侧。
 - `defineConfig()` 与 `definePreset()`。
 - 默认 `@kawapress/preset-nagi`。
@@ -641,7 +641,7 @@ docs
 - 独立 Code Group Plugin、可访问代码 Tab 与 nagi 默认样式。
 - 独立 LLMS Plugin、双通道 SSG-MD、每页 `.md`、每 locale 的 `llms.txt` / `llms-full.txt`、开发期同源 Markdown 响应，以及 nagi 标题下复制正文与链接 UI。
 - 文件路径路由、SSR 首屏和浏览器内导航。
-- 页面路由元数据、nagi 自动侧边栏与独立的本地全文搜索索引。
+- Core 自带的站内路由与页面表（不依赖 vue-router）、nagi 自动侧边栏与独立的本地全文搜索索引。
 - nagi 的 `doc`、`home` 与 `page` 布局语义、上一篇/下一篇导航及系统深浅色模式。
 - Core 路径国际化、locale 站点数据、主题配置覆盖、语言同页切换与 SSR/SSG `lang`/`dir`。
 - `docs` 只声明 `kawapress` 一个运行依赖，并通过 `kawapress/nagi` 使用默认 Preset 和公开能力，完成 dev、SSR、hydration 与静态构建闭环，同时包含至少两种语言用于国际化 dogfooding。

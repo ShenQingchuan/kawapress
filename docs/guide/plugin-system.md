@@ -52,7 +52,7 @@ Generator Plugin 在 KawaPress 读取配置、编译 Markdown 和构建站点时
 
 ### Runtime Plugin 参与页面运行环境 {#a-runtime-plugin-participates-in-the-page-runtime}
 
-Runtime Plugin 在 KawaPress 创建 Vue App 和 Vue Router 时工作。它可以：
+Runtime Plugin 在 KawaPress 创建 Vue App 和站内路由时工作。它可以：
 
 - 安装普通 Vue 插件；
 - 注册全局组件；
