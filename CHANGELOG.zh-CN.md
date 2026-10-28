@@ -105,6 +105,6 @@ KawaPress 的所有重要变更都记录在这里。格式参考 [Keep a Changel
 - 发布时某个版本已经在 npm 上，不再让整次发布失败。
 
 [0.3.0]: https://github.com/kawapress/kawapress/releases/tag/v0.3.0
-[0.2.2]: https://github.com/kawapress/kawapress/releases/tag/v0.2.2
-[0.2.1]: https://github.com/kawapress/kawapress/releases/tag/v0.2.1
+[0.2.2]: https://github.com/kawapress/kawapress/commit/5a9b6f2
+[0.2.1]: https://github.com/kawapress/kawapress/commit/5456bfa
 [0.2.0]: https://github.com/kawapress/kawapress/releases/tag/v0.2.0

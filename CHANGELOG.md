@@ -105,6 +105,6 @@ What changes for each kind of user:
 - A release no longer fails when a version is already on npm.
 
 [0.3.0]: https://github.com/kawapress/kawapress/releases/tag/v0.3.0
-[0.2.2]: https://github.com/kawapress/kawapress/releases/tag/v0.2.2
-[0.2.1]: https://github.com/kawapress/kawapress/releases/tag/v0.2.1
+[0.2.2]: https://github.com/kawapress/kawapress/commit/5a9b6f2
+[0.2.1]: https://github.com/kawapress/kawapress/commit/5456bfa
 [0.2.0]: https://github.com/kawapress/kawapress/releases/tag/v0.2.0
