@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-llms",
   "type": "module",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "SSG-MD and llms.txt output for KawaPress",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",

@@ -102,18 +102,24 @@ pnpm release:lock --apply    # 真正修改；第一次会在浏览器里做两�
 # 1. 改版本号（只改 package.json，不发布）。可以一次写多个包。
 pnpm release:prepare @kawapress/plugin-mermaid=0.2.1
 
-# 2. 提交并推 main
+# 2. 写更新日志：在 CHANGELOG.md 和 CHANGELOG.zh-CN.md 顶部加这个版本的一节，
+#    并更新两份文件底部的版本链接。写法见下面的「发布说明」一节。
+
+# 3. 提交并推 main（版本号和更新日志放在同一个提交里）
 git commit -am "chore: 发布 plugin-mermaid 0.2.1"
 git push origin main
 
-# 3. 等 main 上的 CI 变绿（Actions → CI）
+# 4. 等 main 上的 CI 变绿（Actions → CI）
 
-# 4. 打 tag，推 tag —— 这一步触发发布工作流，之后全自动
+# 5. 打 tag，推 tag —— 这一步触发发布工作流，之后全自动
 git tag v2026-05-30-mermaid
 git push origin v2026-05-30-mermaid
 
-# 5. 等 Actions → Release 跑完，核对结果
+# 6. 等 Actions → Release 跑完，核对结果
 npm view @kawapress/plugin-mermaid version
+
+# 7. 在 GitHub 上创建 Release，正文用更新日志里这个版本的那一节
+gh release create v2026-05-30-mermaid --title "0.2.1" --notes-file <正文文件>
 ```
 
 几条规则：
@@ -176,7 +182,27 @@ pnpm release --publish     # 会要求手输 publish 确认
 
 ---
 
-## 三、相关文件
+## 三、发布说明
+
+每个版本有两处公开记录，内容一致：
+
+- **`CHANGELOG.md` 与 `CHANGELOG.zh-CN.md`**：仓库里的长期记录，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，按版本倒序，每个版本写日期（`YYYY-MM-DD`）。
+- **GitHub Release**：正文直接取自上面那个版本的一节。Release 的 tag 要用实际推送的那个 tag，标题用版本号。
+
+一节更新日志按这个顺序写，没有内容的小节整节省略：
+
+1. **破坏性变更**（Breaking changes）：放在最前面。写出旧名字和新名字，并按用户身份（站点作者、插件作者、主题作者）分别说明要做什么，附一段 `diff` 示例。
+2. **新增**（Added）、**变更**（Changed）、**修复**（Fixed）：每条一句话，写用户能看到的变化，不写内部实现。
+3. **迁移**（Migration）：有破坏性变更时，给出编号的升级步骤。
+
+写作规则：
+
+- 只写事实：这个版本改了什么，用户需要做什么。不写夸奖，不写「大幅提升」「全新」这类词。
+- 只描述这个版本和上个版本之间的差别，不写开发过程。
+- 版本号发错、没有发出去的 tag，不进更新日志。
+- 同一个变化在中文和英文两份里都要有，意思一致。
+
+## 四、相关文件
 
 | 文件 | 作用 |
 | --- | --- |
@@ -186,4 +212,6 @@ pnpm release --publish     # 会要求手输 publish 确认
 | `scripts/release/pack.mjs` | 暂存目录、打包、tarball 校验 |
 | `scripts/release/github-packages.mjs` | 把带 scope 的包镜像到 GitHub Packages |
 | `scripts/release/registry.mjs` | 已发布内容、dist-tag、缺包检查 |
+| `CHANGELOG.md`、`CHANGELOG.zh-CN.md` | 每个版本的变更记录，中英文各一份 |
+| `.github/release.yml` | GitHub 自动生成 Release 说明时的分类 |
 | `scripts/trust-publishers.mjs` | `pnpm release:trust`，读取并校准全部包的 trusted publisher |

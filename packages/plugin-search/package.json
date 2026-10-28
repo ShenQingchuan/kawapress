@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-search",
   "type": "module",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Lazy local full-text search plugin for KawaPress",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",

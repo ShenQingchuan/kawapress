@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. A small project that reproduces the problem gets it fixed fastest.
+  - type: input
+    id: version
+    attributes:
+      label: KawaPress version
+      description: The version of `kawapress` and of any `@kawapress/*` package involved.
+      placeholder: kawapress@0.3.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node.js version, package manager, and operating system.
+      placeholder: Node.js 22.12, pnpm 11.22, macOS 15
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it happen?
+      options:
+        - Development server (`kawapress dev`)
+        - Production build (`kawapress build`)
+        - In the browser after the page loads
+        - Both development and build
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: A link to a small repository is best. Otherwise list the steps and the relevant config.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      render: shell
