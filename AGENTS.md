@@ -4,7 +4,7 @@ KawaPress 是一个全新的、以 Vue 为核心的静态站点生成器，目�
 
 ## 开发计划
 
-KawaPress 的开发计划用 GitHub Project 管理（[KawaPress Roadmap](https://github.com/users/ShenQingchuan/projects/1)），以 issue 追踪驱动。issue 使用英文编写。
+KawaPress 的整体发展计划用 GitHub Project 管理（[KawaPress Development Plan](https://github.com/users/ShenQingchuan/projects/2)），不绑定具体版本，以 issue 追踪驱动。issue 与 PR 使用英文编写。
 
 发布到 npm 的完整流程（一次准备 + 每次发版动作）见 [RELEASING.md](./RELEASING.md)。
 
