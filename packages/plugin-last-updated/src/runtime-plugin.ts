@@ -6,6 +6,6 @@ import './last-updated.css'
 export default defineRuntimePlugin({
   name: PLUGIN_NAME,
   setup(api) {
-    api.addToOutlet('doc.footer', { id: 'last-updated', component: LastUpdated })
+    api.appendToOutlet('doc', { id: 'last-updated', component: LastUpdated })
   },
 })

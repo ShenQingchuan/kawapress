@@ -26,7 +26,7 @@ export async function createRuntimePluginRunner(
 
   for (const plugin of plugins) {
     const api: RuntimePluginAPI = {
-      addToOutlet: outletCollector.addForPlugin(plugin.name),
+      ...outletCollector.forPlugin(plugin.name),
       vueApp: handler => vueAppHandlers.add(plugin.name, handler),
       router: handler => routerHandlers.add(plugin.name, handler),
     }

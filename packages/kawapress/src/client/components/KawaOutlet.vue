@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { OutletItem, OutletName } from '../../core/outlet'
+import type { OutletName } from '../../core/outlet'
 import { computed, onUnmounted } from 'vue'
-import { assertOutletName, getOutletItems } from '../../core/outlet'
+import { assertOutletName, getOutletSlots } from '../../core/outlet'
 import { recordRenderedOutlet, useOutletRegistry, useOutletRenderStore } from '../outlet'
 
 const props = defineProps<{
@@ -9,14 +9,15 @@ const props = defineProps<{
 }>()
 
 defineSlots<{
-  /** Full control over the outlet: filter, wrap, or replace the items. */
-  default?: (props: { items: readonly OutletItem[] }) => unknown
+  /** The theme's own content. Plugin items render before and after it. */
+  default?: () => unknown
 }>()
 
 assertOutletName(props.name, '<KawaOutlet>')
 
 const registry = useOutletRegistry('<KawaOutlet>')
-const items = computed(() => getOutletItems(registry, props.name))
+// `slots` stays unset when the name check above throws; Vue still renders once after that.
+const slots = computed(() => getOutletSlots(registry, props.name))
 
 const renderStore = useOutletRenderStore()
 renderStore?.mount(props.name)
@@ -26,11 +27,15 @@ recordRenderedOutlet(props.name)
 </script>
 
 <template>
-  <slot :items="items">
-    <component
-      :is="item.component"
-      v-for="item in items"
-      :key="item.id"
-    />
-  </slot>
+  <component
+    :is="item.component"
+    v-for="item in slots?.prepend"
+    :key="item.id"
+  />
+  <slot />
+  <component
+    :is="item.component"
+    v-for="item in slots?.append"
+    :key="item.id"
+  />
 </template>

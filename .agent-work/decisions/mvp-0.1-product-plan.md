@@ -244,7 +244,7 @@ Runtime Plugin 有三个注册方法：
 |---|---|---|
 | `vueApp(handler)` | 真实 Vue `App` | `app.use`、全局组件、provide、errorHandler 等 |
 | `router(handler)` | Core 的站内 `Router` | 导航守卫与站内跳转 |
-| `addToOutlet(outlet, { id, component })` | 无 | 把插件界面交给主题摆放，见第六章 6.1 |
+| `prependToOutlet(outlet, { id, component })`、`appendToOutlet(outlet, { id, component })` | 无 | 把插件界面放到主题内容的前面或后面，见第六章 6.1 |
 
 执行时机：
 
@@ -358,36 +358,44 @@ defineRuntimePlugin({
 
 ### 6.1 Outlet
 
-插件在 Runtime Plugin 中调用 `api.addToOutlet(outlet, { id, component })`：
+Outlet 是主题圈出来的一块内容。主题把自己画的内容包进 `<KawaOutlet name="…">`，这块内容就是该位置的默认内容；插件只能在默认内容的前面或后面加东西：
 
 ```ts
 defineRuntimePlugin({
   name: '@kawapress/plugin-comments',
   setup(api) {
-    api.addToOutlet('doc.after', { id: 'comments', component: Comments })
+    api.appendToOutlet('doc', { id: 'comments', component: Comments })
   },
 })
 ```
 
-- `id` 在同一插件内唯一；完整标识为 `<插件名>:<id>`，插件名由 Core 补全，插件无法伪造。
-- 同一 Outlet 内先按插件在 `plugins` 数组中的顺序，再按同一插件内的调用顺序渲染。不提供数字权重与 before/after。
-- `KawaOutlet` 由 `kawapress/client` 导出，并由 Core 注册为全局组件。主题写 `<KawaOutlet name="header.actions" />` 时按顺序渲染全部条目，外面不多包元素；需要筛选、排序、包裹或替换时使用 Vue 作用域插槽 `v-slot="{ items }"`，每个条目包含 `id`、`owner` 与 `component`。
-- 深度替换不需要额外机制：插件可以导出组合式函数（如 Search 的 `useLocalSearch()`），主题用它搭自己的界面，再在插槽中过滤掉默认组件。
+- `api.prependToOutlet(outlet, { id, component })` 放在默认内容前，`api.appendToOutlet(outlet, { id, component })` 放在后。最终顺序是前置条目、默认内容、后置条目。不提供替换默认内容的 API：想整块换掉，主题在自己的 `Layout` 里直接引用插件导出的组件或组合式函数（如 Search 的 `useLocalSearch()`）。
+- `id` 在同一插件内唯一，前置与后置共用同一套 `id`；完整标识为 `<插件名>:<id>`，插件名由 Core 补全，插件无法伪造。
+- 同一 Outlet 的同一侧内，先按插件在 `plugins` 数组中的顺序，再按同一插件内的调用顺序依次排列。不提供数字权重。
+- `KawaOutlet` 由 `kawapress/client` 导出，并由 Core 注册为全局组件。它不生成自己的 DOM 元素，不提供作用域插槽；需要外壳时，主题把外壳写在 `KawaOutlet` 的里面或外面。
 
-0.1 只有 4 个 Outlet，每个都有真实使用者：
+Outlet 名字 = 范围 + 位置，不写里面放什么。范围只有两个：`layout`（整个页面框架）和 `doc`（正在阅读的这一篇文档）。名字按角色取，不按像素方位取（侧边栏叫 `sidebar`，不叫 `left`）。方向词只有 `start` 与 `end`，它们是阅读方向上的起点与终点，从右到左的语言会自动镜像，所以不用 `left` / `right`；只有同一区域内存在两个不同位置时才使用方向词。新增位置只能按这套规则组合，不再起临时名字。旧名字 `header.actions`、`doc.header`、`doc.footer`、`doc.after` 与旧 API `addToOutlet()` 已废弃，不保留别名。
 
-| Outlet | 渲染方 | 首个使用者 |
-|---|---|---|
-| `header.actions` | 主题 | Search 搜索按钮 |
-| `doc.header` | Core，在 Markdown 第一个 H1 之后 | LLMS 复制页面按钮 |
-| `doc.footer` | 主题 | 最后更新时间与编辑此页链接 |
-| `doc.after` | 主题 | 评论区 |
+0.1 有 8 个标准 Outlet：
 
-`doc.header` 由 Core 渲染，因为第一个 H1 位于编译生成的页面组件内部，主题模板伸不进去；没有 H1 的页面不出现该 Outlet。
+| Outlet | 默认内容（nagi） | 渲染方 | 首个使用者 |
+|---|---|---|---|
+| `layout.header` | 整条顶栏 | 主题 | 无，预留 |
+| `layout.header.start` | Logo 与站点名 | 主题 | 无，预留 |
+| `layout.header.end` | 语言、外观、GitHub 控件 | 主题 | Search 搜索按钮（前置） |
+| `layout.sidebar` | 导航树 | 主题 | 无，预留 |
+| `layout.footer` | 版权文字 | 主题 | 无，预留 |
+| `doc` | 正文与上下篇导航 | 主题 | 最后更新时间与编辑此页链接、评论区（后置） |
+| `doc.under-title` | 空 | Core，在 Markdown 第一个 H1 之后 | LLMS 复制页面按钮 |
+| `doc.toc` | 文档大纲 | 主题 | 无，预留 |
+
+名单里没有真实使用者的 Outlet 先作为合同固定下来，nagi 已渲染它们，第三方插件可直接使用。`layout.sidebar` 只在桌面侧边栏上渲染，移动端抽屉是它的临时镜像，不是第二个贡献点。
+
+`doc.under-title` 由 Core 渲染，因为第一个 H1 位于编译生成的页面组件内部，主题模板伸不进去；没有 H1 的页面不出现该 Outlet。
 
 诊断只有三种：未知 Outlet 名在 TypeScript 中报类型错误、运行时抛出带插件名的错误；同一页面重复渲染同一 Outlet 时开发模式警告一次，防止桌面端与移动端各渲染一份；`kawapress build` 结束时，插件放了内容而全站没有页面渲染的 Outlet 按插件各给一行警告。`id` 为空或同一插件内重复同样直接报错。
 
-主题渲染了某个 Outlet 就表示支持它，不需要声明兼容。Outlet 清单与 Token 清单都是 `kawapress` 的公开 API，跟随 `kawapress` 版本号，不设独立契约版本。0.1 不提供 `aside`、`overlay` Outlet，也不允许主题自建私有 Outlet。
+主题渲染了某个 Outlet 就表示支持它，不需要声明兼容，也不必实现全部八个。Outlet 清单与 Token 清单都是 `kawapress` 的公开 API，跟随 `kawapress` 版本号，不设独立契约版本。`layout.footer.start`、`layout.overlay` 等名字预留给将来，有真实使用者时再加。0.1 不允许主题自建私有 Outlet。
 
 ### 6.2 Token
 
@@ -570,7 +578,7 @@ Markdown source
 
 `kawapress build` 在全部 Vite environment 完成后通过 `buildArtifacts()` 导入临时 SSG-MD server bundle、逐 route 渲染，再用受控 `emitFile()` 写出页面与聚合文件；临时 bundle 不进入最终部署目录。开发服务器运行同一个 `ssgMarkdown` environment，并按请求即时返回 `.md`、`llms.txt` 与 `llms-full.txt`，因此开发与构建不能使用两套质量不同的内容。每页 `.md` 默认在正文前加入简短的 AI 提示，指向当前 locale 的 `llms.txt` 与 `llms-full.txt`；全文合集只保留一次站点级提示，不在每页重复。
 
-页面操作 UI 由同一个逻辑插件实现：Runtime Plugin 用 `api.addToOutlet('doc.header', …)` 把复制组件放进 Core 在首个 H1 后渲染的 `doc.header` Outlet，并导入 `kawa.plugin` 层的默认样式；插件不在 Markdown 编译期自行插入组件，主题也不需要知道它。主按钮按需 fetch 当前页面 `.md` 并复制完整正文，相邻菜单复制基于当前 origin、`base` 与 route 计算出的绝对 Markdown URL；正文不进入 client bundle。0.1 不内置 ChatGPT、Claude 等供应商跳转。按钮和菜单内置中英文、其他语言回退英文，具备键盘焦点、Escape 与点击外部关闭、`aria-expanded`、`aria-live`、复制失败状态和 Clipboard API 的 textarea 回退；当前 route path 变化时立即清除正文与链接的临时复制状态、停止旧页面的待处理正文请求，并禁止旧异步结果回写新页面；SSR 与 hydration 初始时菜单都保持关闭。
+页面操作 UI 由同一个逻辑插件实现：Runtime Plugin 用 `api.appendToOutlet('doc.under-title', …)` 把复制组件放进 Core 在首个 H1 后渲染的 `doc.under-title` Outlet，并导入 `kawa.plugin` 层的默认样式；插件不在 Markdown 编译期自行插入组件，主题也不需要知道它。主按钮按需 fetch 当前页面 `.md` 并复制完整正文，相邻菜单复制基于当前 origin、`base` 与 route 计算出的绝对 Markdown URL；正文不进入 client bundle。0.1 不内置 ChatGPT、Claude 等供应商跳转。按钮和菜单内置中英文、其他语言回退英文，具备键盘焦点、Escape 与点击外部关闭、`aria-expanded`、`aria-live`、复制失败状态和 Clipboard API 的 textarea 回退；当前 route path 变化时立即清除正文与链接的临时复制状态、停止旧页面的待处理正文请求，并禁止旧异步结果回写新页面；SSR 与 hydration 初始时菜单都保持关闭。
 
 KawaPress 0.1 不维护独立 Vue-to-Markdown renderer。Vue 的公开 `createRenderer()` 使用客户端式 mount 生命周期，而官方 server renderer 的优化 SFC 路径直接写 HTML，没有可替换的 Markdown host；fork Vue 私有 SSR 组件实例、buffer、shape flag 与 compiler helper 会把一个内容插件绑定到 Vue 内部实现。完整源码复制会丢失动态 Vue 内容，整页 HTML 转换会丢失 Markdown 语义并混入主题 UI，这两条路线同样不采用。
 
@@ -578,8 +586,8 @@ KawaPress 0.1 不维护独立 Vue-to-Markdown renderer。Vue 的公开 `createRe
 
 这三个插件独立安装，nagi 不默认组合；它们只使用公开 API，在 nagi 和任何遵循第六章契约的主题中都无需适配代码。
 
-- `@kawapress/plugin-last-updated`：Generator Plugin 用一次 git 查询取得每个源文件的最后提交时间，在 `pageData()` 中写入 `lastUpdated` 与编辑链接；Runtime Plugin 把显示组件放进 `doc.footer` Outlet。时间只来自 git 提交，不读文件 mtime；浅克隆或不在 git 仓库时输出 warning 并跳过，不输出错误日期。`editLink.pattern` 必须包含 `:path`。frontmatter `lastUpdated: false` 与 `editLink: false` 分别关闭单页对应项。
-- `@kawapress/plugin-comments`：使用 Giscus，配置 `repo`、`repoId`、`category`、`categoryId` 四个必填标识，缺失时构建报错并指出配置路径；不支持需要逐页手写编号的 `specific` 与 `number` 映射。Runtime Plugin 把评论区放进 `doc.after` Outlet。SSR 只输出标题和空容器；评论区进入视口前方 200px 时才请求 `giscus.app/client.js`；外观跟随根元素的 `dark`/`light` class 或系统偏好切换且不整块重载；站内跳转后显示新页面的讨论。frontmatter `comments: false` 关闭单页评论。
+- `@kawapress/plugin-last-updated`：Generator Plugin 用一次 git 查询取得每个源文件的最后提交时间，在 `pageData()` 中写入 `lastUpdated` 与编辑链接；Runtime Plugin 把显示组件追加到 `doc` Outlet 的末尾。时间只来自 git 提交，不读文件 mtime；浅克隆或不在 git 仓库时输出 warning 并跳过，不输出错误日期。`editLink.pattern` 必须包含 `:path`。frontmatter `lastUpdated: false` 与 `editLink: false` 分别关闭单页对应项。
+- `@kawapress/plugin-comments`：使用 Giscus，配置 `repo`、`repoId`、`category`、`categoryId` 四个必填标识，缺失时构建报错并指出配置路径；不支持需要逐页手写编号的 `specific` 与 `number` 映射。Runtime Plugin 把评论区追加到 `doc` Outlet 的末尾，排在最后更新时间之后。SSR 只输出标题和空容器；评论区进入视口前方 200px 时才请求 `giscus.app/client.js`；外观跟随根元素的 `dark`/`light` class 或系统偏好切换且不整块重载；站内跳转后显示新页面的讨论。frontmatter `comments: false` 关闭单页评论。
 - `@kawapress/plugin-image-zoom`：Generator Plugin 只给 Markdown 图片加上 `data-kawa-zoom`、`role="button"`、`tabindex` 与本地化 `aria-label`；HTML `<img>` 与组件渲染的图片不处理。图片地址的 `#no-zoom` 片段关闭单张缩放并在输出中去掉，frontmatter `imageZoom: false` 关闭整页。浏览器侧使用原生 `<dialog>`，支持点击、Enter、空格打开，Escape、点击与滚轮关闭，关闭后焦点回到原图，站内跳转时关闭，并尊重 `prefers-reduced-motion`。
 
 三者的提示文字都内置中英文、其他语言回退英文，并允许用 `labels` 与按 locale 键的 `localeLabels` 覆盖；样式位于 `kawa.plugin` 层并只读公共 Token。
@@ -695,7 +703,7 @@ nagi 同时支持 VitePress 风格的 `themeConfig.sidebar` 手写配置：可�
 
 本地全文搜索由独立逻辑插件包 `@kawapress/plugin-search` 提供，不写死在 Core 或 nagi 内部。Generator Plugin 独立扫描 `srcDir` 下的 Markdown，按标题层级切成搜索段落，以公开路由作为结果地址；frontmatter 中显式设置 `search: false` 的页面不进入索引。Search 使用与 Core 相同的 Frontmatter 标题解析规则，但它按源文件独立建索引，Generator Plugin 的 `pageData()` 修改不会回写搜索索引。Search 不擅自把可选语法当成已安装能力：只有 `searchPlugin()` 显式启用 `containers` 或 `githubAlerts` 时才按对应 parser 语义移除控制标记，nagi 因为默认组合这两个插件而同步启用；自定义 Preset 覆盖 Alert 标题时把同一组全局与 locale labels 同时传给 Search，保证索引标题与可见标题一致。索引使用 MiniSearch 在生成侧预构建，并按 Core locale 路径拆成独立虚拟模块；浏览器首屏只得到很小的 locale loader 映射，用户首次打开搜索时才加载 MiniSearch 运行时和当前语言索引，不能把索引或全站正文打进主入口。中英文共用大小写归一化与 CJK 感知分词，搜索只返回当前 URL locale 的结果。插件不向 Core 增加 `usePages()`、全量 pageData 或搜索专用运行时 API。
 
-`@kawapress/plugin-search/runtime-plugin` 用 `api.addToOutlet('header.actions', …)` 把搜索按钮放进主题的顶栏 Outlet，并自动导入 `kawa.plugin` 层的默认样式，稳定结构 class 使用 `.kawa-search*` 命名空间。任何渲染了 `header.actions` 的主题都会得到搜索；想自建界面的主题可以使用 `@kawapress/plugin-search/client` 导出的组件与 `useLocalSearch()`。nagi Preset 默认组合 `searchPlugin()`，NavBar 只渲染 `header.actions` Outlet，不导入搜索组件，也不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。静态 SSR 无法从构建环境预知访客平台；Search Runtime Plugin 在 SSR `<head>` 注入一段内容固定的同步平台检测脚本，在浏览器绘制正文前为 `<html>` 写入平台属性。搜索按钮始终输出同时包含 `⌘` 与 `Ctrl` 的稳定 DOM，由 CSS 根据该属性从首帧开始只显示正确标记；Vue hydration 不再替换文字，避免首屏文案与宽度跳变。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
+`@kawapress/plugin-search/runtime-plugin` 用 `api.prependToOutlet('layout.header.end', …)` 把搜索按钮放进主题的顶栏 Outlet，并自动导入 `kawa.plugin` 层的默认样式，稳定结构 class 使用 `.kawa-search*` 命名空间。任何渲染了 `layout.header.end` 的主题都会得到搜索；想自建界面的主题可以使用 `@kawapress/plugin-search/client` 导出的组件与 `useLocalSearch()`。nagi Preset 默认组合 `searchPlugin()`，NavBar 只渲染 `layout.header.end` Outlet，不导入搜索组件，也不维护搜索文案、索引、查询状态或键盘交互。搜索组件根据 Core 当前 locale 的 `lang` 内置中文与英文，其他语言回退英文；其他宿主也可以通过组件 props 覆盖文案。`Ctrl/Command + K` 与焦点不在输入控件时的 `/` 可以打开搜索。静态 SSR 无法从构建环境预知访客平台；Search Runtime Plugin 在 SSR `<head>` 注入一段内容固定的同步平台检测脚本，在浏览器绘制正文前为 `<html>` 写入平台属性。搜索按钮始终输出同时包含 `⌘` 与 `Ctrl` 的稳定 DOM，由 CSS 根据该属性从首帧开始只显示正确标记；Vue hydration 不再替换文字，避免首屏文案与宽度跳变。搜索使用浏览器原生模态 dialog，支持 Escape、遮罩关闭、结果方向键循环导航、Enter 打开、明确的 loading/empty/error 状态和安全的纯文本高亮，不通过 `v-html` 注入索引内容。
 
 pageData 与 Data Loader 结果必须能无损表示为标准 JSON 值，只允许 `null`、布尔值、有限数字、字符串、数组和普通对象。`undefined`、非有限数字、BigInt、函数、Symbol、稀疏数组、循环引用、Date、Map、Set、类实例、Vue ref 与其他运行时对象均在生成后立即报错，不允许被 `JSON.stringify()` 静默丢弃或改变类型。KawaPress 公开并在所有数据边界复用 `assertJsonSerializable()`、`stringifyJson()` 与 `parseJson()`；错误必须包含对应页面路由或 Loader 路径、精确属性路径、插件身份（若由 `pageData()` hook 引入）和可执行的修复说明。嵌入生成模块的 JSON 同时转义 `<`、U+2028 与 U+2029，不能破坏 SFC script 或 JavaScript 源码边界。
 
@@ -759,7 +767,7 @@ docs
 - 开发和构建共用 Vite Environment SSR 渲染管线。
 - 默认 Plugin 与 Runtime Plugin 的加载、顺序、错误和 dev/build 闭环。
 - 对象形式的 `definePlugin({ name, setup })` 与六个生成侧注册方法，包括只读的 `pageArtifact()` 和受控的 `buildArtifacts()` 静态产物边界。
-- 对象形式的 `defineRuntimePlugin({ name, setup })` 与 `vueApp()`、`router()`（Core 的站内 `Router`）、`addToOutlet()`。
+- 对象形式的 `defineRuntimePlugin({ name, setup })` 与 `vueApp()`、`router()`（Core 的站内 `Router`）、`prependToOutlet()`、`appendToOutlet()`。
 - 主题界面契约：4 个 Outlet 与 `KawaOutlet`、17 个公共 Token、`kawa.base` / `kawa.plugin` / `kawa.theme` 三层样式顺序。
 - 插件默认工厂只安装一次，自动关联可选的 `./runtime-plugin` 运行侧。
 - `defineConfig()` 与 `definePreset()`。
@@ -769,7 +777,7 @@ docs
 - `.data.ts` / `.data.js` 构建时 Data Loader、文件监听 HMR、`defineLoader()` 与 `createContentLoader()`。
 - Shiki 双主题高亮、Twoslash 与 Floating Vue 浮层。
 - 独立 Code Group Plugin、可访问代码 Tab 与插件自带的默认样式。
-- 独立 LLMS Plugin、双通道 SSG-MD、每页 `.md`、每 locale 的 `llms.txt` / `llms-full.txt`、开发期同源 Markdown 响应，以及放进 `doc.header` Outlet 的复制正文与链接 UI。
+- 独立 LLMS Plugin、双通道 SSG-MD、每页 `.md`、每 locale 的 `llms.txt` / `llms-full.txt`、开发期同源 Markdown 响应，以及放进 `doc.under-title` Outlet 的复制正文与链接 UI。
 - 文件路径路由、SSR 首屏和浏览器内导航。
 - Core 自带的站内路由与页面表（不依赖 vue-router）、nagi 自动侧边栏与独立的本地全文搜索索引。
 - nagi 的 `doc`、`home` 与 `page` 布局语义、上一篇/下一篇导航及系统深浅色模式。

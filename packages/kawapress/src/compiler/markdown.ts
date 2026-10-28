@@ -37,8 +37,8 @@ interface MarkdownEnv extends PageComponentEnv {
   sfcBlocks?: MarkdownSfcBlocks
   /** Set by the LLMS plugin when it compiles Markdown for plain-text output. */
   ssgMarkdown?: boolean
-  /** Set once the `doc.header` outlet has been placed after the first H1. */
-  docHeaderOutletPlaced?: boolean
+  /** Set once the `doc.under-title` outlet has been placed after the first H1. */
+  docUnderTitleOutletPlaced?: boolean
   /** Page body after frontmatter removal, set by the frontmatter plugin. */
   content?: string
   /** Internal links of the page, with line numbers relative to the source file. */
@@ -86,7 +86,7 @@ export async function createMarkdownCompiler(options: MarkdownCompilerOptions = 
   installHeadingTitles(md)
   installPageLinkCollector(md)
   installLinkRenderer(md, options.base ?? '/')
-  installDocHeaderOutlet(md)
+  installDocUnderTitleOutlet(md)
 
   await options.pluginRunner?.runMarkdown(md)
   return md
@@ -169,14 +169,14 @@ function installAsyncSfcRenderCompatibility(md: MarkdownExit): void {
   }
 }
 
-const DOC_HEADER_OUTLET = '<KawaOutlet name="doc.header" />'
+const DOC_UNDER_TITLE_OUTLET = '<KawaOutlet name="doc.under-title" />'
 
 /**
- * Renders the `doc.header` outlet right after the first H1 of every page, so
+ * Renders the `doc.under-title` outlet right after the first H1 of every page, so
  * plugins can place interface pieces inside the Markdown body without the
  * theme reaching into compiled content. Pages without an H1 get no outlet.
  */
-function installDocHeaderOutlet(md: MarkdownExit): void {
+function installDocUnderTitleOutlet(md: MarkdownExit): void {
   const original = md.renderer.rules.heading_close
 
   md.renderer.rules.heading_close = (tokens, index, options, env, renderer) => {
@@ -190,13 +190,13 @@ function installDocHeaderOutlet(md: MarkdownExit): void {
       || typeof env !== 'object'
       || env === null
       || renderEnv.ssgMarkdown
-      || renderEnv.docHeaderOutletPlaced
+      || renderEnv.docUnderTitleOutletPlaced
     ) {
       return rendered
     }
 
-    renderEnv.docHeaderOutletPlaced = true
-    return `${rendered}\n${DOC_HEADER_OUTLET}\n`
+    renderEnv.docUnderTitleOutletPlaced = true
+    return `${rendered}\n${DOC_UNDER_TITLE_OUTLET}\n`
   }
 }
 

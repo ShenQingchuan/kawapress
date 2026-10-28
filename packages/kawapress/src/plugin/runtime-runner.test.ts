@@ -97,35 +97,34 @@ describe('runtime plugin outlets', () => {
   const First = { name: 'FirstItem' }
   const Second = { name: 'SecondItem' }
 
-  it('collects items in plugin order, then call order, with full ids', async () => {
+  it('collects each side in plugin order, then call order, with full ids', async () => {
     const runner = await createRuntimePluginRunner([
       defineRuntimePlugin({
         name: '@acme/plugin-first',
         setup(api) {
-          api.addToOutlet('header.actions', { id: 'trigger', component: First })
-          api.addToOutlet('doc.after', { id: 'comments', component: Second })
+          api.prependToOutlet('layout.header.end', { id: 'trigger', component: First })
+          api.appendToOutlet('doc', { id: 'comments', component: Second })
         },
       }),
       defineRuntimePlugin({
         name: '@acme/plugin-second',
         setup(api) {
-          api.addToOutlet('header.actions', { id: 'trigger', component: Second })
+          api.prependToOutlet('layout.header.end', { id: 'trigger', component: Second })
+          api.appendToOutlet('doc', { id: 'updated-at', component: First })
         },
       }),
     ])
 
-    expect(runner.outlets['header.actions'].map(item => item.id)).toEqual([
+    expect(runner.outlets['layout.header.end'].prepend.map(item => item.id)).toEqual([
       '@acme/plugin-first:trigger',
       '@acme/plugin-second:trigger',
     ])
-    expect(runner.outlets['doc.after']).toEqual([
-      {
-        id: '@acme/plugin-first:comments',
-        owner: '@acme/plugin-first',
-        component: Second,
-      },
+    expect(runner.outlets.doc.append).toEqual([
+      { id: '@acme/plugin-first:comments', owner: '@acme/plugin-first', component: Second },
+      { id: '@acme/plugin-second:updated-at', owner: '@acme/plugin-second', component: First },
     ])
-    expect(runner.outlets['doc.footer']).toEqual([])
+    expect(runner.outlets.doc.prepend).toEqual([])
+    expect(runner.outlets['layout.sidebar']).toEqual({ prepend: [], append: [] })
   })
 
   it('rejects unknown outlet names with the plugin identity', async () => {
@@ -133,7 +132,7 @@ describe('runtime plugin outlets', () => {
       defineRuntimePlugin({
         name: '@acme/plugin-broken',
         setup(api) {
-          api.addToOutlet('header.action' as 'header.actions', {
+          api.appendToOutlet('header.action' as 'doc', {
             id: 'trigger',
             component: First,
           })
@@ -142,7 +141,7 @@ describe('runtime plugin outlets', () => {
     ])
 
     await expect(runner).rejects.toThrow(
-      'KawaPress: plugin "@acme/plugin-broken" calling api.addToOutlet() uses the unknown outlet "header.action".',
+      'KawaPress: plugin "@acme/plugin-broken" calling api.appendToOutlet() uses the unknown outlet "header.action".',
     )
   })
 
@@ -151,29 +150,29 @@ describe('runtime plugin outlets', () => {
       defineRuntimePlugin({
         name: '@acme/plugin-broken',
         setup(api) {
-          api.addToOutlet('doc.footer', { id: '  ', component: First })
+          api.prependToOutlet('doc', { id: '  ', component: First })
         },
       }),
     ])
 
     await expect(runner).rejects.toThrow(
-      '[@acme/plugin-broken / runtime / addToOutlet] Item id for outlet "doc.footer" must be a non-empty string.',
+      '[@acme/plugin-broken / runtime / prependToOutlet] Item id for outlet "doc" must be a non-empty string.',
     )
   })
 
-  it('rejects duplicate ids inside one plugin', async () => {
+  it('rejects duplicate ids inside one plugin, even across the two sides', async () => {
     const runner = createRuntimePluginRunner([
       defineRuntimePlugin({
         name: '@acme/plugin-broken',
         setup(api) {
-          api.addToOutlet('doc.footer', { id: 'updated-at', component: First })
-          api.addToOutlet('doc.footer', { id: 'updated-at', component: Second })
+          api.prependToOutlet('doc', { id: 'updated-at', component: First })
+          api.appendToOutlet('doc', { id: 'updated-at', component: Second })
         },
       }),
     ])
 
     await expect(runner).rejects.toThrow(
-      '[@acme/plugin-broken / runtime / addToOutlet] Duplicate item id "@acme/plugin-broken:updated-at"',
+      '[@acme/plugin-broken / runtime / appendToOutlet] Duplicate item id "@acme/plugin-broken:updated-at"',
     )
   })
 })

@@ -51,13 +51,13 @@ test('the comment thread loads only once the reader scrolls', async ({ page }) =
   const requests = await stubGiscus(page)
   await page.goto(sitePath('/'))
 
-  const section = page.locator('.ref-doc-after .kawa-comments')
+  const section = page.locator('.ref-doc .kawa-comments')
   await expect(section).toBeVisible()
   expect(requests, 'the script must not load before the reader scrolls').toHaveLength(0)
 
   await section.scrollIntoViewIfNeeded()
 
-  await expect(page.locator('.ref-doc-after iframe.giscus-frame')).toHaveCount(1)
+  await expect(page.locator('.ref-doc iframe.giscus-frame')).toHaveCount(1)
   expect(requests).toHaveLength(1)
   await expect(page.locator('.kawa-comments script'))
     .toHaveAttribute('data-repo', 'kawapress/kawapress')

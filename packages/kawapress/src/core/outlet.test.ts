@@ -1,4 +1,4 @@
-import type { OutletItem, OutletName, OutletRegistry } from './outlet'
+import type { OutletItem, OutletName, OutletRegistry, OutletSlots } from './outlet'
 import { describe, expect, it } from 'vitest'
 import {
   assertOutletName,
@@ -10,11 +10,11 @@ import {
 } from './outlet'
 
 function registry(
-  items: Partial<Record<OutletName, OutletItem[]>>,
+  items: Partial<Record<OutletName, Partial<OutletSlots>>>,
 ): OutletRegistry {
-  const entries = {} as Record<OutletName, readonly OutletItem[]>
+  const entries = {} as Record<OutletName, OutletSlots>
   for (const name of OUTLET_NAMES) {
-    entries[name] = items[name] ?? []
+    entries[name] = { prepend: [], append: [], ...items[name] }
   }
   return entries
 }
@@ -24,42 +24,60 @@ function item(owner: string, outlet: OutletName, id: string): OutletItem {
 }
 
 describe('outlet names', () => {
-  it('keeps the four public outlets', () => {
+  it('keeps the eight public outlets', () => {
     expect(OUTLET_NAMES).toEqual([
-      'header.actions',
-      'doc.header',
-      'doc.footer',
-      'doc.after',
+      'layout.header',
+      'layout.header.start',
+      'layout.header.end',
+      'layout.sidebar',
+      'layout.footer',
+      'doc',
+      'doc.under-title',
+      'doc.toc',
     ])
   })
 
   it('recognizes only the published names', () => {
-    expect(isOutletName('doc.after')).toBe(true)
+    expect(isOutletName('doc')).toBe(true)
     expect(isOutletName('doc.before')).toBe(false)
     expect(isOutletName(undefined)).toBe(false)
     expect(() => assertOutletName('doc.before', '<KawaOutlet>')).toThrow(
-      'KawaPress: <KawaOutlet> uses the unknown outlet "doc.before". Available outlets: header.actions, doc.header, doc.footer, doc.after.',
+      'KawaPress: <KawaOutlet> uses the unknown outlet "doc.before". Available outlets: layout.header, layout.header.start, layout.header.end, layout.sidebar, layout.footer, doc, doc.under-title, doc.toc.',
     )
   })
 
   it('returns an empty list for outlets without items', () => {
-    expect(getOutletItems(registry({}), 'doc.footer')).toEqual([])
+    expect(getOutletItems(registry({}), 'doc')).toEqual([])
+  })
+
+  it('lists the prepended items before the appended ones', () => {
+    const outlets = registry({
+      doc: {
+        prepend: [item('@acme/plugin-crumbs', 'doc', 'crumbs')],
+        append: [item('@acme/plugin-comments', 'doc', 'comments')],
+      },
+    })
+
+    expect(getOutletItems(outlets, 'doc').map(entry => entry.id)).toEqual([
+      '@acme/plugin-crumbs:crumbs',
+      '@acme/plugin-comments:comments',
+    ])
   })
 })
 
 describe('findUnconsumedOutletItems', () => {
   it('reports items whose outlet never rendered', () => {
     const outlets = registry({
-      'header.actions': [
-        item('@acme/plugin-search', 'header.actions', 'trigger'),
-      ],
-      'doc.after': [item('@acme/plugin-comments', 'doc.after', 'comments')],
+      'layout.header.end': {
+        prepend: [item('@acme/plugin-search', 'layout.header.end', 'trigger')],
+      },
+      'doc': { append: [item('@acme/plugin-comments', 'doc', 'comments')] },
     })
 
-    expect(findUnconsumedOutletItems(outlets, ['header.actions'])).toEqual([
+    expect(findUnconsumedOutletItems(outlets, ['layout.header.end'])).toEqual([
       {
         owner: '@acme/plugin-comments',
-        outlet: 'doc.after',
+        outlet: 'doc',
         id: '@acme/plugin-comments:comments',
       },
     ])
@@ -67,7 +85,9 @@ describe('findUnconsumedOutletItems', () => {
 
   it('reports nothing when every outlet rendered', () => {
     const outlets = registry({
-      'doc.header': [item('@acme/plugin-llms', 'doc.header', 'actions')],
+      'doc.under-title': {
+        append: [item('@acme/plugin-llms', 'doc.under-title', 'actions')],
+      },
     })
 
     expect(findUnconsumedOutletItems(outlets, OUTLET_NAMES)).toEqual([])
@@ -75,7 +95,7 @@ describe('findUnconsumedOutletItems', () => {
 
   it('ignores rendered names that are not outlets', () => {
     const outlets = registry({
-      'doc.footer': [item('@acme/plugin-updated-at', 'doc.footer', 'updated-at')],
+      doc: { append: [item('@acme/plugin-updated-at', 'doc', 'updated-at')] },
     })
 
     expect(findUnconsumedOutletItems(outlets, ['doc.before'])).toHaveLength(1)
@@ -87,25 +107,25 @@ describe('formatUnconsumedOutletWarnings', () => {
     const lines = formatUnconsumedOutletWarnings([
       {
         owner: '@acme/plugin-updated-at',
-        outlet: 'doc.footer',
+        outlet: 'doc',
         id: '@acme/plugin-updated-at:updated-at',
       },
       {
         owner: '@acme/plugin-updated-at',
-        outlet: 'doc.after',
+        outlet: 'doc',
         id: '@acme/plugin-updated-at:feedback',
       },
       {
         owner: '@acme/plugin-comments',
-        outlet: 'doc.after',
+        outlet: 'doc',
         id: '@acme/plugin-comments:comments',
       },
     ])
 
     expect(lines).toHaveLength(2)
     expect(lines[0]).toContain('"@acme/plugin-updated-at"')
-    expect(lines[0]).toContain('doc.footer (item "@acme/plugin-updated-at:updated-at")')
-    expect(lines[0]).toContain('doc.after (item "@acme/plugin-updated-at:feedback")')
+    expect(lines[0]).toContain('doc (item "@acme/plugin-updated-at:updated-at")')
+    expect(lines[0]).toContain('doc (item "@acme/plugin-updated-at:feedback")')
     expect(lines[0]).toContain('<KawaOutlet name="..." />')
     expect(lines[1]).toContain('"@acme/plugin-comments"')
   })

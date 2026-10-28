@@ -2,18 +2,26 @@ import type { Component } from 'vue'
 
 /**
  * Every outlet a theme can render. The list is the public contract between
- * plugins (which place interface pieces) and themes (which place the sockets).
+ * plugins (which contribute interface pieces) and themes (which draw the
+ * default content of each outlet).
+ *
+ * A name is a scope plus a role: `layout` is the page frame, `doc` is the page
+ * being read. `start` and `end` follow the reading direction.
  */
 export const OUTLET_NAMES = [
-  'header.actions',
-  'doc.header',
-  'doc.footer',
-  'doc.after',
+  'layout.header',
+  'layout.header.start',
+  'layout.header.end',
+  'layout.sidebar',
+  'layout.footer',
+  'doc',
+  'doc.under-title',
+  'doc.toc',
 ] as const
 
 export type OutletName = typeof OUTLET_NAMES[number]
 
-/** What a plugin passes to `api.addToOutlet()`. */
+/** What a plugin passes to `api.prependToOutlet()` or `api.appendToOutlet()`. */
 export interface OutletItemInput {
   id: string
   component: Component
@@ -27,10 +35,14 @@ export interface OutletItem extends OutletItemInput {
   owner: string
 }
 
-/** Outlet items grouped by outlet name, in render order. */
-export type OutletRegistry = Readonly<
-  Record<OutletName, readonly OutletItem[]>
->
+/** Items of one outlet: `prepend` renders before the theme content, `append` after it. */
+export interface OutletSlots {
+  readonly prepend: readonly OutletItem[]
+  readonly append: readonly OutletItem[]
+}
+
+/** Outlet items grouped by outlet name. Each side is in plugin install order. */
+export type OutletRegistry = Readonly<Record<OutletName, OutletSlots>>
 
 export function isOutletName(value: unknown): value is OutletName {
   return typeof value === 'string'
@@ -50,11 +62,21 @@ export function assertOutletName(
   )
 }
 
+const EMPTY_SLOTS: OutletSlots = Object.freeze({ prepend: [], append: [] })
+
+export function getOutletSlots(
+  registry: OutletRegistry,
+  outlet: OutletName,
+): OutletSlots {
+  return registry[outlet] ?? EMPTY_SLOTS
+}
+
 export function getOutletItems(
   registry: OutletRegistry,
   outlet: OutletName,
 ): readonly OutletItem[] {
-  return registry[outlet] ?? []
+  const { prepend, append } = getOutletSlots(registry, outlet)
+  return [...prepend, ...append]
 }
 
 /** One registered item that no page ever rendered. */

@@ -51,7 +51,9 @@ async function toggleOutline(): Promise<void> {
     </button>
 
     <OsScroll class="nagi-outline-aside__scroll">
-      <Outline />
+      <KawaOutlet name="doc.toc">
+        <Outline />
+      </KawaOutlet>
     </OsScroll>
   </aside>
 
