@@ -7,6 +7,9 @@ export const rootDir = fileURLToPath(new URL('../..', import.meta.url))
 
 export const defaultRegistry = 'https://registry.npmjs.org/'
 
+/** GitHub's npm registry, which feeds the Packages list on the repository page. */
+export const githubPackagesRegistry = 'https://npm.pkg.github.com/'
+
 export const publishedDependencyFields = [
   'dependencies',
   'optionalDependencies',

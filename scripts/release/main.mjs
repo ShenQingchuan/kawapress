@@ -7,6 +7,7 @@ import { checkCiReleaseEnvironment, formatMissingPackagesError, isOidcPublishing
 import { parseArguments, printUsage } from './cli.mjs'
 import { minNpmVersionForTrustedPublishing } from './constants.mjs'
 import { assertGitClean, checkGit, requireCleanWorkingTree } from './git.mjs'
+import { publishToGitHubPackages } from './github-packages.mjs'
 import { copyReleaseWorkspace, packAndValidate, removeStagingDir } from './pack.mjs'
 import { applyBumps, discoverPackages, parseBumps } from './packages.mjs'
 import { confirmPublish, dryRunPublish, filterPublishOrder, publishPackages, sortForPublish } from './publish.mjs'
@@ -124,6 +125,9 @@ export async function main(argv = process.argv.slice(2)) {
     await requireCleanWorkingTree()
     await confirmPublish(options, publishOrder, registryStates)
     await publishPackages(publishOrder, registryStates, options)
+    // The GitHub token only exists in the release workflow; local publishes skip the mirror.
+    if (ci && process.env.GITHUB_TOKEN)
+      await publishToGitHubPackages(publishOrder, process.env.GITHUB_TOKEN)
     printPublishSummary(publishOrder, registryStates, ci)
   }
   finally {

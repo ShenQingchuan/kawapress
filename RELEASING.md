@@ -4,6 +4,8 @@ KawaPress 有 17 个公开包，每个包有自己的版本号，各发各的。
 
 真正的发布在 GitHub Actions 里跑，走 npm 的 trusted publishing（OIDC）：工作流不需要、也不应该保存任何 npm token，npm 从 GitHub 的短期身份令牌里认出「这是 `kawapress/kawapress` 的 `release.yml`，跑在 `npm` 环境里」，然后才允许发布，并自动带上 provenance（来源证明）。推送 `v*` tag 之后全程自动，不需要人工介入。
 
+发布成功后，同一个工作流还会把 15 个带 `@kawapress/` 前缀的包镜像到 GitHub Packages（`npm.pkg.github.com`），这样仓库页面右侧的 Packages 列表里能看到它们。认证用工作流自带的 `GITHUB_TOKEN`（job 权限 `packages: write`），不需要额外配置任何 token。GitHub 要求包的 scope 和仓库所有者同名，所以不带 scope 的 `kawapress` 和 `create-kawapress` 不会出现在那里。镜像只用来展示，用户仍然从 npmjs.com 安装；已经存在的版本会被跳过，重跑是安全的。
+
 下面分成两部分：**只做一次的准备**，和**每次发版的固定动作**。
 
 ---
@@ -182,5 +184,6 @@ pnpm release --publish     # 会要求手输 publish 确认
 | `scripts/release.mjs` | 入口，其余逻辑在 `scripts/release/` |
 | `scripts/release/ci.mjs` | CI 模式判定：tag / 版本 / HEAD 校验，缺包报错文案 |
 | `scripts/release/pack.mjs` | 暂存目录、打包、tarball 校验 |
+| `scripts/release/github-packages.mjs` | 把带 scope 的包镜像到 GitHub Packages |
 | `scripts/release/registry.mjs` | 已发布内容、dist-tag、缺包检查 |
 | `scripts/trust-publishers.mjs` | `pnpm release:trust`，读取并校准全部包的 trusted publisher |

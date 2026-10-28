@@ -52,6 +52,8 @@ jobs:
       name: npm
     permissions:
       contents: read
+      # Lets the built-in token publish the scoped packages to GitHub Packages.
+      packages: write
       # The OIDC token is what lets npm publish without a long-lived token.
       id-token: write
     steps:
@@ -76,5 +78,8 @@ jobs:
 
       # No NODE_AUTH_TOKEN: npm mints a short-lived token from the OIDC token and
       # attaches provenance on its own, because the repository is public.
-      - name: Publish to npm
+      # GITHUB_TOKEN is only used for the GitHub Packages mirror of the scoped packages.
+      - name: Publish to npm and GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm release --publish --yes
