@@ -1,7 +1,7 @@
 {
   "name": "@kawapress/plugin-comments",
   "type": "module",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "GitHub Discussions comments for KawaPress, powered by Giscus",
   "license": "MIT",
   "homepage": "https://kawapress.dev/",

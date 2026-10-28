@@ -136,11 +136,12 @@ KawaPress 把扩展边界分得很清楚：
 - [国际化](https://kawapress.dev/guide/internationalization)
 - [插件体系](https://kawapress.dev/plugins/plugin-system)
 - [官方插件总览](https://kawapress.dev/plugins/overview)
-- [主题定制](https://kawapress.dev/guide/theme-customization)
+- [主题开发](https://kawapress.dev/plugins/theme-development)
+- [插件开发](https://kawapress.dev/plugins/plugin-development)
 
 ## 参与贡献
 
-欢迎提交 Issue 和 Pull Request。如果准备增加较大的功能，请先创建 Issue，把目标和方案聊清楚后再开始实现。
+欢迎提交 Issue 和 Pull Request。如果准备增加较大的功能，请先创建 Issue，把目标和方案聊清楚后再开始实现。工作流程见 [CONTRIBUTING.zh-CN.md](https://github.com/kawapress/kawapress/blob/main/CONTRIBUTING.zh-CN.md)，安全问题请按 [SECURITY.zh-CN.md](https://github.com/kawapress/kawapress/blob/main/SECURITY.zh-CN.md) 处理。每个版本的变化见[更新日志](https://github.com/kawapress/kawapress/blob/main/CHANGELOG.zh-CN.md)。
 
 ```sh
 pnpm install

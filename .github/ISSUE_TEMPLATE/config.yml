@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/kawapress/kawapress/discussions
+    about: Ask a question or talk through an idea before it becomes an issue.
+  - name: Security vulnerability
+    url: https://github.com/kawapress/kawapress/security/advisories/new
+    about: Report a vulnerability privately. Do not open a public issue.

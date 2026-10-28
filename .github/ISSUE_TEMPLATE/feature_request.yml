@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a change or a new capability
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem do you want to solve?
+      description: Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What do you propose?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What did you consider instead?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Core
+        - Theme (nagi)
+        - Official plugin
+        - Documentation
+        - Build and release
+    validations:
+      required: true

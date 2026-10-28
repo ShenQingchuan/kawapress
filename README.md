@@ -136,11 +136,12 @@ A logical plugin is installed once and can provide both generator and runtime be
 - [Internationalization](https://kawapress.dev/en/guide/internationalization)
 - [Plugin System](https://kawapress.dev/en/plugins/plugin-system)
 - [Official Plugins](https://kawapress.dev/en/plugins/overview)
-- [Theme Customization](https://kawapress.dev/en/guide/theme-customization)
+- [Theme Development](https://kawapress.dev/en/plugins/theme-development)
+- [Plugin Development](https://kawapress.dev/en/plugins/plugin-development)
 
 ## Contributing
 
-Issues and pull requests are welcome. For a large feature, please open an issue first so the direction can be agreed on before implementation.
+Issues and pull requests are welcome. For a large feature, please open an issue first so the direction can be agreed on before implementation. [CONTRIBUTING.md](https://github.com/kawapress/kawapress/blob/main/CONTRIBUTING.md) explains the workflow, and security problems go through [SECURITY.md](https://github.com/kawapress/kawapress/blob/main/SECURITY.md). Every release is described in the [changelog](https://github.com/kawapress/kawapress/blob/main/CHANGELOG.md).
 
 ```sh
 pnpm install
