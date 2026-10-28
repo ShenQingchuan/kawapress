@@ -17,13 +17,13 @@ test.beforeEach(async ({ page }) => {
   await stubGiscus(page)
 })
 
-test('header.actions: the search trigger renders in the theme header', async ({ page }) => {
+test('layout.header.end: the search trigger renders in the theme header', async ({ page }) => {
   await page.goto(sitePath('/'))
 
   await expect(page.locator('.ref-header .ref-actions .kawa-search-button')).toBeVisible()
 })
 
-test('doc.header: the Markdown actions follow the page H1', async ({ page }) => {
+test('doc.under-title: the Markdown actions follow the page H1', async ({ page }) => {
   await page.goto(sitePath('/'))
 
   const actions = page.locator('.ref-doc .kawa-llms-actions')
@@ -40,10 +40,10 @@ test('doc.header: the Markdown actions follow the page H1', async ({ page }) => 
   ).toBe(true)
 })
 
-test('doc.footer: the last updated time and the edit link render in the theme footer', async ({ page }) => {
+test('doc: the last updated time and the edit link follow the page content', async ({ page }) => {
   await page.goto(sitePath('/second'))
 
-  const footer = page.locator('.ref-doc-footer .kawa-last-updated')
+  const footer = page.locator('.ref-doc .kawa-last-updated')
   await expect(footer).toBeVisible()
 
   const time = footer.locator('time')
@@ -56,22 +56,22 @@ test('doc.footer: the last updated time and the edit link render in the theme fo
   )
 })
 
-test('doc.after: the comment section renders below the page content', async ({ page }) => {
+test('doc: the comment section renders after the last updated line', async ({ page }) => {
   await page.goto(sitePath('/second'))
 
-  const section = page.locator('.ref-doc-after .kawa-comments')
+  const section = page.locator('.ref-doc .kawa-comments')
   await expect(section).toBeVisible()
   await expect(section.getByRole('heading', { level: 2 })).toHaveText('Comments')
 
   const followsContent = await page.evaluate(() => {
-    const lastParagraph = document.querySelector('.ref-doc > p:last-of-type')
-    const comments = document.querySelector('.ref-doc-after .kawa-comments')
-    if (!lastParagraph || !comments) {
+    const lastUpdated = document.querySelector('.ref-doc .kawa-last-updated')
+    const comments = document.querySelector('.ref-doc .kawa-comments')
+    if (!lastUpdated || !comments) {
       return false
     }
     return Boolean(
-      lastParagraph.compareDocumentPosition(comments) & Node.DOCUMENT_POSITION_FOLLOWING,
+      lastUpdated.compareDocumentPosition(comments) & Node.DOCUMENT_POSITION_FOLLOWING,
     )
   })
-  expect(followsContent, 'the comments must come after the Markdown content').toBe(true)
+  expect(followsContent, 'the comments must come after the last updated line').toBe(true)
 })

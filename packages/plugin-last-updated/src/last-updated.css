@@ -6,7 +6,9 @@
     gap: 0.5rem 1.25rem;
     align-items: center;
     justify-content: space-between;
-    margin: 0;
+    margin: 4rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--kawa-c-divider);
     font-family: var(--kawa-font-sans);
     font-size: 0.875rem;
     font-weight: 500;

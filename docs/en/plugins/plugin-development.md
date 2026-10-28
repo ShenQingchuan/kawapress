@@ -22,7 +22,7 @@ Before writing an extension, ask where the work happens:
 | Add or adjust Vite behavior | Generator Plugin `vite()` |
 | Generate static files after the build | Generator Plugin `buildArtifacts()` |
 | Install a Vue plugin or global component | Runtime Plugin `vueApp()` |
-| Place interface pieces where the theme wants them | Runtime Plugin `addToOutlet()` |
+| Place interface pieces where the theme wants them | Runtime Plugin `prependToOutlet()` / `appendToOutlet()` |
 | Add navigation guards or runtime route behavior | Runtime Plugin `router()` |
 | Provide a complete experience ready to use | Preset |
 
@@ -444,7 +444,7 @@ import { defineRuntimePlugin } from 'kawapress'
 export default defineRuntimePlugin({
   name: '@acme/kawapress-plugin-notes',
   setup(api) {
-    // All runtime APIs (api.vueApp, api.addToOutlet, api.router) are called here
+    // All runtime APIs (api.vueApp, api.prependToOutlet, api.appendToOutlet, api.router) are called here
   },
 })
 ```
@@ -472,14 +472,14 @@ export default defineRuntimePlugin({
 
 `NotesBadge.vue` is an ordinary Vue component. After registration, pages can use it by the name `NotesBadge`.
 
-### `api.addToOutlet()` {#add-to-outlet}
+### `api.prependToOutlet()` and `api.appendToOutlet()` {#add-to-outlet}
 
-`addToOutlet()` mounts a plugin's interface into a predefined spot provided by the theme.
+These two methods mount a plugin's interface into a spot the theme provides. `prependToOutlet()` places it before the theme's own content, `appendToOutlet()` after it.
 
 Interface elements like search buttons, copy buttons, and comment sections belong to the page frame rather than the Markdown document body. Plugins and themes do not need to know about each other directly. Instead, they collaborate through **Outlets**:
 
-1. **Themes provide spots**: The theme places `<KawaOutlet name="..." />` at appropriate positions in its layout templates.
-2. **Plugins provide components**: The plugin calls `api.addToOutlet()` in its Runtime Plugin to inject its components into those spots.
+1. **Themes wrap their content**: The theme puts what it draws inside `<KawaOutlet name="...">`. That content is the default content of the spot.
+2. **Plugins add components**: The plugin calls `api.prependToOutlet()` or `api.appendToOutlet()` in its Runtime Plugin to place its components before or after that content.
 
 ```ts
 // src/runtime-plugin.ts
@@ -489,7 +489,7 @@ import CopyPageButton from './CopyPageButton.vue'
 export default defineRuntimePlugin({
   name: '@acme/kawapress-plugin-notes',
   setup(api) {
-    api.addToOutlet('doc.header', {
+    api.appendToOutlet('doc.under-title', {
       id: 'copy-page',
       component: CopyPageButton,
     })
@@ -499,22 +499,27 @@ export default defineRuntimePlugin({
 
 #### Standard Outlets
 
-KawaPress defines four standard outlets:
+An outlet name is a scope plus a position: `layout` is the whole page frame, `doc` is the document being read, and `start` / `end` follow the reading direction and mirror in right-to-left languages. KawaPress defines eight standard outlets:
 
-| Outlet | Placed by | Location & Purpose | Typical Content |
+| Outlet | Placed by | Wrapped content | Typical contributions |
 | --- | --- | --- | --- |
-| `header.actions` | Theme | Top navigation bar action area | Search trigger, repository link, dark mode toggle |
-| `doc.header` | KawaPress automatically | Directly below the first `<h1>` in the document body (only appears when an H1 is present) | Copy page button, reading time, page tools |
-| `doc.footer` | Theme | Information area between document body end and footer | Last updated date, edit-this-page link |
-| `doc.after` | Theme | Below the entire document body | Comments, feedback form, prev/next pagination |
+| `layout.header` | Theme | The whole top bar | Prepend: announcement banner |
+| `layout.header.start` | Theme | Logo and site title | Append: version picker |
+| `layout.header.end` | Theme | Language, appearance, GitHub controls | Prepend: search trigger |
+| `layout.sidebar` | Theme | Navigation tree | Prepend: site switcher, append: sponsor link |
+| `layout.footer` | Theme | Site footer | Append: legal notice |
+| `doc` | Theme | Document body and prev/next links | Append: last updated, comments |
+| `doc.under-title` | KawaPress automatically | Directly below the first `<h1>` (only appears when an H1 is present) | Copy page button, reading time |
+| `doc.toc` | Theme | Document outline | Append: back to top |
 
-> **Note**: Except for `doc.header` which is mounted automatically by KawaPress below the first heading, the other three outlets are placed freely by the theme in its templates.
+> **Note**: Except for `doc.under-title`, which KawaPress mounts below the first heading, the other seven outlets are placed by the theme in its templates. Items added to an outlet the theme does not render are not shown.
 
 #### Rules & Notes
 
-- **Namespaces & IDs**: The `id` must be unique within the plugin. KawaPress automatically prefixes it as `<plugin-name>:<id>` to avoid conflicts.
-- **Render Order**: Items render in the order plugins appear in the `kawapress.config.ts` `plugins` array first, then in the order `addToOutlet()` was called within the plugin. There are no numeric weights.
+- **Namespaces & IDs**: The `id` must be unique within the plugin, across both prepend and append calls. KawaPress automatically prefixes it as `<plugin-name>:<id>` to avoid conflicts.
+- **Render Order**: The final order is prepended plugin items, the theme's default content, appended plugin items. On each side, items follow the order plugins appear in the `kawapress.config.ts` `plugins` array first, then the order of calls within the plugin. There are no numeric weights.
 - **Validation & Warnings**: Invalid outlet names, empty IDs, or duplicate IDs within a plugin throw errors immediately. If a plugin injects into an outlet that the current theme never renders, `kawapress build` emits a warning.
+- **No replacing theme content**: A plugin can only add around the default content. To replace a whole piece of UI, a theme imports the component the plugin exports and uses it in its own `Layout`.
 - **Provide Logic-Only Composables**: If you want themes to be able to fully customize this UI, consider exporting a composable (such as `useCopyPage()`). Themes can then reuse the underlying logic with their own components.
 
 ### Wrap Plugin Styles in the `kawa.plugin` Layer {#plugin-styles}
@@ -602,5 +607,5 @@ To see production plugins built with these patterns, explore the official plugin
 
 - **Build-time Markdown extensions**: [`packages/plugin-shiki`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-shiki) (demonstrates using `api.markdown()` in `setup(api)` to inject syntax highlighting).
 - **Runtime UI and Outlets**: [`packages/plugin-search`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-search) (demonstrates dual-entry export, mounting buttons with `api.addToOutlet()` in `runtime-plugin.ts`, and styling with `@layer kawa.plugin`).
-- **Page tools and actions**: [`packages/plugin-llms`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-llms) (demonstrates mounting page action tools into the `doc.header` outlet).
+- **Page tools and actions**: [`packages/plugin-llms`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-llms) (demonstrates mounting page action tools into the `doc.under-title` outlet).
 

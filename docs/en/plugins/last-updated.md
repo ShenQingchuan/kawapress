@@ -46,7 +46,7 @@ export default nagi({
 })
 ```
 
-The line is placed in the `doc.footer` outlet, so the theme decides where it appears. The nagi theme already renders that outlet, which is why the configuration above works right away. In your own theme, put `<KawaOutlet name="doc.footer" />` in the `Layout`. When no page renders the outlet, the build prints a warning.
+The plugin appends this line to the end of the `doc` outlet, right after the page content and the prev/next links. The nagi theme already renders that outlet, which is why the configuration above works right away. If you write your own theme, wrap the page content in `<KawaOutlet name="doc">`. When no theme renders the outlet, the build prints a warning.
 
 ## The Edit Link {#edit-link}
 

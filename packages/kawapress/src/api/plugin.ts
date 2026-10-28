@@ -68,8 +68,10 @@ export function definePlugin(plugin: KawaPressPlugin): KawaPressPlugin {
 export type RuntimePluginHandler<T> = (value: T) => MaybePromise<void>
 
 export interface RuntimePluginAPI {
-  /** Places a component in a theme outlet. */
-  addToOutlet: (outlet: OutletName, item: OutletItemInput) => void
+  /** Places a component before the theme's own content of an outlet. */
+  prependToOutlet: (outlet: OutletName, item: OutletItemInput) => void
+  /** Places a component after the theme's own content of an outlet. */
+  appendToOutlet: (outlet: OutletName, item: OutletItemInput) => void
   vueApp: (handler: RuntimePluginHandler<App>) => void
   router: (handler: RuntimePluginHandler<Router>) => void
 }

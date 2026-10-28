@@ -50,17 +50,6 @@
     padding: 2rem 1.25rem 4rem;
   }
 
-  .ref-doc-footer {
-    margin-top: 2.5rem;
-    padding-top: 1rem;
-    color: var(--kawa-c-text-3);
-    font-size: 0.875rem;
-    border-top: 1px solid var(--kawa-c-divider);
-  }
-
-  .ref-doc-after {
-    margin-top: 2.5rem;
-  }
 
   .ref-notfound {
     max-width: 48rem;

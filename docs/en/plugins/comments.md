@@ -117,7 +117,8 @@ comments: false
 - Switching the site between light and dark appearance switches the thread as well, without reloading it.
 - Moving to another page builds a fresh thread for that page, so the discussion always belongs to the page you are reading.
 - The interface language follows `lang` in your `locales` configuration: `zh-CN` for Chinese, `en` for everything else.
-- The `doc.after` outlet only exists in the documentation layout, so home and plain pages never show a comment section.
+- The comment section is appended to the `doc` outlet, which only the documentation layout renders, so home and plain pages never show it.
+- Within one page, plugins follow the order of the `plugins` array. To place comments after the last updated line, write `commentsPlugin()` after `lastUpdatedPlugin()`.
 
 ## Limitations {#limitations}
 

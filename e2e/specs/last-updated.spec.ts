@@ -6,7 +6,7 @@ const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
 test('the doc footer shows the last commit time and the edit link', async ({ page }) => {
   await page.goto(sitePath('/guide/getting-started'))
 
-  const footer = page.locator('.nagi-doc-footer .kawa-last-updated')
+  const footer = page.locator('.nagi-main__content .kawa-last-updated')
   await expect(footer).toBeVisible()
 
   const time = footer.locator('time')
@@ -27,7 +27,7 @@ test('the doc footer shows the last commit time and the edit link', async ({ pag
 test('the English page uses English text and its own source path', async ({ page }) => {
   await page.goto(sitePath('/en/guide/getting-started'))
 
-  const footer = page.locator('.nagi-doc-footer .kawa-last-updated')
+  const footer = page.locator('.nagi-main__content .kawa-last-updated')
   await expect(footer).toBeVisible()
   await expect(footer.locator('.kawa-last-updated__label'))
     .toHaveText('Last updated: ')

@@ -5,6 +5,6 @@ import './comments.css'
 export default defineRuntimePlugin({
   name: '@kawapress/plugin-comments',
   setup(api) {
-    api.addToOutlet('doc.after', { id: 'comments', component: Comments })
+    api.appendToOutlet('doc', { id: 'comments', component: Comments })
   },
 })

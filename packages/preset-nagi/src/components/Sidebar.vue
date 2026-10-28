@@ -13,7 +13,7 @@ import {
   resetSidebarWidth,
 } from '../sidebar-width'
 import OsScroll from './OsScroll.vue'
-import SidebarItem from './SidebarItem.vue'
+import SidebarTree from './SidebarTree.vue'
 
 const props = withDefaults(defineProps<{
   mode?: 'desktop' | 'drawer'
@@ -140,15 +140,15 @@ watch(() => route.value.path, () => {
   >
     <OsScroll class="nagi-sidebar__scroll">
       <nav class="nagi-sidebar__nav">
-        <ul class="nagi-sidebar__items">
-          <SidebarItem
-            v-for="item in items"
-            :key="item.link ?? item.text"
-            :item="item"
-            :active-path="activePath"
-            @navigate="emit('close')"
-          />
-        </ul>
+        <KawaOutlet v-if="props.mode === 'desktop'" name="layout.sidebar">
+          <SidebarTree :items="items" :active-path="activePath" @navigate="emit('close')" />
+        </KawaOutlet>
+        <SidebarTree
+          v-else
+          :items="items"
+          :active-path="activePath"
+          @navigate="emit('close')"
+        />
       </nav>
     </OsScroll>
 

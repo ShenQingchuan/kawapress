@@ -46,7 +46,7 @@ export default nagi({
 })
 ```
 
-插件把这一行放进 `doc.footer` 这个 Outlet，由主题决定它出现在页面底部还是别处。nagi 主题已经渲染了这个位置，所以上面的配置就能直接看到效果。如果换成自己写的主题，记得在 `Layout` 里放一个 `<KawaOutlet name="doc.footer" />`。没有渲染这个 Outlet 时，构建会给出一行警告。
+插件把这一行追加到 `doc` 这个 Outlet 的末尾，也就是正文和上下篇导航之后。nagi 主题已经渲染了这个位置，所以上面的配置就能直接看到效果。如果换成自己写的主题，记得在 `Layout` 里用 `<KawaOutlet name="doc">` 包住正文。没有渲染这个 Outlet 时，构建会给出一行警告。
 
 ## 「编辑此页」链接 {#edit-link}
 

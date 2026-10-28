@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import type { App, Component } from 'vue'
-import type { OutletItem, OutletName, OutletRegistry } from '../../core/outlet'
+import type { OutletItem, OutletName, OutletRegistry, OutletSlots } from '../../core/outlet'
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp, createSSRApp, defineComponent, h, nextTick } from 'vue'
@@ -17,16 +17,16 @@ function item(name: string): Component {
 }
 
 function createRegistry(
-  items: Partial<Record<OutletName, OutletItem[]>> = {},
+  items: Partial<Record<OutletName, Partial<OutletSlots>>> = {},
 ): OutletRegistry {
-  const registry = {} as Record<OutletName, readonly OutletItem[]>
+  const registry = {} as Record<OutletName, OutletSlots>
   for (const name of OUTLET_NAMES) {
-    registry[name] = items[name] ?? []
+    registry[name] = { prepend: [], append: [], ...items[name] }
   }
   return registry
 }
 
-function registered(outlet: OutletName, id: string, name: string): OutletItem {
+function registered(id: string, name: string): OutletItem {
   return { id: `${name}:${id}`, owner: name, component: item(id) }
 }
 
@@ -59,28 +59,51 @@ function mount(
 }
 
 describe('outlet rendering', () => {
-  it('renders every item of one outlet in registry order', async () => {
+  it('renders prepended items, the theme content, then appended items', async () => {
     const registry = createRegistry({
-      'header.actions': [
-        registered('header.actions', 'search', '@acme/plugin-search'),
-        registered('header.actions', 'llms', '@acme/plugin-llms'),
-      ],
+      'layout.header.end': {
+        prepend: [
+          registered('search', '@acme/plugin-search'),
+          registered('banner', '@acme/plugin-banner'),
+        ],
+        append: [registered('llms', '@acme/plugin-llms')],
+      },
     })
 
     mount(defineComponent({
-      setup: () => () => h(KawaOutlet, { name: 'header.actions' }),
+      setup: () => () => h(
+        KawaOutlet,
+        { name: 'layout.header.end' },
+        { default: () => h('b', 'theme') },
+      ),
     }), registry)
     await nextTick()
 
-    expect(document.querySelector('#app')!.innerHTML)
-      .toBe('<span class="item-search">search</span><span class="item-llms">llms</span>')
+    expect(document.querySelector('#app')!.innerHTML).toBe(
+      '<span class="item-search">search</span><span class="item-banner">banner</span>'
+      + '<b>theme</b><span class="item-llms">llms</span>',
+    )
   })
 
-  it('renders nothing and no wrapper element for an empty outlet', async () => {
+  it('renders only the theme content when no plugin contributed', async () => {
     mount(defineComponent({
       setup: () => () => h('div', { class: 'page' }, [
         'before',
-        h(KawaOutlet, { name: 'doc.after' }),
+        h(KawaOutlet, { name: 'doc' }, { default: () => 'theme' }),
+        'after',
+      ]),
+    }))
+    await nextTick()
+
+    expect(document.querySelector('#app')!.innerHTML)
+      .toBe('<div class="page">beforethemeafter</div>')
+  })
+
+  it('renders nothing and no wrapper element for an empty outlet without theme content', async () => {
+    mount(defineComponent({
+      setup: () => () => h('div', { class: 'page' }, [
+        'before',
+        h(KawaOutlet, { name: 'doc' }),
         'after',
       ]),
     }))
@@ -88,35 +111,6 @@ describe('outlet rendering', () => {
 
     expect(document.querySelector('#app')!.innerHTML)
       .toBe('<div class="page">beforeafter</div>')
-  })
-
-  it('hands the items to the scoped slot for filtering and wrapping', async () => {
-    const registry = createRegistry({
-      'doc.footer': [
-        registered('doc.footer', 'updated-at', '@acme/plugin-updated-at'),
-        registered('doc.footer', 'edit-link', '@acme/plugin-edit-link'),
-      ],
-    })
-
-    mount(defineComponent({
-      setup: () => () => h(
-        KawaOutlet,
-        { name: 'doc.footer' },
-        {
-          default: ({ items }: { items: readonly OutletItem[] }) => h(
-            'nav',
-            { class: 'footer' },
-            items
-              .filter(entry => entry.id !== '@acme/plugin-edit-link:edit-link')
-              .map(entry => h('span', { key: entry.id }, entry.id)),
-          ),
-        },
-      ),
-    }), registry)
-    await nextTick()
-
-    expect(document.querySelector('#app')!.innerHTML)
-      .toBe('<nav class="footer"><span>@acme/plugin-updated-at:updated-at</span></nav>')
   })
 
   it('reports an unknown outlet name', async () => {
@@ -128,27 +122,27 @@ describe('outlet rendering', () => {
 
     expect(errors).toHaveLength(1)
     expect(String(errors[0])).toContain(
-      'KawaPress: <KawaOutlet> uses the unknown outlet "doc.before". Available outlets: header.actions, doc.header, doc.footer, doc.after.',
+      'KawaPress: <KawaOutlet> uses the unknown outlet "doc.before". Available outlets: layout.header, layout.header.start, layout.header.end, layout.sidebar, layout.footer, doc, doc.under-title, doc.toc.',
     )
   })
 
   it('warns once per app when the same outlet is mounted twice', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const registry = createRegistry({
-      'doc.after': [registered('doc.after', 'comments', '@acme/plugin-comments')],
+      doc: { append: [registered('comments', '@acme/plugin-comments')] },
     })
 
     mount(defineComponent({
       setup: () => () => h('div', [
-        h(KawaOutlet, { name: 'doc.after' }),
-        h(KawaOutlet, { name: 'doc.after' }),
-        h(KawaOutlet, { name: 'doc.after' }),
+        h(KawaOutlet, { name: 'doc' }),
+        h(KawaOutlet, { name: 'doc' }),
+        h(KawaOutlet, { name: 'doc' }),
       ]),
     }), registry)
     await nextTick()
 
     expect(warn).toHaveBeenCalledTimes(1)
-    expect(warn.mock.calls[0][0]).toContain('"doc.after"')
+    expect(warn.mock.calls[0][0]).toContain('"doc"')
     expect(document.querySelectorAll('.item-comments')).toHaveLength(3)
 
     app?.unmount()
@@ -156,8 +150,8 @@ describe('outlet rendering', () => {
     document.body.innerHTML = '<div id="app"></div>'
     mount(defineComponent({
       setup: () => () => h('div', [
-        h(KawaOutlet, { name: 'doc.after' }),
-        h(KawaOutlet, { name: 'doc.after' }),
+        h(KawaOutlet, { name: 'doc' }),
+        h(KawaOutlet, { name: 'doc' }),
       ]),
     }), registry)
     await nextTick()
@@ -171,13 +165,13 @@ describe('outlet rendering', () => {
 
     mount(defineComponent({
       setup: () => () => h('div', [
-        h(KawaOutlet, { name: 'doc.after' }),
-        h(KawaOutlet, { name: 'doc.footer' }),
+        h(KawaOutlet, { name: 'doc' }),
+        h(KawaOutlet, { name: 'doc.toc' }),
       ]),
     }), registry)
     await nextTick()
 
-    expect(getOutletItems(registry, 'doc.after')).toEqual([])
+    expect(getOutletItems(registry, 'doc')).toEqual([])
     expect(warn).not.toHaveBeenCalled()
   })
 })
@@ -186,7 +180,7 @@ describe('outlet hydration', () => {
   const page = defineComponent({
     setup: () => () => h('div', [
       h('h1', 'Title'),
-      h(KawaOutlet, { name: 'doc.header' }),
+      h(KawaOutlet, { name: 'doc.under-title' }),
       h('p', 'body'),
     ]),
   })
@@ -195,7 +189,7 @@ describe('outlet hydration', () => {
     for (const items of [
       createRegistry(),
       createRegistry({
-        'doc.header': [registered('doc.header', 'actions', '@acme/plugin-llms')],
+        'doc.under-title': { append: [registered('actions', '@acme/plugin-llms')] },
       }),
     ]) {
       const serverApp = createSSRApp(page)

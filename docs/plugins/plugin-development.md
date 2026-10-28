@@ -22,7 +22,7 @@ description: 按扩展位置编写 KawaPress 插件，使用生成侧与运行�
 | 添加或调整 Vite 能力 | Generator Plugin 的 `vite()` |
 | 构建结束后生成静态文件 | Generator Plugin 的 `buildArtifacts()` |
 | 安装 Vue 插件或全局组件 | Runtime Plugin 的 `vueApp()` |
-| 把界面放进主题预留的位置 | Runtime Plugin 的 `addToOutlet()` |
+| 把界面放进主题预留的位置 | Runtime Plugin 的 `prependToOutlet()` / `appendToOutlet()` |
 | 添加导航守卫或运行时路由行为 | Runtime Plugin 的 `router()` |
 | 提供一套可以直接开始的完整体验 | Preset |
 
@@ -454,7 +454,7 @@ import { defineRuntimePlugin } from 'kawapress'
 export default defineRuntimePlugin({
   name: '@acme/kawapress-plugin-notes',
   setup(api) {
-    // 所有的运行侧 API (api.vueApp, api.addToOutlet, api.router) 都在这里调用
+    // 所有的运行侧 API (api.vueApp, api.prependToOutlet, api.appendToOutlet, api.router) 都在这里调用
   },
 })
 ```
@@ -482,14 +482,14 @@ export default defineRuntimePlugin({
 
 `NotesBadge.vue` 是普通的 Vue 组件。注册后，页面中就可以按 `NotesBadge` 这个名称使用它。
 
-### `api.addToOutlet()` {#add-to-outlet}
+### `api.prependToOutlet()` 与 `api.appendToOutlet()` {#add-to-outlet}
 
-`addToOutlet()` 用于把插件的界面挂进主题预留的位置。
+这两个方法用于把插件的界面挂进主题预留的位置：`prependToOutlet()` 放在主题自己的内容前面，`appendToOutlet()` 放在后面。
 
 搜索按钮、文档复制按钮、评论区这些界面，属于页面框架的一部分，而不是写在 Markdown 正文里的内容。插件和主题彼此不需要直接引用，而是通过 **Outlet（插座）** 机制协作：
 
-1. **主题负责留位置**：主题在模板的合适位置放上 `<KawaOutlet name="..." />`。
-2. **插件负责送组件**：插件在 Runtime Plugin 中调用 `api.addToOutlet()`，把自己的组件插进去。
+1. **主题负责圈位置**：主题把自己画的内容包进 `<KawaOutlet name="...">`，这块内容就是这个位置的默认内容。
+2. **插件负责送组件**：插件在 Runtime Plugin 中调用 `api.prependToOutlet()` 或 `api.appendToOutlet()`，把自己的组件放到默认内容的前面或后面。
 
 ```ts
 // src/runtime-plugin.ts
@@ -499,7 +499,7 @@ import CopyPageButton from './CopyPageButton.vue'
 export default defineRuntimePlugin({
   name: '@acme/kawapress-plugin-notes',
   setup(api) {
-    api.addToOutlet('doc.header', {
+    api.appendToOutlet('doc.under-title', {
       id: 'copy-page',
       component: CopyPageButton,
     })
@@ -509,22 +509,27 @@ export default defineRuntimePlugin({
 
 #### 标准 Outlet 位置
 
-KawaPress 约定了四个标准 Outlet：
+Outlet 的名字由「范围 + 位置」组成：`layout` 是整个页面框架，`doc` 是正在阅读的这一篇文档；`start` 和 `end` 跟随阅读方向，从右到左的语言里会自动镜像。KawaPress 约定了八个标准 Outlet：
 
-| Outlet | 谁来放置插座 | 页面位置与用途 | 常见内容 |
+| Outlet | 谁来放置 | 圈住的内容 | 常见贡献 |
 | --- | --- | --- | --- |
-| `header.actions` | 主题 | 页面顶部导航栏的操作区域 | 搜索按钮、GitHub 链接、暗色模式切换 |
-| `doc.header` | KawaPress 自动放置 | 正文第一个 `<h1>` 标题正下方（仅正文含 H1 时出现） | 复制正文按钮、阅读时间、页面工具栏 |
-| `doc.footer` | 主题 | 正文末尾与页脚之间的信息区 | 最后更新时间、编辑此页链接 |
-| `doc.after` | 主题 | 整个正文区下方 | 评论区、反馈表单、上一篇/下一篇导航 |
+| `layout.header` | 主题 | 整条顶栏 | 前置：公告横幅 |
+| `layout.header.start` | 主题 | Logo 与站点名 | 后置：版本选择器 |
+| `layout.header.end` | 主题 | 语言、外观、GitHub 等控件 | 前置：搜索按钮 |
+| `layout.sidebar` | 主题 | 导航树 | 前置：站点切换，后置：赞助入口 |
+| `layout.footer` | 主题 | 站点页脚 | 后置：备案号 |
+| `doc` | 主题 | 正文与上下篇导航 | 后置：最后更新时间、评论区 |
+| `doc.under-title` | KawaPress 自动放置 | 正文第一个 `<h1>` 标题正下方（仅正文含 H1 时出现） | 复制正文按钮、阅读时间 |
+| `doc.toc` | 主题 | 文档大纲 | 后置：返回顶部 |
 
-> **提示**：除了 `doc.header` 由框架自动挂载到文章首个标题后，其余三个 Outlet 均由主题模板自由决定放在具体 DOM 结构的什么位置。
+> **提示**：除了 `doc.under-title` 由框架自动挂载到文章首个标题后，其余七个 Outlet 均由主题模板决定放在具体 DOM 结构的什么位置。主题没有渲染的 Outlet，插件放进去的内容不会显示。
 
 #### 插入规则与注意事项
 
-- **命名空间与 ID**：同一个插件内 `id` 必须唯一。KawaPress 会自动拼装为 `<插件名>:<id>`，防止多个插件冲突。
-- **渲染顺序**：先按 `kawapress.config.ts` 中 `plugins` 数组的插件顺序排列；同一个插件内多次调用 `addToOutlet()` 时，按调用先后顺序排列。不提供权重配置。
+- **命名空间与 ID**：同一个插件内 `id` 必须唯一，前置和后置共用同一套 `id`。KawaPress 会自动拼装为 `<插件名>:<id>`，防止多个插件冲突。
+- **渲染顺序**：最终顺序是前置的插件内容、主题的默认内容、后置的插件内容。同一侧内先按 `kawapress.config.ts` 中 `plugins` 数组的插件顺序排列；同一个插件内多次调用时，按调用先后顺序排列。不提供权重配置。
 - **校验与告警**：Outlet 名字写错、`id` 为空或插件内重复均会直接报错。如果插件向某个 Outlet 注册了组件，但当前使用的主题完全没有渲染该 Outlet，在 `kawapress build` 时会收到警告提示。
+- **不能替换主题的内容**：插件只能在默认内容的前后加东西。想完全换掉某块界面，需要在自己的主题 `Layout` 里直接引用插件导出的组件。
 - **提供纯逻辑支持**：如果插件希望主题能够完全定制这块 UI，建议同时导出一个 Composable（例如 `useCopyPage()`）。这样主题既可以直接用 Outlet 显示默认界面，也可以选择自行调用 Composable 重新实现组件。
 
 ### 插件样式包进 `kawa.plugin` 层 {#plugin-styles}
@@ -614,5 +619,5 @@ Runtime Plugin 会为每个 Vue App 执行一次。服务端渲染时，每次�
 
 - **生成侧扩展（Markdown 与代码高亮）**：[`packages/plugin-shiki`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-shiki)（演示了在 `setup(api)` 中调用 `api.markdown()` 注入语法高亮）。
 - **运行侧界面与 Outlet 挂载（带 UI 的插件）**：[`packages/plugin-search`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-search)（演示了如何提供双入口、在 `runtime-plugin.ts` 中调用 `api.addToOutlet()` 挂载搜索按钮，以及通过 `@layer kawa.plugin` 组织样式）。
-- **页面工具栏与复制能力**：[`packages/plugin-llms`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-llms)（演示了如何向 `doc.header` 挂载页面操作按钮）。
+- **页面工具栏与复制能力**：[`packages/plugin-llms`](https://github.com/kawapress/kawapress/tree/main/packages/plugin-llms)（演示了如何向 `doc.under-title` 挂载页面操作按钮）。
 

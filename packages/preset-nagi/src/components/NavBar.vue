@@ -38,41 +38,48 @@ onUnmounted(() => {
 
 <template>
   <div class="nagi-nav-bar">
-    <header class="nagi-nav">
-      <a :href="site.link" class="nagi-nav__title">
-        <ThemeableImage
-          v-if="theme.logo"
-          :image="theme.logo"
-          alt=""
-          class="nagi-nav__logo"
-        />
-        <span>{{ site.title }}</span>
-      </a>
-      <div class="nagi-nav__end">
-        <NavLinks class="nagi-nav__links" />
-        <div class="nagi-nav__controls nagi-nav__controls--desktop">
-          <KawaOutlet name="header.actions" />
-          <LanguageMenu />
-          <AppearanceSwitch />
-          <GitHubLink />
+    <KawaOutlet name="layout.header">
+      <header class="nagi-nav">
+        <div class="nagi-nav__start">
+          <KawaOutlet name="layout.header.start">
+            <a :href="site.link" class="nagi-nav__title">
+              <ThemeableImage
+                v-if="theme.logo"
+                :image="theme.logo"
+                alt=""
+                class="nagi-nav__logo"
+              />
+              <span>{{ site.title }}</span>
+            </a>
+          </KawaOutlet>
         </div>
-        <button
-          type="button"
-          class="nagi-nav__menu"
-          aria-controls="nagi-nav-screen"
-          :aria-expanded="screenOpen"
-          :aria-label="theme.navMenuLabel"
-          :title="theme.navMenuLabel"
-          @click="screenOpen = !screenOpen"
-        >
-          <span class="nagi-nav__menu-icon" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
-        </button>
-      </div>
-    </header>
+        <div class="nagi-nav__end">
+          <NavLinks class="nagi-nav__links" />
+          <div class="nagi-nav__controls nagi-nav__controls--desktop">
+            <KawaOutlet name="layout.header.end">
+              <LanguageMenu />
+              <AppearanceSwitch />
+              <GitHubLink />
+            </KawaOutlet>
+          </div>
+          <button
+            type="button"
+            class="nagi-nav__menu"
+            aria-controls="nagi-nav-screen"
+            :aria-expanded="screenOpen"
+            :aria-label="theme.navMenuLabel"
+            :title="theme.navMenuLabel"
+            @click="screenOpen = !screenOpen"
+          >
+            <span class="nagi-nav__menu-icon" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+        </div>
+      </header>
+    </KawaOutlet>
 
     <Transition name="nagi-nav-screen">
       <NavScreen v-if="screenOpen" @close="screenOpen = false" />

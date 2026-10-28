@@ -87,8 +87,8 @@
 
 .nagi-nav__start {
   display: flex;
+  gap: 0.75rem;
   align-items: center;
-  margin-left: 1.5rem;
 }
 
 .nagi-nav-links {
@@ -500,26 +500,6 @@
 .nagi-sidebar-item__items {
   padding-left: 1rem;
   border-left: 1px solid var(--nagi-c-divider);
-}
-
-/* Outlet wrappers: empty when no plugin placed anything, so they must not take space. */
-.nagi-doc-footer:empty,
-.nagi-doc-after:empty {
-  display: none;
-}
-
-.nagi-doc-footer {
-  margin-top: 4rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--nagi-c-divider);
-}
-
-.nagi-doc-after {
-  margin-top: 3rem;
-}
-
-.nagi-doc-footer + .nagi-doc-navigation {
-  margin-top: 3rem;
 }
 
 .nagi-doc-navigation {

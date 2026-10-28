@@ -8,11 +8,12 @@ vi.mock('kawapress/client', () => ({}))
 vi.mock('virtual:kawapress-search-index', () => ({ searchIndexLoaders: {} }))
 
 describe('search runtime plugin', () => {
-  it('places the search trigger in the header actions outlet', async () => {
+  it('places the search trigger before the header controls', async () => {
     const items = await collectOutletItems(runtimePlugin)
 
     expect(items).toHaveLength(1)
-    expect(items[0].outlet).toBe('header.actions')
+    expect(items[0].side).toBe('prepend')
+    expect(items[0].outlet).toBe('layout.header.end')
     expect(items[0].item.id).toBe('trigger')
     expect(items[0].item.component).toBe(Search)
   })
@@ -20,11 +21,14 @@ describe('search runtime plugin', () => {
 
 async function collectOutletItems(
   plugin: RuntimePlugin,
-): Promise<{ outlet: OutletName, item: OutletItemInput }[]> {
-  const items: { outlet: OutletName, item: OutletItemInput }[] = []
+): Promise<{ side: 'prepend' | 'append', outlet: OutletName, item: OutletItemInput }[]> {
+  const items: { side: 'prepend' | 'append', outlet: OutletName, item: OutletItemInput }[] = []
   await plugin.setup({
-    addToOutlet: (outlet, item) => {
-      items.push({ outlet, item })
+    prependToOutlet: (outlet, item) => {
+      items.push({ side: 'prepend', outlet, item })
+    },
+    appendToOutlet: (outlet, item) => {
+      items.push({ side: 'append', outlet, item })
     },
     router: () => {},
     vueApp: () => {},

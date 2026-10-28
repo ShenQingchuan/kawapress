@@ -14,13 +14,15 @@ describe('github alerts runtime plugin', () => {
   })
 
   it('registers nothing beyond its stylesheet', async () => {
-    const addToOutlet = vi.fn()
+    const prependToOutlet = vi.fn()
+    const appendToOutlet = vi.fn()
     const router = vi.fn()
     const vueApp = vi.fn()
 
-    await runtimePlugin.setup({ addToOutlet, router, vueApp })
+    await runtimePlugin.setup({ prependToOutlet, appendToOutlet, router, vueApp })
 
-    expect(addToOutlet).not.toHaveBeenCalled()
+    expect(prependToOutlet).not.toHaveBeenCalled()
+    expect(appendToOutlet).not.toHaveBeenCalled()
     expect(router).not.toHaveBeenCalled()
     expect(vueApp).not.toHaveBeenCalled()
   })

@@ -7,11 +7,13 @@ const currentYear = new Date().getFullYear()
 
 <template>
   <footer class="nagi-footer">
-    <p class="nagi-footer__license">
-      {{ theme.footerLicenseText }}
-    </p>
-    <p class="nagi-footer__copyright">
-      © {{ currentYear }} {{ theme.footerPoweredByText }}
-    </p>
+    <KawaOutlet name="layout.footer">
+      <p class="nagi-footer__license">
+        {{ theme.footerLicenseText }}
+      </p>
+      <p class="nagi-footer__copyright">
+        © {{ currentYear }} {{ theme.footerPoweredByText }}
+      </p>
+    </KawaOutlet>
   </footer>
 </template>

@@ -12,6 +12,13 @@ export default nagi({
   base: process.env.KAWAPRESS_BASE,
   plugins: [
     imageZoomPlugin(),
+    mathjaxPlugin(),
+    mermaidPlugin(),
+    lastUpdatedPlugin({
+      editLink: {
+        pattern: 'https://github.com/kawapress/kawapress/edit/main/:path',
+      },
+    }),
     commentsPlugin({
       // giscus 只读取 GitHub Discussions，站点本身不存任何评论数据。
       giscus: {
@@ -19,13 +26,6 @@ export default nagi({
         repoId: 'R_kgDOUBnCOQ',
         category: 'Announcements',
         categoryId: 'DIC_kwDOUBnCOc4DJuT-',
-      },
-    }),
-    mathjaxPlugin(),
-    mermaidPlugin(),
-    lastUpdatedPlugin({
-      editLink: {
-        pattern: 'https://github.com/kawapress/kawapress/edit/main/:path',
       },
     }),
   ],

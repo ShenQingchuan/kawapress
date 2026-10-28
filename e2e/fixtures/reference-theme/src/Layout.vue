@@ -12,22 +12,15 @@ const site = useSite()
         <a :href="site.link">Home</a>
         <a :href="withBase('/second', site.base)">Second page</a>
       </nav>
-      <!-- Scoped slot: the theme wraps the outlet items in its own element. -->
-      <KawaOutlet v-slot="{ items }" name="header.actions">
-        <div class="ref-actions">
-          <component :is="item.component" v-for="item in items" :key="item.id" />
-        </div>
-      </KawaOutlet>
+      <div class="ref-actions">
+        <KawaOutlet name="layout.header.end" />
+      </div>
     </header>
 
     <main class="ref-doc">
-      <RouterView />
-      <div class="ref-doc-footer">
-        <KawaOutlet name="doc.footer" />
-      </div>
-      <div class="ref-doc-after">
-        <KawaOutlet name="doc.after" />
-      </div>
+      <KawaOutlet name="doc">
+        <RouterView />
+      </KawaOutlet>
     </main>
   </div>
 </template>
