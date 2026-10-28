@@ -106,8 +106,9 @@ export async function main(argv = process.argv.slice(2)) {
     const registryStates = await inspectRegistry(publishOrder, options.registry)
 
     if (options.mode === 'dry-run') {
+      // Only versions npm does not have yet can be simulated; npm refuses to republish the rest.
       await dryRunPublish(
-        publishOrder.filter(packageInfo => !isSkippedState(registryStates.get(packageInfo.name))),
+        publishOrder.filter(packageInfo => registryStates.get(packageInfo.name) === 'available'),
         options,
       )
       console.log('\nDry-run complete. Nothing was published and package versions were not changed.')
